@@ -1,7 +1,7 @@
 --[[
 ****************************************************************************
 *                                                                          *
-*   Copyright (C) 2021-2023 Neo-Mind                                            *
+*   Copyright (C) 2021-2023 Neo-Mind                                       *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -30,11 +30,11 @@
 
 --[[
 
-(ï¿½`ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½ï¿½)
+(?`¡¤?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¡¤¢¥?)
 ( \                                              / )
  ( ) Default set of prefixes used for imf files ( )
-  (/                                            \)
-   (.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½)
+  (/                                             \)
+   (.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬)
 
 ]]--
 
@@ -51,46 +51,46 @@ PCImfs =
 	-----------------
 	-- 1st Classes --
 	-----------------
-	[PCIds.NOVICE]   = "ï¿½Êºï¿½ï¿½ï¿½",
-	[PCIds.SWORDMAN] = "ï¿½Ë»ï¿½",
-	[PCIds.MAGICIAN] = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.ARCHER]   = "ï¿½Ã¼ï¿½",
-	[PCIds.ACOLYTE]  = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.MERCHANT] = "ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.THIEF]    = "ï¿½ï¿½ï¿½ï¿½",
+	[PCIds.NOVICE]   = "ÃÊº¸ÀÚ",
+	[PCIds.SWORDMAN] = "°Ë»ç",
+	[PCIds.MAGICIAN] = "¸¶¹ý»ç",
+	[PCIds.ARCHER]   = "±Ã¼ö",
+	[PCIds.ACOLYTE]  = "¼ºÁ÷ÀÚ",
+	[PCIds.MERCHANT] = "»óÀÎ",
+	[PCIds.THIEF]    = "µµµÏ",
 
 	--------------------------
 	-- Extended 1st Classes --
 	--------------------------
-	[PCIds.GUNSLINGER]   = "ï¿½Ç³ï¿½",
-	[PCIds.NINJA]        = "ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.TAEKWON]      = "ï¿½Â±Ç¼Ò³ï¿½",
+	[PCIds.GUNSLINGER]   = "°Ç³Ê",
+	[PCIds.NINJA]        = "´ÑÀÚ",
+	[PCIds.TAEKWON]      = "ÅÂ±Ç¼Ò³â",
 
 	-----------------
 	-- 2nd Classes --
 	-----------------
-	[PCIds.KNIGHT]       = "ï¿½ï¿½ï¿½",
-	[PCIds.KNIGHT_MOUNT] = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½ï¿½ï¿½",
-	[PCIds.PRIEST]       = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®",
-	[PCIds.WIZARD]       = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.BLACKSMITH]   = "ï¿½ï¿½Ã¶ï¿½ï¿½",
-	[PCIds.HUNTER]       = "ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.ASSASSIN]     = "ï¿½î¼¼ï¿½ï¿½",
+	[PCIds.KNIGHT]       = "±â»ç",
+	[PCIds.KNIGHT_MOUNT] = "ÆäÄÚÆäÄÚ_±â»ç",
+	[PCIds.PRIEST]       = "ÇÁ¸®½ºÆ®",
+	[PCIds.WIZARD]       = "À§Àúµå",
+	[PCIds.BLACKSMITH]   = "Á¦Ã¶°ø",
+	[PCIds.HUNTER]       = "ÇåÅÍ",
+	[PCIds.ASSASSIN]     = "¾î¼¼½Å",
 
-	[PCIds.CRUSADER]     = "Å©ï¿½ç¼¼ï¿½Ì´ï¿½",
-	[PCIds.CRUS_MOUNT]   = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å©ï¿½ç¼¼ï¿½Ì´ï¿½",
-	[PCIds.MONK]         = "ï¿½ï¿½Å©",
-	[PCIds.SAGE]         = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.ROGUE]        = "ï¿½Î±ï¿½",
-	[PCIds.ALCHEMIST]    = "ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½",
-	[PCIds.BARD]         = "ï¿½Ùµï¿½",
-	[PCIds.DANCER]       = "ï¿½ï¿½ï¿½ï¿½",
+	[PCIds.CRUSADER]     = "Å©·ç¼¼ÀÌ´õ",
+	[PCIds.CRUS_MOUNT]   = "½ÅÆäÄÚÅ©·ç¼¼ÀÌ´õ",
+	[PCIds.MONK]         = "¸ùÅ©",
+	[PCIds.SAGE]         = "¼¼ÀÌÁö",
+	[PCIds.ROGUE]        = "·Î±×",
+	[PCIds.ALCHEMIST]    = "¿¬±Ý¼ú»ç",
+	[PCIds.BARD]         = "¹Ùµå",
+	[PCIds.DANCER]       = "¹«Èñ",
 
 	------------------------------
 	-- Transcendent 2nd Classes --
 	------------------------------
-	[PCIds.HIGH_WIZARD] = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	--[PCIds.ASSASSIN_X]  = "ï¿½ï¿½Ø½ï¿½Å©ï¿½Î½ï¿½",
+	[PCIds.HIGH_WIZARD] = "ÇÏÀÌÀ§Àúµå",
+	--[PCIds.ASSASSIN_X]  = "¾î¼¼½ÅÅ©·Î½º",
 
 	--------------------------
 	-- Extended 2nd Classes --
@@ -101,12 +101,12 @@ PCImfs =
 	-----------------
 	-- 3rd Classes --
 	-----------------
-	[PCIds.WARLOCK]       = "ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.RANGER_MOUNT]  = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.MADOGEAR]      = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCIds.GUILLOTINE_X]  = "ï¿½î¼¼ï¿½ï¿½Å©ï¿½Î½ï¿½",
+	[PCIds.WARLOCK]        = "¿ö·Ï",
+	[PCIds.RANGER_MOUNT]   = "·¹ÀÎÁ®´Á´ë",
+	[PCIds.MADOGEAR]       = "¸¶µµ±â¾î",
+	[PCIds.GUILLOTINE_X]   = "¾î¼¼½ÅÅ©·Î½º",
 
-	[PCIds.SORCERER]      = "ï¿½ï¿½ï¿½ï¿½ï¿½ä¼­",
+	[PCIds.SORCERER]       = "ÇÁ·ÎÆä¼­",
 
 	--------------------------
 	-- Extended 3rd Classes --
@@ -145,7 +145,7 @@ PCImfs =
 	--------------
 	-- Costumes --
 	--------------
-	[PCIds.MARRIED]      = "ï¿½ï¿½È¥",
+	[PCIds.MARRIED]      = "°áÈ¥",
 
 	-----------------------
 	-- Doram 1st Classes --
@@ -168,56 +168,56 @@ PCImfs =
 	-----------------
 	-- 1st Classes --
 	-----------------
-	[PCMounts.PORING_NOVICE]    = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.FOX_MAGICIAN]     = "ï¿½ï¿½ï¿½ì¸¶ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_ARCHER]   = "Å¸ï¿½ï¿½ï¿½Ã¼ï¿½",
-	[PCMounts.SHEEP_ACO]        = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.PIG_MERCHANT]     = "ï¿½ï¿½ï¿½Î¸ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.HYENA_THIEF]      = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½",
+	[PCMounts.PORING_NOVICE]    = "Æ÷¸µÃÊº¸ÀÚ",
+	[PCMounts.FOX_MAGICIAN]     = "¿©¿ì¸¶¹ý»ç",
+	[PCMounts.OSTRICH_ARCHER]   = "Å¸Á¶±Ã¼ö",
+	[PCMounts.SHEEP_ACO]        = "º¹»ç¾ËÆÄÄ«",
+	[PCMounts.PIG_MERCHANT]     = "¸äµÅÁö»óÀÎ",
+	[PCMounts.HYENA_THIEF]      = "ÇÏÀÌ¿¡³ªµµµÏ",
 
 	--------------------------
 	-- Extended 1st Classes --
 	--------------------------
-	[PCMounts.PORING_S_NOVICE]  = "ï¿½ï¿½ï¿½Û³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.BIKE_GUNNER]      = "ï¿½ï¿½ï¿½Ú°Ç³ï¿½",
-	[PCMounts.FROG_NINJA]       = "ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.PORING_TAEKWON]   = "ï¿½Â±Ç¼Ò³ï¿½ï¿½ï¿½ï¿½ï¿½",
+	[PCMounts.PORING_S_NOVICE]  = "½´ÆÛ³ëºñ½ºÆ÷¸µ",
+	[PCMounts.BIKE_GUNNER]      = "¹ÙÀÌÅ©°Ç³Ê",
+	[PCMounts.FROG_NINJA]       = "°³±¸¸®´ÑÀÚ",
+	[PCMounts.PORING_TAEKWON]   = "ÅÂ±Ç¼Ò³âÆ÷¸µ",
 
 	-----------------
 	-- 2nd Classes --
 	-----------------
-	[PCMounts.LION_KNIGHT]      = "ï¿½ï¿½ï¿½Ú±ï¿½ï¿½",
-	[PCMounts.SHEEP_PRIEST]     = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.FOX_WIZARD]       = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.PIG_BLACKSMITH]   = "ï¿½ï¿½Ã¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_HUNTER]   = "Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.HYENA_ASSASSIN]   = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½",
+	[PCMounts.LION_KNIGHT]      = "»çÀÚ±â»ç",
+	[PCMounts.SHEEP_PRIEST]     = "ÇÁ¸®½ºÆ®¾ËÆÄÄ«",
+	[PCMounts.FOX_WIZARD]       = "¿©¿ìÀ§Àúµå",
+	[PCMounts.PIG_BLACKSMITH]   = "Á¦Ã¶°ø¸äµÅÁö",
+	[PCMounts.OSTRICH_HUNTER]   = "Å¸Á¶ÇåÅÍ",
+	[PCMounts.HYENA_ASSASSIN]   = "ÇÏÀÌ¿¡³ª¾î¼¼½Å",
 
-	[PCMounts.LION_CRUSADER]    = "ï¿½ï¿½ï¿½ï¿½Å©ï¿½ç¼¼ï¿½Ì´ï¿½",
-	[PCMounts.SHEEP_MONK]       = "ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.FOX_SAGE]         = "ï¿½ï¿½ï¿½ì¼¼ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.HYENA_ROGUE]      = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½Î±ï¿½",
-	[PCMounts.PIG_ALCHE]        = "ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_BARD]     = "Å¸ï¿½ï¿½ï¿½Ùµï¿½",
-	[PCMounts.OSTRICH_DANCER]   = "Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+	[PCMounts.LION_CRUSADER]    = "»çÀÚÅ©·ç¼¼ÀÌ´õ",
+	[PCMounts.SHEEP_MONK]       = "¸ùÅ©¾ËÆÄÄ«",
+	[PCMounts.FOX_SAGE]         = "¿©¿ì¼¼ÀÌÁö",
+	[PCMounts.HYENA_ROGUE]      = "ÇÏÀÌ¿¡³ª·Î±×",
+	[PCMounts.PIG_ALCHE]        = "¿¬±Ý¼ú»ç¸äµÅÁö",
+	[PCMounts.OSTRICH_BARD]     = "Å¸Á¶¹Ùµå",
+	[PCMounts.OSTRICH_DANCER]   = "Å¸Á¶¹«Èñ",
 
 	------------------------------
 	-- Transcendent 2nd Classes --
 	------------------------------
-	[PCMounts.LION_LORD_KNIGHT] = "ï¿½ï¿½ï¿½Ú·Îµå³ªï¿½ï¿½Æ®",
-	[PCMounts.SHEEP_HI_PRIEST]  = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.FOX_HI_WIZ]       = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.PIG_WHITESMITH]   = "È­ï¿½ï¿½Æ®ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_SNIPER]   = "Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.HYENA_SIN_X]      = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½Å©ï¿½Î½ï¿½",
+	[PCMounts.LION_LORD_KNIGHT] = "»çÀÚ·Îµå³ªÀÌÆ®",
+	[PCMounts.SHEEP_HI_PRIEST]  = "ÇÏÀÌÇÁ¸®½ºÆ®¾ËÆÄÄ«",
+	[PCMounts.FOX_HI_WIZ]       = "¿©¿ìÇÏÀÌÀ§Àúµå",
+	[PCMounts.PIG_WHITESMITH]   = "È­ÀÌÆ®½º¹Ì½º¸äµÅÁö",
+	[PCMounts.OSTRICH_SNIPER]   = "Å¸Á¶½º³ªÀÌÆÛ",
+	[PCMounts.HYENA_SIN_X]      = "ÇÏÀÌ¿¡³ª¾î¼¼½ÅÅ©·Î½º",
 
-	[PCMounts.LION_PALADIN]     = "ï¿½ï¿½ï¿½ï¿½ï¿½È¶ï¿½ï¿½",
-	[PCMounts.SHEEP_CHAMP]      = "Ã¨ï¿½Ç¿Â¾ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.FOX_PROF]         = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ä¼­",
-	[PCMounts.HYENA_STALKER]    = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿",
-	[PCMounts.PIG_CREATOR]      = "Å©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_CLOWN]    = "Å¸ï¿½ï¿½Å©ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_GYPSY]    = "Å¸ï¿½ï¿½Â¤ï¿½ï¿½",
+	[PCMounts.LION_PALADIN]     = "»çÀÚÆÈ¶óµò",
+	[PCMounts.SHEEP_CHAMP]      = "Ã¨ÇÇ¿Â¾ËÆÄÄ«",
+	[PCMounts.FOX_PROF]         = "¿©¿ìÇÁ·ÎÆä¼­",
+	[PCMounts.HYENA_STALKER]    = "ÇÏÀÌ¿¡³ª½ºÅäÄ¿",
+	[PCMounts.PIG_CREATOR]      = "Å©¸®¿¡ÀÌÅÍ¸äµÅÁö",
+	[PCMounts.OSTRICH_CLOWN]    = "Å¸Á¶Å©¶ó¿î",
+	[PCMounts.OSTRICH_GYPSY]    = "Å¸Á¶Áý½Ã",
 
 	--------------------------
 	-- Extended 2nd Classes --
@@ -226,25 +226,25 @@ PCImfs =
 	[PCMounts.BIKE_REBELLION]   = "peco_rebellion",
 	[PCMounts.FROG_KAGEROU]     = "frog_kagerou",
 	[PCMounts.FROG_OBORO]       = "frog_oboro",
-	[PCMounts.PORING_STAR]      = "ï¿½Ç¼ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.FROG_LINKER]      = "ï¿½Î²ï¿½ï¿½ï¿½Ò¿ï¸µÄ¿",
+	[PCMounts.PORING_STAR]      = "±Ç¼ºÆ÷¸µ",
+	[PCMounts.FROG_LINKER]      = "°³±¸¸®¼Ò¿ï¸µÄ¿",
 
 	--------------------------------------------------
 	-- 3rd Classes (Transcendent also use the same) --
 	--------------------------------------------------
-	[PCMounts.LION_RUNE_KNIGHT]  = "ï¿½ï¿½ï¿½Ú·é³ªï¿½ï¿½Æ®",
-	[PCMounts.FOX_WARLOCK]       = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_RANGER]    = "Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.SHEEP_BISHOP]      = "ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.HYENA_G_CROSS]     = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½Æ¾Å©ï¿½Î½ï¿½",
+	[PCMounts.LION_RUNE_KNIGHT]  = "»çÀÚ·é³ªÀÌÆ®",
+	[PCMounts.FOX_WARLOCK]       = "¿©¿ì¿ö·Ï",
+	[PCMounts.OSTRICH_RANGER]    = "Å¸Á¶·¹ÀÎÁ®",
+	[PCMounts.SHEEP_BISHOP]      = "¾ÆÅ©ºñ¼ó¾ËÆÄÄ«",
+	[PCMounts.HYENA_G_CROSS]     = "ÇÏÀÌ¿¡³ª±æ·ÎÆ¾Å©·Î½º",
 
-	[PCMounts.LION_ROYAL_GUARD]  = "ï¿½ï¿½ï¿½Ú·Î¾â°¡ï¿½ï¿½",
-	[PCMounts.FOX_SORCERER]      = "ï¿½ï¿½ï¿½ï¿½Ò¼ï¿½ï¿½ï¿½",
-	[PCMounts.OSTRICH_MINSTREL]  = "Å¸ï¿½ï¿½ï¿½Î½ï¿½Æ®ï¿½ï¿½",
-	[PCMounts.OSTRICH_WANDERER]  = "Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.SHEEP_SURA]        = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä«",
-	[PCMounts.PIG_GENETIC]       = "ï¿½ï¿½ï¿½×¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
-	[PCMounts.HYENA_S_CHASER]    = "ï¿½Ìºï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½Ì¼ï¿½",
+	[PCMounts.LION_ROYAL_GUARD]  = "»çÀÚ·Î¾â°¡µå",
+	[PCMounts.FOX_SORCERER]      = "¿©¿ì¼Ò¼­·¯",
+	[PCMounts.OSTRICH_MINSTREL]  = "Å¸Á¶¹Î½ºÆ®·²",
+	[PCMounts.OSTRICH_WANDERER]  = "Å¸Á¶¿ø´õ·¯",
+	[PCMounts.SHEEP_SURA]        = "¼ö¶ó¾ËÆÄÄ«",
+	[PCMounts.PIG_GENETIC]       = "Á¦³×¸¯¸äµÅÁö",
+	[PCMounts.HYENA_S_CHASER]    = "ÇÏÀÌ¿¡³ª½¦µµ¿ìÃ¼ÀÌ¼­",
 
 	--------------------------
 	-- Extended 3rd Classes --
@@ -290,11 +290,11 @@ PCImfs =
 
 --[[
 
-(ï¿½`ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½)
+(?`¡¤?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?)
 ( \                                                      / )
  ( ) Inheritance table for mapping ids with same prefix ( )
   (/                                                    \)
-   (.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.ï¿½ï¿½.ï¿½ï¿½ï¿½`ï¿½.)
+   (.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.¢¬¢¬.¡¤¢¥?`¡¤.)
 
 ]]--
 
