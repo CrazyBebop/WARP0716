@@ -153,13 +153,11 @@ PCPals =
 	-- Doram 1st Classes --
 	-----------------------
 	[PCIds.SUMMONER]   = "묘족",
-	[PCIds.SUMM_MOUNT] = "고양이카트",
 
 	-----------------------
 	-- Doram 2nd Classes --
 	-----------------------
 	[PCIds.SPIRIT_HANDLER]   = "SPIRIT_HANDLER",
-	[PCIds.SP_HANDLER_MOUNT] = "SPIRIT_HANDLER_RIDING",
 
 	--[[
 	 __  __   ___   _   _  _  _  _____     ___  ___   ___
