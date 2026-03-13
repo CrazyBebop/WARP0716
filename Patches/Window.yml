@@ -124,6 +124,12 @@ CustomEquipWin:
             author : CH.C (jchcc), Andrei Karas (4144) , X-EcutiOnner
             desc : Removes the title bar text from the equipment window. A cosmetic change for a cleaner equipment window appearance.
 
+        - DisableEquipAttrButton:
+            title : Disable Equipment Attribute Button
+            recommend : no
+            author : Gerzzie (RDL)
+            desc : Disables the Equipment Attribute (Properties) button in the Equipment Window so clicking it does nothing. Use on servers where the Equipment Properties panel is not applicable.
+
 CustomExpBars:
     title : EXP BAR CUSTOMIZATION
     mutex : false
