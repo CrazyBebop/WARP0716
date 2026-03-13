@@ -256,31 +256,70 @@ DisableEquipAttrButton = function(_)
 	if (pushAddr < 0)
 		throw Error("PUSH btn_e_ability_a not found in code");
 
-	$$(_, 3, `Find the guard conditional jump before button creation`);
+	$$(_, 3, `Find button UUID PUSH near bitmap reference`);
+	const winStart = Math.max(pushAddr - 0x50, 0);
+	const winEnd = pushAddr + 0x90;
+	let idPushAddr = -1;
+	let idValue = -1;
 
-	// Search backward from the PUSH for TEST EAX, EAX + JNZ near
-	// which guards the entire button creation block
-	let addr = Exe.FindHex(TEST(EAX, EAX) + JNZ(POS3WC), pushAddr - 0x60, pushAddr);
-	if (addr < 0)
-		addr = Exe.FindHex(TEST(EAX, EAX) + JNE(POS3WC), pushAddr - 0x60, pushAddr);
-
-	if (addr >= 0)
+	// Prefer a nearby PUSH imm32 that is actually used in click-dispatch compares.
+	for (let a = winStart; a <= winEnd; ++a)
 	{
-		$$(_, 4, `Convert JNZ to JMP to skip button creation`);
-		Exe.SetJMP(addr + TEST(EAX, EAX).byteCount());
-		return true;
+		if (Exe.GetUint8(a) != 0x68) continue; // PUSH imm32
+		const v = Exe.GetInt32(a + 1);
+		if (v < 0x100 || v > 0x1000) continue;
+
+		const hasDispatchCmp =
+			Exe.FindHex(CMP(EAX, v) + JG(POS3WC) + JZ(POS3WC)) >= 0 ||
+			Exe.FindHex(CMP(EAX, v) + JNE(POS3WC) + JZ(POS3WC)) >= 0 ||
+			Exe.FindHex(CMP(EAX, v) + JA(POS3WC) + JE(POS3WC)) >= 0;
+		if (!hasDispatchCmp) continue;
+
+		idPushAddr = a;
+		idValue = v;
+		break;
 	}
 
-	// Fallback: look for CMP + JNZ pattern instead
-	addr = Exe.FindHex(CMP(EAX, 0) + JNZ(POS3WC), pushAddr - 0x60, pushAddr);
-	if (addr >= 0)
+	// Fallback: first plausible UUID PUSH after the bitmap reference.
+	if (idPushAddr < 0)
 	{
-		$$(_, 4, `Convert JNZ to JMP to skip button creation`);
-		Exe.SetJMP(addr + CMP(EAX, 0).byteCount());
-		return true;
+		for (let a = pushAddr; a <= winEnd; ++a)
+		{
+			if (Exe.GetUint8(a) != 0x68) continue;
+			const v = Exe.GetInt32(a + 1);
+			if (v < 0x100 || v > 0x1000) continue;
+			idPushAddr = a;
+			idValue = v;
+			break;
+		}
 	}
 
-	throw Error("Guard jump before button creation not found");
+	if (idPushAddr < 0)
+		throw Error("Equipment Attribute button UUID PUSH not found");
+
+	$$(_, 4, `Rewrite button UUID ${idValue.toHex()} to an unused value`);
+	Exe.SetUint32(idPushAddr + 1, 0x7FFF);
+	$$(_, 5, `Try to hide visual button via validated AddChild call only`);
+
+	const addChildPrefix =
+		PUSH([R32, POS2WC]) // push button/control pointer
+	+	MOV(ECX, R32)       // this = parent window
+	;
+	const addChildSig = addChildPrefix + CALL(ALLWC);
+	const addChildPos = Exe.FindHex(addChildSig, idPushAddr, idPushAddr + 0x90);
+
+	if (addChildPos >= 0)
+	{
+		const addChildCall = addChildPos + addChildPrefix.byteCount();
+		// Keep stack balanced for skipped AddChild(button).
+		Exe.SetHex(addChildCall, ADD(ESP, 4) + NOP2);
+	}
+	else
+	{
+		$$(_, 5.1, `validated AddChild pattern not found, keeping UUID-only disable`);
+	}
+
+	return true;
 };
 
 ///
