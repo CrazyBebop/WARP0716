@@ -1,0 +1,113 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Created Date  : 2026-07-21                                             *
+*   Last Modified : 2026-07-21                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Lets the player chat while the Berserk status (EFST_BERSERK, 0x6B /
+///        107) is active. Self-contained static EXE patch.
+///
+///        The client helper Status_IsBerserkActive @ 0x00D8E6C0 walks the local
+///        status-icon list (g_StatusEffectList @ 0x0136E6C8) and returns 1 when
+///        EFST 0x6B is present, else 0. Every chat-channel handler inside
+///        CModeMgr::SendMsg (0x00C86740) does `CMP EAX,1 / JZ skip`, so a 1
+///        return drops the outgoing CZ_REQUEST_CHAT (opcode 0xF3) before it is
+///        sent: the input box clears but nothing reaches the chat. Emotes use a
+///        different command and are not gated.
+///
+///        Every caller of that helper is a chat channel, so forcing it to return
+///        0 unblocks chat on every channel while Berserk and leaves the item and
+///        skill Berserk restrictions untouched.
+///
+///        NOTE: this removes ONLY the client-side gate. If the SERVER also drops
+///        chat while SC_BERSERK is active, that server-side gate must be removed
+///        as well for chat to actually go through. (Equivalently, the server can
+///        simply stop sending EFST_BERSERK, which also disables this client gate.)
+///
+///        Target: 2025-07-16 Ragexe, image base 0x00400000.
+///
+
+const BerserkChatStatic = {
+	BuildDate: 20250716,
+	// Status_IsBerserkActive. Stock prologue loads g_StatusEffectList begin/end:
+	//   A1 C8 E6 36 01    mov eax, [0136E6C8]   (begin)
+	//   8B 0D CC E6 36 01 mov ecx, [0136E6CC]   (end)
+	IsBerserkActive: 0x00D8E6C0,
+	Stolen: "A1 C8 E6 36 01 8B 0D CC E6 36 01",
+	// xor eax, eax ; retn  -> the helper always reports "not berserk".
+	Return0: "33 C0 C3"
+};
+
+BerserkChatStatic.hexNorm = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+BerserkChatStatic.assertBytes = function(label, vir, expected)
+{
+	const phy = Exe.Vir2Phy(vir, CODE);
+	if (phy < 0)
+		throw Error(`BerserkChatStatic: ${label} is not mapped`);
+
+	const size = BerserkChatStatic.hexNorm(expected).split(" ").length;
+	const actual = BerserkChatStatic.hexNorm(Exe.GetHex(phy, size));
+	if (actual !== BerserkChatStatic.hexNorm(expected))
+		throw Error(`BerserkChatStatic: ${label} mismatch, got ${actual}`);
+	return phy;
+};
+
+AllowChatWhileBerserk = function(_)
+{
+	if (Exe.BuildDate !== BerserkChatStatic.BuildDate)
+		throw Error("BerserkChatStatic supports only the 2025-07-16 client");
+
+	$$(_, 1, `Verify Status_IsBerserkActive prologue`);
+	const phy = BerserkChatStatic.assertBytes(
+		"D8E6C0 Status_IsBerserkActive",
+		BerserkChatStatic.IsBerserkActive,
+		BerserkChatStatic.Stolen
+	);
+
+	$$(_, 2, `Force it to always return 0 (Berserk no longer blocks chat)`);
+	Exe.SetHex(phy, BerserkChatStatic.Return0);
+
+	return true;
+};
+
+AllowChatWhileBerserk.validate = function()
+{
+	if (Exe.BuildDate !== BerserkChatStatic.BuildDate)
+		return false;
+	try
+	{
+		BerserkChatStatic.assertBytes(
+			"D8E6C0 Status_IsBerserkActive",
+			BerserkChatStatic.IsBerserkActive,
+			BerserkChatStatic.Stolen
+		);
+		return true;
+	}
+	catch (error)
+	{
+		return false;
+	}
+};

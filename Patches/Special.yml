@@ -80,6 +80,12 @@ CustomSpecials:
             author : Louis T Steinhil
             desc : "Self-contained QJS/EXE patch; no weapon DLL is required. The D403A0 equipment hook drives the stock single-item loader for each equipped item and installs the original parallel SPR/ACT resources in native weapon slots 5 and 6 instead of generic combined types 25..30. A live-slot renderer bridge direction-preservingly maps blank item ACT actions 88..95 to populated actions 80..87. Off-hand-only equipment also receives its real item pair in slot 6. Applies to every valid item resource without an item-ID allowlist."
 
+        - AllowChatWhileBerserk:
+            title : Allow Chatting While Berserk
+            recommend : no
+            author : Stingor empowered by Claude
+            desc : "Self-contained QJS/EXE patch. The client helper Status_IsBerserkActive (0x00D8E6C0) scans the local status-icon list for EFST_BERSERK (0x6B) and returns 1 while Berserk is up; every chat-channel handler in CModeMgr::SendMsg drops the outgoing CZ_REQUEST_CHAT (opcode 0xF3) on that 1, so the input clears but nothing is sent. Emotes use another command and stay usable. This forces the helper to always return 0, unblocking chat on every channel while Berserk without touching the item/skill Berserk restrictions. NOTE: removes ONLY the client gate; any server-side chat gate for SC_BERSERK must also be removed for chat to go through."
+
 CustomSkills:
     title : SKILL CUSTOMIZATIONS
     mutex : false
