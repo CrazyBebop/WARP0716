@@ -36,15 +36,9 @@ That's all most people need. The sections below are for server operators and tin
 
 ## What's New
 
-See [CHANGELOG.md](CHANGELOG.md) for full details on every patch and recent update. Recent highlights:
+See **[CHANGELOG.md](CHANGELOG.md)** for every patch and update, newest first.
 
-**Character Select X Button Fix** - Fixed a bug where pressing the X button on the character select screen would show a "Are you sure you want to quit?" dialog instead of returning to the login screen. The previous cancel-exit patch was too broad and affected shared event guards. Now uses a targeted hook that only activates on the server selection screen.
-
-**Cancel-Exit on Service Select** - The server select screen is now fully functional. Previously the cancel button did nothing. Now it shows a "Are you sure you want to quit?" dialog and exits the client. The cancel button also automatically changes to say "exit" when on this screen. No extra files needed, the exit button graphics already exist in the GRF.
-
-**Multi-Connection clientinfo.xml** - Servers with multiple entries in `clientinfo.xml` now work correctly. Previously all connections went to the first entry's IP regardless of which server the player selected. Now each server entry's address and port are stored separately, and the client connects to the right one based on the player's selection. Works with any standard `clientinfo.xml` layout, no special formatting needed.
-
-Combined with the cancel-exit fix above, you can list multiple servers and players will see the server select screen, pick their server, and connect to the correct one.
+The latest is the **July 29, 2026 Ragexe update**: the exit button on server select now works, switching to a different server mid-session is fixed, start-up is leaner with no 8 server limit, and a broken `clientinfo.xml` now tells you what is wrong. Those fixes are in the executable itself, so get the new one through **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)** (the **RAGEXE** tab) rather than by re-WARPing an older exe.
 
 **Custom Jobs Guide:** [HTML](docs/CustomJobs/CUSTOM_JOBS_GUIDE.html) | [Online](https://legacygamers.net/docs/public/customjobs-reforged/)
 

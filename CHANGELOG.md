@@ -1,3 +1,41 @@
+# CrazyBebop - 2025-07-16 build (July 29, 2026)
+
+> **EXE update - grab the new Ragexe.** These fixes live in the injected EXE itself, not in a WARP patch, so re-WARPing the exe you already have will **not** pick them up.
+>
+> Get it through **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**: unzip, run it, and use the **RAGEXE** tab. Then re-apply your patch set if you use one.
+>
+> If you have already patched your own executable, WARPGATE keeps yours and will not overwrite it. Choose ours from the RAGEXE tab (your copy is saved as a `.bak`), or re-patch starting from the new one.
+
+## July 29 Update
+
+### The "exit" button on server select now actually exits ([#17](https://github.com/CrazyBebop/WARP0716/issues/17))
+
+Reported by gidzdlcrz: on the service/server select screen, pressing the second button made the window vanish and left you with nothing on screen. The only way out was to close the client.
+
+The button was renamed to "exit" in an earlier build, but only the label changed. It still performed a cancel, and cancel on that screen closes the window and then sends a message the client ignores while it is on the server list, so nothing replaces it.
+
+It now uses the client's own exit path, which was already present and simply never shown: a confirmation dialog, and a clean shutdown if you accept. Pressing cancel on that dialog returns you to the server list with everything intact.
+
+### Multi-connection clientinfo.xml: switching servers mid-session now works
+
+If your `clientinfo.xml` lists more than one `<connection>`, players can pick a server on the service select screen. That worked from a fresh start, but not after you had already played: log in to one server, go all the way in-game, back out to the server list, pick a **different** server, and the client would fail to connect.
+
+The old code kept its own private copy of every server's address and port and looked yours up by position in that list. That copy went stale once you had been in-game, and it could also drift out of step with the on-screen list if any `<connection>` was missing an `<address>`. It was capped at 8 servers, silently.
+
+It now reads the address and port the client itself resolved for the connection you picked, so there is nothing of ours to go stale, no cap, and no way for the list positions to disagree. Verified against two live servers: pick the second or third entry after a full in-game session and you land on the right one.
+
+### Leaner startup, and the 8 server limit is gone
+
+The old code scanned your entire `clientinfo.xml` at startup and built its own private copy of every server's address and port before the login screen even appeared. That work scaled with the length of your server list, and it was capped at 8 servers.
+
+None of that happens now. The client reads the address and port for the server you picked, at the moment it connects. Startup does strictly less work, there is no cap on how many servers you can list, and there is no second copy of your server list to fall out of step with the file.
+
+### clientinfo.xml problems now tell you what is wrong
+
+Previously a missing, unreadable or incomplete `clientinfo.xml` just produced a failed connection with no explanation. The client now names the actual problem: the file could not be opened, or it has no usable `<clientinfo>`/`<connection>`, or the server you picked has no `<address>`.
+
+---
+
 # CrazyBebop - 2025-07-16 build (July 20, 2026)
 
 > **Patch update - re-WARP to apply.** Adds one new patch for Skill Tree performance; re-apply WARP to use it.
