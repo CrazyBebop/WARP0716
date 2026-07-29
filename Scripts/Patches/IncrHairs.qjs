@@ -84,7 +84,7 @@ IncrHairs.stage2_open = _ =>
 		const hookCode =
 			" A1" + site.tableGlobal.toHex(4)  // MOV EAX, [table_global]  (5 bytes)
 		+	" 83 F9" + TABLE_LIMIT.toHex(1)    // CMP ECX, 43             (3 bytes)
-		+	" 7E 03"                            // JLE +3 → skip clamp    (2 bytes)
+		+	" 7C 03"                            // JL +3 → skip clamp ; must be JL, not JLE: the table has 43 entries (0-42), so index 43 must be clamped too (2 bytes)
 		+	" 33 C9"                            // XOR ECX, ECX            (2 bytes)
 		+	" 41"                               // INC ECX → ECX = 1      (1 byte)
 		+	" 8B 14 88"                         // MOV EDX, [EAX+ECX*4]   (3 bytes)
