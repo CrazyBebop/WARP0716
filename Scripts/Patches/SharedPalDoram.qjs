@@ -1,0 +1,107 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor                                                *
+*   Created Date  : 2026-08-04                                             *
+*   Last Modified : 2026-08-04                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Shared HEAD palettes for the doram races - the missing half of
+///        SharedHeadPal (see SharedPal.qjs).
+///
+///        CSession::GetHeadPaletteName holds TWO format strings and picks one
+///        by race:
+///
+///            human : "머리\머리%s_%s_%d.pal"
+///            doram : "%s\머리\머리%s_%s_%d.pal"     (%s = race folder)
+///
+///        HeadPalMF / HeadPalUnisex only redirect the first one, so a doram
+///        still needs one palette file per hairstyle AND per gender while every
+///        other race needs a single one. The BODY patches do not have that gap:
+///        SharedBodyPal already handles its own doram variant ("%s\body\").
+///
+///        This patch closes the gap for the head:
+///
+///            "%s\머리\head%.s_%s_%d.pal"    (MF)      -> 도람족\머리\head_남_5.pal
+///            "%s\머리\head%.s%.s_%d.pal"    (Unisex)  -> 도람족\머리\head_5.pal
+///
+///        %.s (zero precision) is required: it CONSUMES the argument without
+///        printing anything, which is how the hairstyle and the gender are
+///        dropped. The flavour follows whichever human patch is enabled.
+///
+///        🔴 The RACE FOLDER is kept on purpose, and it is not a detail: doram
+///        sprites do NOT share the human palette indexing. Measured on
+///        summoner_남.spr / 1_남.spr against the shared human palettes: 46% of
+///        the body's opaque pixels and 90% of the head's land on entries the
+///        human file leaves black, and only 5/74 resp. 3/44 of the indices even
+///        carry the intended colour. Pointing a doram at the human files gives
+///        a mostly black character - there is no single set of files the two
+///        races could share.
+///
+///        Doram palettes are not shipped by the official client either: their
+///        colours live INSIDE the .spr. Generating "도람족\body_<n>.pal" and
+///        "도람족\머리\head_<n>.pal" from that embedded palette is what makes
+///        this patch useful.
+///
+DoramHeadPalShared = patchName =>
+{
+	$$(patchName, 1.1, `Check that the human shared head palette patch is on`)
+	//
+	// There is nothing to be consistent with while the other races still use one
+	// palette per hairstyle. This also keeps IncrHairStyles and Allow65kHairs out
+	// of the way: they hook the doram head string themselves, but only while the
+	// Shared Head Palette patches are off (their own 'isPalShared' test), and
+	// that hook REPLACES the PUSH redirected here.
+	//
+	const headMF = Warp.GetPatchState("HeadPalMF");
+	if (!headMF && !Warp.GetPatchState("HeadPalUnisex"))
+		throw Error("Enable a Shared Head Palette patch first (HeadPalMF or HeadPalUnisex)");
+
+	$$(patchName, 1.2, `Find the doram format string`)
+	const addr = Exe.FindText("%s\\\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE%s_%s_%d.pal");
+	if (addr < 0)
+		throw Error("Format string not found - client is older than the doram races");
+
+	$$(patchName, 1.3, `Find where it is PUSHed`)
+	const hookAddr = Exe.FindHex( PUSH(addr) );
+	if (hookAddr < 0)
+		throw Error("Format string not used");
+
+	$$(patchName, 2.1, `Add the new format string`)
+	const [, freeVir] = Exe.AddText(
+		headMF ?
+			"%s\\\xB8\xD3\xB8\xAE\\head%.s_%s_%d.pal\x00" // %.s is required. Skips hairnum
+		:
+			"%s\\\xB8\xD3\xB8\xAE\\head%.s%.s_%d.pal\x00" // %.s is required. Skips hairnum & gender
+	);
+
+	$$(patchName, 2.2, `Update the PUSHed address`)
+	Exe.SetInt32(hookAddr + 1, freeVir);
+
+	return true;
+};
+
+///
+/// \brief Setup reloading IncrHairStyles / Allow65kHairs after selecting or
+///        deselecting - same reason as SharedHeadPal: they read the palette
+///        patch state while they stage.
+///
+DoramHeadPalShared.onSelected = DoramHeadPalShared.onDeselected = () =>
+	ReloadPatch("IncrHairStyles") || ReloadPatch("Allow65kHairs");
