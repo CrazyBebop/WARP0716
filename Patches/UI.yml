@@ -38,6 +38,12 @@ CustomUI:
             author : Demonbytes (NoxaraRO)
             desc : Adds a configurable slash command (default /greyworld) that loads a specified GRF archive at runtime via CFileMgr::AddPak. Typing the command toggles the GRF on/off with chat feedback. The state persists across sessions via the registry. Assets become available on the next map change.
 
+        - NoLookalikeNameWarning:
+            title : No bogus "not your guildsman" whisper warning
+            recommend : yes
+            author : Stingor empowered by Claude
+            desc : Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They are meant to flag impostors who swap a capital I for a lowercase l, but the comparison is far too loose -- it calls two names alike as soon as min(lenA,lenB)-2 characters match by position. A guild with a member named "Test" therefore warns on every whisper from "Gettar". Firing constantly, the warning only teaches players to ignore the one line that would matter. Verified scope -- the comparison helper is used by nothing else in the client, so only those two messages disappear.
+
         - AllowShortcutsInWine:
             title : Allow shortcuts in WINE [Experimental]
             recommend : no

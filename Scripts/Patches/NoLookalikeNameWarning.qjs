@@ -1,0 +1,83 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Created Date  : 2026-08-06                                             *
+*   Last Modified : 2026-08-06                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Stops the bogus "not your guildsman / not in your Friend List"
+///        warnings that the client prints on incoming whispers.
+///
+///        When a whisper arrives, the client checks whether the sender's name
+///        merely RESEMBLES one of your friends or guild members, and if so warns
+///        you that it might not be them:
+///
+///            MsgStringTable 917 - "This name is not registered in your Friend
+///                                  List. Please check the name again."
+///            MsgStringTable 919 - "This character is not your guildsman.
+///                                  Please check the name again."
+///
+///        The intent is sound: it is meant to catch impostors who swap a capital
+///        'I' for a lowercase 'l', two glyphs that are indistinguishable in the
+///        client's font. The comparison, however, is far too permissive. Its
+///        third pass accepts two names as "lookalikes" as soon as
+///
+///            matching_positions >= min(lenA, lenB) - 2
+///
+///        with a length difference of up to 2. So a guild that has a member
+///        named "Test" makes every whisper from "Gettar" raise the alarm: four
+///        characters compared, threshold two, and 'e'=='e' plus 't'=='t' meet it.
+///        Two completely unrelated names.
+///
+///        In practice the warning fires almost constantly, which is worse than
+///        useless: it trains players to ignore the one line that would matter on
+///        the day somebody really is impersonating a guildmate.
+///
+///        This patch neutralizes the comparison helper, so both warnings stop.
+///        Nothing else changes - whispers, the whisper window and the friend and
+///        guild lists all behave exactly as before.
+///
+///        SCOPE (verified on the 2025-07-16 client before writing this patch):
+///        the helper has exactly two callers, `FriendListHasLookalikeName` and
+///        `GuildHasLookalikeMemberName`, and those two are themselves called
+///        only from the whisper pivot and the ZC_WHISPER handler. It serves no
+///        other purpose in the client, so returning "clearly different" removes
+///        precisely those two messages and nothing more.
+///
+NoLookalikeNameWarning = function(_)
+{
+	$$(_, 1, `Find the lookalike-name comparison helper`)
+	// Function prologue + its first argument loads:
+	//   PUSH EBP | MOV EBP,ESP | SUB ESP,44 | MOV EAX,[SecurityCookie] | XOR EAX,EBP
+	//   MOV [EBP-4],EAX | PUSH EBX | PUSH ESI | MOV ESI,[EBP+C] | MOV ECX,ESI
+	//   PUSH EDI | MOV EDI,[EBP+8] | LEA EDX,[ECX+1]
+	// The cookie address is wildcarded so the pattern survives a rebase.
+	// __stdcall (name, name) -> returns 0 when the two names look alike, 1 when
+	// they are clearly different. Cleans 8 bytes of arguments on return.
+	const addr = Exe.FindHex(
+		"55 8B EC 83 EC 44 A1 ?? ?? ?? ?? 33 C5 89 45 FC 53 56 8B 75 0C 8B CE 57 8B 7D 08 8D 51 01"
+	);
+	if (addr < 0)
+		throw Error("Lookalike-name comparison not found");
+
+	$$(_, 2, `Make it always answer "clearly different"`)
+	// MOV EAX,1 | RETN 8
+	// 8 bytes overwritten in a 0x252 byte function - no risk of clipping code
+	// that is still reachable, since nothing jumps back into the prologue.
+	Exe.SetHex(addr, "B8 01 00 00 00 C2 08 00");
+
+	return true;
+};
