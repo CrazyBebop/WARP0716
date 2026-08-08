@@ -1,0 +1,2303 @@
+############################################################################
+#                                                                          #
+#   Author(s)     : Francisco Méndez (Empire Servicios Digitales)          #
+#   Created Date  : 2026-05-17                                             #
+#   Last Modified : 2026-05-17                                             #
+#                                                                          #
+############################################################################
+
+#######################################################
+# Traducción al Español Latinoamericano (ES-LATAM)    #
+# Basado en Español de Chile (ES-CL)                  #
+#######################################################
+
+
+##===================================#
+## Text orientation & other settings #
+##===================================#
+
+RTL: no
+
+##============================#
+## Tab names for TestBench UI #
+##============================#
+
+tabs:
+    - 補丁
+    - 擴充套件
+    - 測試人員
+    - 結果
+
+##========================#
+## File/Dir Dialog titles #
+##========================#
+
+dialogs:
+    dir: 選擇包含測試exe的目錄
+    src: 選擇源exe檔案
+    tgt: 選擇目標exe檔案
+    loadS: 選擇要上傳的會話檔案
+    saveS: 選擇要儲存的會話檔案
+
+actions:
+
+    #==============#
+    # Patches Page #
+    #==============#
+
+    getPatches:
+        title: 獲取<br>補丁
+        tooltip: 使用所有定義的補丁填充補丁列表
+
+    selVisiblePatches:
+        title: 選擇<br>可見
+        tooltip: 選擇當前可見的所有補丁
+
+    clearSelPatches:
+        title: 清除<br>選擇
+        tooltip: 取消選擇所有選定的補丁
+
+    #=================#
+    # Extensions Page #
+    #=================#
+
+    getExtns:
+        title: 獲取<br>擴充套件
+        tooltip: 用所有定義的擴充套件填充擴充套件列表
+
+    selVisibleExtns:
+        title: 選擇<br>可見
+        tooltip: 選擇所有當前可見的擴充套件程式
+
+    clearSelExtns:
+        title: 清除<br>選擇
+        tooltip: 取消選擇所有選定的擴充套件
+
+    #==============#
+    # Testers Page #
+    #==============#
+
+    getExes:
+        title: 獲取前任
+        tooltip: 用測試目錄中找到的所有 .exe 檔案填充 Exes 列表
+
+    selVisibleExes:
+        title: 選擇<br>可見
+        tooltip: 選擇所有當前可見的exe
+
+    clearSelExes:
+        title: 清除<br>選擇
+        tooltip: 取消選擇所有選定的exe
+
+    #==============#
+    # Results Page #
+    #==============#
+
+    runTest:
+        title: 執行測試
+        tooltip: 測試所選 EXE 列表中的所選補丁和擴充套件，並在“結果”選項卡中顯示結果
+
+    #=======================#
+    # Script Window related #
+    #=======================#
+
+    showScriptWin:
+        title: 顯示指令碼視窗
+        tooltip: 顯示（Alt+W）用於快速測試指令碼的指令碼視窗
+
+    #=========================#
+    # Remaining Quick Actions #
+    #=========================#
+
+    loadSrcExe:
+        title: 載入<br>原點
+        tooltip: 載入源 exe 檔案（以及指令碼，如果尚未載入）
+
+    applyPatches:
+        title: 應用<br>補丁
+        tooltip: 將選定的補丁應用到載入的 exe 並將其儲存為目標檔案
+
+    selectPrev:
+        title: 選擇<br>上一個
+        tooltip: 選擇上次應用的所有補丁
+
+    selectRcmd:
+        title: 選擇<br>推薦
+        tooltip: 選擇所有標記為“推薦”的補丁
+
+    loadChangedScripts:
+        title: 載入<br>指令碼
+        tooltip: 載入/重新載入 (Alt+C) 自上次載入到“Scripts”目錄中的“Patches”、“Support”和“Extensions”子資料夾後修改的所有 .qjs 檔案
+
+    clearOutput:
+        title: 乾淨
+        tooltip: 清除“輸出”檢視
+
+    evalScript:
+        title: 評價
+        tooltip: 在編輯器中評估 (Ctrl+R) 指令碼並將結果轉儲到輸出
+
+    clearEditor:
+        title: 乾淨
+        tooltip: 清理指令碼編輯器
+
+    #================#
+    # Filter Options #
+    #================#
+
+    rexBtn:
+        tooltip: 選擇是否使用正規表示式或全域性匹配
+
+    csBtn:
+        tooltip: 選擇匹配是否區分大小寫
+
+    #============#
+    # Menu Items #
+    #============#
+
+    loadPatchScripts:
+        title: 從 <b>'補丁'</b> 載入
+        tooltip: 載入/重新載入（Alt+P）“Scripts/Patches”目錄中的所有 .qjs 檔案
+
+    loadExtnScripts:
+        title: 從 <b>'擴充套件'</b> 載入
+        tooltip: 載入/重新載入（Alt+E）“Scripts/Extensions”目錄中的所有 .qjs 檔案
+
+    loadSuppScripts:
+        title: 從 <b>'支撐'</b> 載入
+        tooltip: 載入/重新載入（Alt+S）“Scripts/Support”目錄中的所有 .qjs 檔案
+
+    loadAllScripts:
+        title: 載入 <b>all</b> 指令碼
+        tooltip: 載入/重新載入（Alt+A）“Scripts”目錄中“Patches”、“Support”和“Extensions”子資料夾中的所有 .qjs 檔案
+
+    loadSession:
+        title: 載入會話檔案
+        tooltip: 從指定的會話檔案載入補丁和輸入選擇
+
+    saveSession:
+        title: 儲存會話檔案
+        tooltip: 將補丁和輸入選擇儲存到指定的會話檔案
+
+    refreshLanguages:
+        title: 重新整理語言
+        tooltip: 重新載入“Languages”資料夾中 .yml 檔案提供的語言列表
+
+    refreshStyles:
+        title: 重新整理樣式
+        tooltip: 重新載入“Styles”資料夾中 .yml 檔案提供的樣式列表
+
+    loadExtns:
+        title: 負載擴充套件
+        tooltip: 用所有定義的擴充套件填充擴充套件抽屜
+
+    pro2Session:
+        title: 將配置檔案轉換為會話
+        tooltip: 將 NEMO 配置檔案轉換為 WARP 中可用的會話檔案
+
+    genSecFile:
+        title: 生成安全檔案
+        tooltip: 從輸入檔案（無論是否可執行）生成具有多個雜湊值的安全檔案
+
+    #=========================#
+    # Settings Dialog related #
+    #=========================#
+
+    saveResolution:
+        title: 儲存解析度
+        tooltip: 將測試儀視窗的當前解析度儲存為預設值
+
+    keepTestInputs:
+        title: 維護測試輸入
+        tooltip: 在每次後續測試中保留先前儲存的輸入的選項
+
+    stopAtError:
+        title: 出錯時停止
+        tooltip: 在發現第一個錯誤時停止執行測試的選項
+
+    saveResolutions:
+        title: 儲存決議
+        tooltip: 將主視窗和指令碼視窗的當前解析度儲存為預設值
+
+    showVersion:
+        title: 顯示上傳的版本
+        tooltip: 選中此選項可顯示載入的 exe 的構建版本以及日期
+
+    enableEpi:
+        title: 啟用個人防護裝備
+        tooltip: 允許生成和載入 EPI 檔案以及相應的 exe。謹慎使用。
+
+    genTgtSecure:
+        title: 生成<target>.secure.txt
+        tooltip: 啟用安全檔案 (.secure.txt) 以及修補的目標 Exe 的生成
+
+    genTgtSession:
+        title: "生成目標會話"
+        tooltip: 允許生成會話檔案（供以後使用）以及修補的目標 Exe
+
+    keepInputs:
+        title: 維護會話條目
+        tooltip: 載入會話檔案時保留儲存的輸入而不是一一詢問的選項
+
+messages:
+
+    #====================#
+    # Regular Box titles #
+    #====================#
+
+    success: 工具資訊
+    query: 工具諮詢
+    warn: 工具警告
+    error: 工具錯誤
+
+    #============================#
+    # Script specific Box titles #
+    #============================#
+
+    errS: 指令碼錯誤
+
+    #===========================#
+    # Patch specific Box titles #
+    #===========================#
+
+    warnP: "補丁警告：<b>'%0'</b>"
+    errP: "補丁錯誤：<b>'%0'</b>"
+
+    #===============================#
+    # Extension specific Box titles #
+    #===============================#
+
+    infoE: "擴充套件資訊：<b>'%0'</b>"
+    warnE: "擴充套件警告：<b>'%0'</b>"
+    errE: "擴充套件錯誤：<b>'%0'</b>"
+
+    #===============#
+    # Button titles #
+    #===============#
+
+    btnOK: 好的
+    btnCANC: 取消
+    btnYES: 是的
+    btnNO: 否
+    btnLOAD: 負載
+    btnSAVE: 儲存
+    btnSEL: 選擇當前
+
+    #===============#
+    # Error prompts #
+    #===============#
+
+    noAccess: "<b>'%0'</b> 不可訪問"
+    noWrite: "無法開啟 <b>'%0'</b> 進行寫入"
+
+    wrongSig: "<b>'%0'</b> 簽名無效"
+    wrongPE: "<b>'%0'</b> 中未找到 PE 標頭"
+    need32: "只能使用 <b>'%0'</b> 等 32 位 exe"
+
+    yamlErr: "解析 YAML 時出錯 (%0)：<b>%1</b>"
+    evalErr: "%1 的 %0 行錯誤：<b>%2</b>"
+    grpErr: "<b>'groups'</b> 必須以陣列/序列的形式存在"
+    extErr: "擴充套件必須以陣列/序列的形式提供"
+
+    loadFail: "<b>'%0'</b> 上傳失敗"
+    callFail: "呼叫<b>Patch函式</b>失敗"
+    applyFail: "無法應用 <b>Patches</b>"
+    tgtFail: "寫入目標 <b>Exe</b> 失敗"
+    funcFail: "函式 <b>%0</b> 缺失或不可呼叫"
+    allocFail: "空間分配失敗"
+    dependFail: "無法選擇依賴項“<b>%0</b>”"
+
+    #=================#
+    # Warning prompts #
+    #=================#
+
+    empty: "<b>'%0'</b> 為空"
+    noneLoaded: "沒有載入 Exe"
+    skipWarn: "由於各種原因（缺少函式、語法不正確等），某些 <b>Z%0</b> 被跳過"
+    retnFalse: "該函式返回<b>false</b>"
+    noExes: "未選擇任何 Exes 進行測試"
+    noPatExts: "未選擇用於測試的補丁或擴充套件"
+    setNoSave: "無法儲存配置 <b>'%0'</b>"
+
+    #=================#
+    # Success prompts #
+    #=================#
+
+    ready: "<b>'%0'</b> 載入成功"
+    tgtReady: "補丁被寫入目標<b>Exe</b>"
+    patSuccess: "補丁已成功應用"
+    extnSuccess: "延期申請成功"
+
+    #==============#
+    # Info prompts #
+    #==============#
+
+    patInfo: "測試補丁：<b>%0</b>"
+    exeInfo: "正在處理 <b>'%0'</b>\n"
+    extnInfo: "測試擴充套件：<b>%0</b>"
+    extnOutput: "<b>結果 => %0</b>"
+    patIgnored: "此構建日期的補丁被忽略"
+    userInterrupt: "<b>使用者中斷測試</b>"
+
+    #===============#
+    # Query prompts #
+    #===============#
+    srcQuery: "更新目標Exe的路徑？"
+
+texts:
+
+    #================#
+    # Header Prompts #
+    #================#
+
+    selCount: "選定的補丁"
+    extnSelCount: "選定的擴充套件"
+    exeSelCount: "精選前任"
+    loadDate: "上傳日期"
+    loadVersion: "和版本"
+
+    #===========================================#
+    # StringField titles (appears on the frame) #
+    #===========================================#
+
+    srcEntry: 產地
+    tgtEntry: 目的地
+    dirEntry: 測試目錄
+
+    #===============================#
+    # StringField placeholder texts #
+    #===============================#
+
+    exePath: 執行路徑
+    filter: 過濾表示式
+    path: 路線
+    find: Expresión de búsqueda
+
+    #==============#
+    # Frame titles #
+    #==============#
+
+    actionFrame: 快速行動
+    patchFrame: 補丁列表
+    extnFrame: 擴充套件列表
+    exeFrame: 前任名單
+    fontFrame: 字型名稱
+    demoFrame: 演示
+    choiceFrame: 選項
+
+    #====================#
+    # Text Editor titles #
+    #====================#
+
+    scriptEditor: 指令碼編輯器
+    outputView: 退出
+
+    #======================#
+    # Context Menu prompts #
+    #======================#
+
+    cutPrompt: 切
+    copyPrompt: 複製
+    pastePrompt: 貼上
+    delPrompt: 刪除
+    clrPrompt: 乾淨
+    undoPrompt: 撤消
+    redoPrompt: 重做
+    deselPrompt: 取消選擇
+    selAllPrompt: 選擇全部
+
+    #===============#
+    # Other prompts #
+    #===============#
+
+    fontSizePrompt: "字型大小："
+    fontNamePrompt: "字型名稱："
+    langPrompt: "語言："
+    stylePrompt: "風格："
+
+
+##===========================================================#
+## All translations (including UI, Patches, Extensions etc.) #
+##===========================================================#
+
+translations:
+
+    #========================#
+    #             UI         #
+    #========================#
+    - find: Settings
+      replace: 設定
+
+    - find: Title
+      replace: 標題
+
+    - find: Group
+      replace: 集團
+
+    - find: Author
+      replace: 作者
+
+    - find: Description
+      replace: 描述
+
+    - find: Selected
+      replace: 已選擇
+
+    - find: Tooltip
+      replace: 工具提示
+
+    - find: FileName
+      replace: 檔名
+
+    - find: Inbuilt
+      replace: 綜合
+
+    - find: From Scripts
+      replace: 來自指令碼
+
+    - find: Refresh
+      replace: 重新整理
+
+    - find: Session
+      replace: 會議
+
+    - find: Find
+      replace: 搜尋
+
+    - find: Sort
+      replace: 排序
+
+    - find: by
+      replace: 透過
+
+    - find: None
+      replace: 無
+
+    - find: Options
+      replace: 選項
+
+    - find: Actions
+      replace: 行動
+
+    - find: Enter the target file path
+      replace: 輸入目標檔案的路徑
+
+    - find: Target File
+      replace: 目標檔案
+
+
+    #==================================#
+    #     PATCHES — Character.yml      #
+    #==================================#
+
+    # CustomChar
+    - find : CHARACTER CUSTOMIZATION
+      replace : 角色定製
+
+    - find : Use official cloth palettes
+      replace : 使用官方服裝調色盤
+
+    - find : "Forces the client to use Gravity's official cloth color palettes on all langtypes. <b>WARNING:</b> Incompatible with the 'Enable Custom Jobs' patch."
+      replace : "強制客戶端在所有語言型別上使用官方重力服裝調色盤。 <b>A警告：</b> 與“啟用自定義作業”補丁不相容。"
+
+    - find : Disable GM sprite
+      replace : 禁用 GM 精靈
+
+    - find : Hides the special GM sprite (the yellow character) while keeping all GM functionality intact, including the yellow name color and admin right-click menu. GMs appear as their normal job class.
+      replace : 隱藏特殊的 GM 精靈（黃色字元），同時保持所有 GM 功能完整，包括黃色名稱和右鍵管理選單。總經理似乎是他們的正常工作類別。
+
+    - find : Enable Emblem hover for BG [Experimental]
+      replace : 啟用BG中的浮動徽章[實驗]
+
+    - find : Displays guild emblems above characters in Battleground maps, the same way they appear during Guild vs Guild (WoE). Helps identify team members in BG. Experimental -- may have visual quirks.
+      replace : 在戰場地圖上的角色上方顯示公會徽章，就像在公會 vs 公會 (WoE) 中一樣。幫助識別 BG 的團隊成員。實驗性的——可能有視覺問題。
+
+    - find : Restore model culling
+      replace : 恢復模型剔除
+
+    - find : Makes 3D models (buildings, walls, objects) that block your view of the player character turn transparent. Improves visibility in areas with large obstructing models.
+      replace : 使遮擋角色視線的 3D 模型（建築物、牆壁、物體）變得透明。提高具有大型遮擋模型的區域的可視性。
+
+    - find : Always see hidden/cloaked objects
+      replace : 始終看到隱藏/隱藏的物體
+
+    - find : Makes hidden and cloaked characters/objects always visible as dark silhouettes, as if the player permanently has the Intravision buff. Useful for GMs or testing -- gives an unfair advantage in PvP.
+      replace : 使隱藏或隱形的角色/物體始終以黑色輪廓可見，就好像玩家擁有永久的 Intravision 增益一樣。對於 GM 或測試有用——在 PvP 中提供不公平的優勢。
+
+    - find : Customize Quick Switch delay
+      replace : 自定義快速切換延遲
+
+    - find : Changes the cooldown delay (in ticks) for the quick equipment swap feature. Lower values allow faster gear switching; higher values enforce a longer wait between swaps.
+      replace : 更改快速團隊變更的冷卻時間（以滴答為單位）。較低的值允許更快的換檔；值越高，更改之間的等待時間就越長。
+
+    - find : Allow party leader to leave
+      replace : 允許黨魁離開
+
+    - find : Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists.
+      replace : 當同一張地圖上沒有其他成員時，允許隊長離開隊伍。預設情況下，只要隊伍仍然存在，客戶端就會阻止領導者離開。
+
+    - find : Allow spam skills by hotkey
+      replace : 透過熱鍵允許技能垃圾郵件
+
+    - find : Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations.
+      replace : 允許您透過按住熱鍵而不是重複按下來快速啟動技能。消除熱鍵啟用之間的客戶端冷卻時間。
+
+    - find : Allow guild activities in clan
+      replace : 允許在部落中進行公會活動
+
+    - find : Removes the client-side restriction that blocks guild features (creating/joining guilds, GvG, etc.) while the player is a member of a clan. Allows both memberships to coexist.
+      replace : 刪除當玩家是部落成員時阻止公會功能（建立/加入公會、GvG 等）的客戶端限制。允許兩種財產共存。
+
+    - find : Customize auto follow stop delay
+      replace : 自定義自動跟隨停止延遲
+
+    - find : Changes the delay before auto-follow stops after the target moves out of range. Lower values make the character stop sooner; higher values keep following longer.
+      replace : 更改當目標超出範圍時自動跟隨停止之前的延遲。較低的值使角色停止得更快；值越高，您的關注時間就越長。
+
+    - find : Show Damage for GvG
+      replace : 在 GvG 中顯示傷害
+
+    - find : Shows damage numbers on Guild vs Guild (WoE) maps. By default, the client hides all damage digits during GvG to reduce visual clutter, but this makes it hard to gauge effectiveness.
+      replace : 在公會與公會 (WoE) 地圖上顯示傷害數字。預設情況下，客戶端會在 GvG 期間隱藏傷害數字以減少視覺噪音，但這使得衡量有效性變得困難。
+
+    - find : Allow 65k Hair Styles
+      replace : 允許 65k 種髮型
+
+    - find : Removes the hard-coded hair style limit, allowing the client to load any hair sprite by number. Supports up to 65535 styles.
+      replace : 消除了對髮型的硬編碼限制，允許客戶端按數量載入任何頭髮精靈。最多支援 65535 種樣式。
+
+    # CustomAutoFollow
+    - find : AUTO FOLLOW CUSTOMIZATION
+      replace : 自動跟隨定製
+
+    - find : Disable auto follow
+      replace : 禁用自動跟隨
+
+    - find : Completely disables the Shift+Right-Click auto-follow feature. Use on servers where auto-follow is considered an exploit or is not desired.
+      replace : 完全禁用Shift+右鍵的自動跟隨功能。在自動關注被視為漏洞或不允許的伺服器上使用它。
+
+    - find : Decrease auto follow delay
+      replace : 減少自動跟隨延遲
+
+    - find : Reduces the initial delay before auto-follow starts moving after Shift+Right-Click. Lower values make the character begin following sooner.
+      replace : 減少 Shift+右鍵單擊後自動跟隨開始移動角色之前的初始延遲。較低的值會導致角色更早開始跟隨。
+
+    # CustomAura
+    - find : AURA CUSTOMIZATION
+      replace : 光環定製
+
+    - find : Customize Aura sprites
+      replace : 自定義光環精靈
+
+    - find : Separates aura sprites from warp portal effects by using dedicated files (aurafloat.tga and auraring.bmp in 'data\texture\effect'). Prevents high-level character auras from visually interfering with warp portals.
+      replace : 使用專用檔案（“data\texture\effect”中的 aurafloat.tga 和 auraring.bmp）將光環精靈與扭曲門戶效果分開。防止高階角色光環在視覺上干擾傳送門。
+
+    - find : Customize Aura display limits
+      replace : 自定義光環顯示限制
+
+    - find : Customizes which character classes and levels display the standard aura effect. Set minimum levels and allowed job classes for aura visibility to match your server's progression system.
+      replace : 自定義哪些職業類別和級別顯示標準光環效果。定義允許光環可見的最低階別和工作類別，並將其調整為伺服器的進度系統。
+
+    # CustomChatColor
+    - find : Customize chat color (GM)
+      replace : 自定義聊天顏色（GM）
+
+    - find : Changes the color of GM chat messages to a custom hex value. Default is ffff00 (yellow). Use to make GM announcements stand out in your preferred color.
+      replace : 將 GM 聊天訊息的顏色更改為自定義十六進位制值。預設為 ffff00（黃色）。使用它以您選擇的顏色突出顯示 GM 廣告。
+
+    - find : Customize chat color (Guild)
+      replace : 自定義聊天顏色（公會）
+
+    - find : Changes the color of guild chat messages to a custom hex value. Default is b4ffb4 (light green).
+      replace : 將公會聊天訊息的顏色更改為自定義十六進位制值。預設值為 b4ffb4（淺綠色）。
+
+    - find : Customize chat color (Party - Others)
+      replace : 自定義聊天顏色（派對-其他）
+
+    - find : Changes the color of party chat messages from other members to a custom hex value. Default is ffc8c8 (pinkish).
+      replace : 將其他成員的聚會聊天訊息的顏色更改為自定義十六進位制值。預設為 ffc8c8（粉色）。
+
+    - find : Customize chat color (Party - Self)
+      replace : 自定義聊天顏色（派對-自己）
+
+    - find : Changes the color of your own party chat messages to a custom hex value. Default is ffc800 (orange).
+      replace : 將您自己的聚會聊天訊息的顏色更改為自定義十六進位制值。預設為 ffc800（橙色）。
+
+    - find : Customize chat color (Public - Others)
+      replace : 自定義聊天顏色（公共-其他）
+
+    - find : Changes the color of public chat messages from other players to a custom hex value. Default is ffffff (white).
+      replace : 將其他玩家的公共聊天訊息的顏色更改為自定義的十六進位制值。預設情況下它是 ffffff（白色）。
+
+    - find : Customize chat color (Public - Self)
+      replace : 自定義聊天顏色（公共-自己）
+
+    - find : Changes the color of your own public chat messages to a custom hex value. Default is 00ff00 (green).
+      replace : 將您自己的公共聊天訊息的顏色更改為自定義十六進位制值。預設情況下為 00ff00（綠色）。
+
+    # SkipCheatCheck
+    - find : SKIP CHEATER CHECK
+      replace : 跳過作弊檢查
+
+    - find : Skip Friend list cheat check
+      replace : 跳過好友列表中的作弊檢查
+
+    - find : Disables the "possible impersonation" warning when receiving a PM from someone whose name resembles a friend on your list. The warning is meant to detect name spoofing but causes false positives.
+      replace : 當您收到與您列表中好友姓名相似的人發來的私信時，請關閉“可能冒充”警告。該警告旨在檢測姓名欺騙行為，但會產生誤報。
+
+    - find : Skip Guild Member cheat check
+      replace : 跳過對公會成員的作弊檢查
+
+    - find : Disables the "possible impersonation" warning when receiving a PM from someone whose name resembles a guild member. Same as the friend list version but for guild members.
+      replace : 當收到名字與公會成員相似的人的私信時，禁用“可能冒充”警告。與好友列表版本相同，但適用於公會成員。
+
+    # WalkDelay
+    - find : WALK DELAY
+      replace : 步行延遲
+
+    - find : Remove Walk Delay
+      replace : 消除步行延遲
+
+    - find : "Removes the delay between walk-click inputs entirely, allowing immediate movement response. <b>Note:</b> May cause the client to send duplicate movement packets to the server."
+      replace : "完全消除了運動點選之間的延遲，允許在行走時立即響應。 <b>注：</b>可能會導致客戶端向伺服器傳送重複的運動資料包。"
+
+    - find : Customize Walk Delay
+      replace : 自定義步行延遲
+
+    - find : "Changes the delay between walk-click inputs to a custom value (in milliseconds). Lower values make movement more responsive. <b>Note:</b> Very low values may cause the client to send duplicate movement packets."
+      replace : "將移動點選之間的延遲更改為自定義值（以毫秒為單位）。較低的值使運動反應更加靈敏。 <b>注意：</b>非常低的值可能會導致客戶端傳送重複的運動資料包。"
+
+    # ResButtonVis
+    - find : RESURRECT BUTTON VISIBILITY
+      replace : 復活按鈕可見性
+
+    - find : Skip Resurrection button
+      replace : 跳過復活按鈕
+
+    - find : Hides the Token of Ziegfried resurrection button when the player dies, even if one is in inventory. Use on servers where self-resurrection is not desired or the token has been repurposed.
+      replace : 當玩家死亡時隱藏齊格弗裡德復活按鈕，即使他們的庫存中有一個。在不需要自動復活或令牌被重複用於其他用途的伺服器上使用它。
+
+    - find : Always show Resurrection button
+      replace : 始終顯示覆活按鈕
+
+    - find : Always shows the Token of Ziegfried resurrection button on death regardless of the map type. By default, the button is hidden on certain map types like PvP or GvG maps.
+      replace : 無論地圖型別如何，死亡時始終顯示齊格弗裡德復活按鈕。預設情況下，該按鈕在某些地圖型別（例如 PvP 或 GvG）中隱藏。
+
+    # CustomChatColor (título con tags HTML)
+    - find : '<font color="#9F00EF">CHA</font><font color="#5F00FF">T CO</font><font color="blue">LOR </font><font color="green">CUS</font><font color="yellow">TOM</font><font color="orange">IZA</font><font color="red">TION</font>'
+      replace : '<font color="#9F00EF">PER</font><font color="#5F00FF">SON</font><font color="blue">ALI</font><font color="green">ZAR</font><font color="yellow"> CO</font><font color="orange">LOR</font><font color="red"> CHAT</font>'
+
+
+    #==================================#
+    #      PATCHES — Client.yml        #
+    #==================================#
+
+    - find : RESIZE HP BAR
+      replace : 調整HP條大小
+
+    - find : Resize Player HP/SP bar
+      replace : 調整玩家 HP/SP 條的大小
+
+    - find : Changes the width of your own character's HP and SP bars to a custom size. Useful for making health bars easier to read at a glance.
+      replace : 將自己角色的 HP 和 SP 條的寬度更改為自定義尺寸。有助於使條形圖更易於一目瞭然地閱讀。
+
+    - find : Resize Normal mob HP bar
+      replace : 調整普通生物 HP 條的大小
+
+    - find : Changes the width of the HP bar displayed above regular monsters to a custom size.
+      replace : 將普通怪物上方顯示的 HP 條的寬度更改為自定義尺寸。
+
+    - find : Resize Mini-Boss mob HP bar
+      replace : 調整 Mini Boss HP 條的大小
+
+    - find : Changes the width of the HP bar displayed above Mini-Boss monsters to a custom size. Helpful for distinguishing Mini-Bosses from regular mobs.
+      replace : 將出現在迷你 Boss 上方的 HP 條的寬度更改為自定義尺寸。對於區分小首領和普通怪物很有用。
+
+    - find : Resize Boss mob HP bar
+      replace : 調整 Boss HP 條大小
+
+    - find : Changes the width of the HP bar displayed above Boss (MVP) monsters to a custom size. Helpful for distinguishing Bosses from regular mobs.
+      replace : 將 Boss (MVP) 上方出現的 HP 條的寬度更改為自定義尺寸。對於區分 Boss 和普通生物很有用。
+
+    - find : Alliance Chat Hotkey Selector
+      replace : 聯盟聊天熱鍵選擇器
+
+    - find : "Allows you to choose a custom symbol to trigger Alliance Chat instead of the default '#'. This is useful to avoid conflicts with GM command symbols such as @ or !."
+      replace : "允許您選擇自定義符號來啟用 Alliance Chat，而不是預設的“#”。有助於避免與 GM 命令符號（例如 @ 或 !）發生衝突。"
+
+    - find : DISABLE EFFECT
+      replace : 禁用效果
+
+    - find : Disable Quake skill effect
+      replace : 解除地震技能的效果
+
+    - find : Disables the screen-shaking Earthquake skill effect. Prevents motion sickness and visual discomfort caused by this skill.
+      replace : 禁用地震技能的螢幕震動效果。避免因該技能引起的頭暈和視覺不適。
+
+    - find : Disable Blind skills effect
+      replace : 禁用失明技能效果
+
+    - find : Disables the Blind status effect that darkens the entire screen. Prevents the disorienting black-screen visual when blinded.
+      replace : 禁用使整個螢幕變暗的盲狀態效果。避免失明時出現令人迷惑的黑屏效果。
+
+    - find : Restore Bard/Dancer Song Effects (Old Song Patch)
+      replace : 恢復吟遊詩人/舞者歌曲效果（老歌補丁）
+
+    - find : Restores the visual ground effects for Bard and Dancer song skills. Otherwise known as the Restore Old Song patch. These effects were removed in newer clients but this patch reconstructs them using LandProtector's rendering code.
+      replace : 恢復了吟遊詩人和舞者歌曲技能的地面視覺效果。也稱為恢復老歌補丁。這些效果在新客戶端中被刪除，但此補丁使用 LandProtector 渲染程式碼重建它們。
+
+    - find : SLASH COMMANDS
+      replace : 斜線命令
+
+    - find : "Always enable '/who' command"
+      replace : "始終啟用“/who”命令"
+
+    - find : Enables the <b>/w</b> and <b>/who</b> commands on all langtypes to show the current number of online players. Normally restricted to certain service regions.
+      replace : 在所有語言型別上啟用 <b>/w</b> 和 <b>/who</b> 命令來顯示當前線上玩家數量。通常僅限於某些服務區域。
+
+    - find : "Always enable '/showname' command"
+      replace : "始終啟用“/showname”命令"
+
+    - find : Enables the <b>/showname</b> command on all langtypes, allowing players to toggle the display of character names, party names, and guild names above sprites.
+      replace : 在所有語言型別上啟用 <b>/showname</b> 命令，允許玩家在精靈上切換角色、隊伍和公會名稱的顯示。
+
+    - find : "Allow unknown '/command's [Experimental]"
+      replace : "允許未知的“/命令”[實驗]"
+
+    - find : "Sends unrecognized '<b>/command</b>' inputs to the server instead of showing \"Invalid command\". Allows server-side slash commands (like custom scripts) to work through the chat box."
+      replace : "將無法識別的“<b>/command</b>”輸入傳送到伺服器，而不是顯示“無效命令”。允許伺服器端斜線命令（例如自定義指令碼）透過聊天進行工作。"
+
+    - find : SKILL CHATTER REMOVAL
+      replace : 刪除技能喋喋不休
+
+    - find : Remove Dancer's Scream chatter
+      replace : 消除舞者尖叫中的喋喋不休
+
+    - find : Removes the random chat messages that appear when the Dancer's Scream skill is used (loaded from dc_scream.txt). Reduces chat spam in busy areas.
+      replace : 刪除使用舞者的尖叫技能時出現的隨機聊天訊息（從 dc_scream.txt 載入）。減少繁忙區域的聊天垃圾郵件。
+
+    - find : Remove Bard's Frost Joke chatter
+      replace : 刪除吟遊詩人的冰霜笑話中的喋喋不休
+
+    - find : Removes the random chat messages that appear when the Bard's Frost Joke skill is used (loaded from ba_frostjoke.txt). Reduces chat spam in busy areas.
+      replace : 刪除使用吟遊詩人的冰霜笑話技能（從 ba_frostjoke.txt 載入）時出現的隨機聊天訊息。減少繁忙區域的聊天垃圾郵件。
+
+    - find : RESIZE BOX
+      replace : 調整文字框的大小
+
+    - find : Resize Chat Box
+      replace : 調整聊天框大小
+
+    - find : Increases the character limit in the Main/Battle chat input box from <b>70</b> to a custom value. Most servers use 234 to allow longer messages.
+      replace : 將主/戰鬥聊天框中的字元限制從 <b>70</b> 增加到自定義值。大多數伺服器使用 234 來允許更長的訊息。
+
+    - find : Resize Chat Room Box
+      replace : 調整聊天室框的大小
+
+    - find : Increases the character limit in chat room input boxes from <b>70</b> to a custom value. Most servers use 234 to allow longer messages.
+      replace : 將聊天室框中的字元限制從 <b>70</b> 增加到自定義值。大多數伺服器使用 234 來允許更長的訊息。
+
+    - find : Resize PM Box
+      replace : 調整 PM 框大小
+
+    - find : Increases the character limit in the PM (whisper) input box from <b>70</b> to a custom value. Most servers use 234 to allow longer private messages.
+      replace : 將 PM（耳語）框中的字元限制從 <b>70</b> 增加到自定義值。大多數伺服器使用 234 來允許更長的私人訊息。
+
+    - find : Resize NPC Dialog Box
+      replace : 調整 NPC 對話方塊大小
+
+    - find : Increases the maximum character limit for NPC dialog input fields to a custom value (between 2052 and 4096). Useful for servers with NPCs that accept longer text input.
+      replace : 將 NPC 對話方塊輸入欄位中的最大字元限制增加到自定義值（2052 到 4096 之間）。對於具有接受較長文字條目的 NPC 的伺服器很有用。
+
+    - find : ROULETTE VISIBILITY
+      replace : 輪盤賭可見性
+
+    - find : Hide Roulette icon
+      replace : 隱藏輪盤賭圖示
+
+    - find : Hides the Roulette icon from the game interface. Useful for servers that do not use Gravity's Roulette system.
+      replace : 在遊戲介面中隱藏輪盤圖示。對於不使用重力輪盤系統的伺服器很有用。
+
+    - find : Show Roulette icon
+      replace : 顯示輪盤賭圖示
+
+    - find : Restores the Roulette icon that Gravity removed in newer clients. Use this if your server has Roulette functionality enabled.
+      replace : 恢復“重力”在新客戶端中刪除的輪盤圖示。如果您的伺服器啟用了輪盤賭功能，請使用它。
+
+    - find : CASH SHOP CUSTOMIZATION
+      replace : 現金商店個性化
+
+    - find : Move Cash Shop icon
+      replace : 移動現金店圖示
+
+    - find : Repositions the Cash Shop icon to custom screen coordinates. Positive values offset from the top-left corner; negative values offset from the bottom-right corner.
+      replace : 將商城圖示重新定位到自定義座標。正值是從左上角開始測量的；右下角的負片。
+
+    - find : Enforce 0 C in Cash Shop
+      replace : 商城強制 0 C
+
+    - find : Forces the <b>C</b> (cash point) field to display 0 instead of random garbage values in the Cash Shop. Fixes a display bug on servers that do not use Gravity's cash point system.
+      replace : 強制 <b>C</b>（現金點）欄位在商城中顯示 0，而不是垃圾值。修復了不使用 Gravity 現金點系統的伺服器上的視覺錯誤。
+
+    - find : Use default web browser in Cash Shop
+      replace : 在商城中使用預設網路瀏覽器
+
+    - find : Opens Cash Shop URLs in your default web browser instead of the hardcoded Internet Explorer. Essential since IE is deprecated on modern Windows.
+      replace : 在預設 Web 瀏覽器（而不是硬編碼的 Internet Explorer）中開啟商城 URL。由於 IE 在現代 Windows 上已被棄用，因此至關重要。
+
+    - find : SHOP EQ PREVIEW
+      replace : 商店裝置預覽
+
+    - find : Enable equipment preview in Cash Shop
+      replace : 在商城中啟用裝置預覽
+
+    - find : Adds an equipment preview button in the Cash Shop (right-click items to see it). Lets players see how gear looks before buying. Requires server-side support to be enabled as well.
+      replace : 在商城中新增裝備預覽按鈕（右鍵單擊物品）。在購買之前我們先看看裝備是什麼樣子的。還需要伺服器端支援。
+
+    - find : Enable equipment preview in Trader Shop
+      replace : 在交易商店中啟用裝備預覽
+
+    - find : Adds an equipment preview button in the older-style Trader Shop (right-click items to see it). Requires server-side support to be enabled as well.
+      replace : 在交易商店中新增舊式裝備預覽按鈕（右鍵單擊物品）。還需要伺服器端支援。
+
+    - find : Hide Cash Shop icon
+      replace : 隱藏商城圖示
+
+    - find : Hides the Cash Shop icon from the game interface. Useful for servers that do not use a Cash Shop or want a cleaner UI.
+      replace : 在遊戲介面中隱藏商城圖示。對於不使用 Cash Shop 或想要更簡潔的 UI 的伺服器很有用。
+
+    - find : CAMERA ANGLES
+      replace : 相機角度
+
+    - find : Increase Camera Angles (LOW)
+      replace : 增加相機角度（低）
+
+    - find : Expands the allowed camera tilt range to about <b>30 degrees</b>, letting you angle the view slightly lower than default. A subtle improvement for general gameplay.
+      replace : 將相機允許的傾斜範圍擴大到大約 <b>30 度</b>，允許您將檢視角度稍微低於預設值。整體遊戲玩法的微妙改進。
+
+    - find : Increase Camera Angles (MEDIUM)
+      replace : 增加相機角度（中）
+
+    - find : Expands the allowed camera tilt range to about <b>42 degrees</b>, providing a good balance between visibility and immersion. Recommended for most players.
+      replace : 將攝像機允許的傾斜範圍擴大到大約 <b>42 度</b>，在可視性和沉浸感之間實現良好的平衡。推薦給大多數玩家。
+
+    - find : Increase Camera Angles (HIGH)
+      replace : 增加相機角度（高）
+
+    - find : Expands the allowed camera tilt range to about <b>65 degrees</b>, enabling a near ground-level view. Great for screenshots, but may cause visual glitches on some maps.
+      replace : 將相機允許的傾斜範圍擴大到大約 <b>65 度</b>，從而實現近地檢視。非常適合螢幕截圖，但可能會導致某些地圖上出現視覺故障。
+
+    - find : ZOOM OUT
+      replace : 縮小
+
+    - find : Decrease Zoom Out (to 25%)
+      replace : 減少縮小（至 25%）
+
+    - find : Restricts the zoom-out range to about 25% of the maximum, bringing the camera closer than default. For a more zoomed-in gameplay experience.
+      replace : 將縮小範圍限制為最大範圍的大約 25%，使相機比預設值更近。為了更接近角色的體驗。
+
+    - find : Increase Zoom Out (to 50%)
+      replace : 增加縮小（至 50%）
+
+    - find : Extends the zoom-out range to about 50% of the maximum, letting you see more of the map around your character.
+      replace : 將縮小範圍擴大到最大範圍的大約 50%，讓您可以看到角色周圍地圖的更多部分。
+
+    - find : Increase Zoom Out (to 75%)
+      replace : 增加縮小（至 75%）
+
+    - find : Extends the zoom-out range to about 75% of the maximum. Provides a wide field of view useful for WoE, PvP, and large-scale fights.
+      replace : 將縮小範圍擴大到最大範圍的大約 75%。提供廣闊的視野，對於 WoE、PvP 和大規模戰鬥很有用。
+
+    - find : Increase Zoom Out (to Max)
+      replace : 增加縮小（至最大）
+
+    - find : Unlocks the full zoom-out range, allowing the camera to pull back as far as possible. Maximum visibility, but sprites may appear very small.
+      replace : 解鎖完整的變焦範圍，讓您可以將相機拉得儘可能遠。最大可見度，但精靈可能看起來很小。
+
+    - find : LOGIN MODE
+      replace : 登入方式
+
+    - find : Restore Login Window
+      replace : 恢復登入視窗
+
+    - find : Bypasses Gravity's token-based login system and restores the classic username/password login window. Required for most servers that do not use a web-based launcher.
+      replace : 跳過 Gravity 基於令牌的登入系統並恢復經典的使用者/密碼視窗。對於大多數不使用 Web 啟動器的伺服器來說是必需的。
+
+    - find : Use SSO Login Packet
+      replace : 使用SSO登入包
+
+    - find : "Forces all langtypes to use the SSO login packet (0x825) instead of the old login packet (0x64). Required when using a patcher/launcher that passes credentials via command-line token. <b>WARNING:</b> Incompatible with 'Disable Login password encryption' (NoPassEncr)."
+      replace : "強制所有語言型別使用 SSO 登入資料包 (0x825)，而不是舊資料包 (0x64)。使用在命令列上透過令牌傳遞憑據的修補程式/啟動程式時需要。 <b>A警告：</b> 與“禁用登入密碼加密”(NoPassEncr) 不相容。"
+
+    - find : Use Old Login Packet
+      replace : 使用舊登入包
+
+    - find : "Forces the client to use the old login packet (0x64) for authentication. Required for newer clients where 'Restore Login Window' no longer works. The standard choice for most servers with direct username/password login."
+      replace : "強制客戶端使用舊的登入資料包 (0x64) 進行身份驗證。對於“恢復登入視窗”不再起作用的新客戶來說是必需的。大多數具有直接使用者/密碼登入功能的伺服器的標準選項。"
+
+    - find : CHAT REPEAT
+      replace : 聊天重播
+
+    - find : Allow unlimited chat repeat
+      replace : 允許無限制的聊天重播
+
+    - find : Removes the client-side limit on repeating the same chat message. By default, the client blocks you from sending the same message more than a few times in a row.
+      replace : 取消客戶端重複同一聊天訊息的限制。預設情況下，客戶端會阻止連續多次傳送同一訊息。
+
+    - find : Customize chat repeat limit
+      replace : 自定義聊天重複限制
+
+    - find : Changes the maximum number of identical consecutive chat messages allowed from the default of 2 to a custom value. Provides more control than fully removing the limit.
+      replace : 將允許的連續相同訊息的最大數量從預設值 (2) 更改為自定義值。它比完全取消限制提供更多的控制。
+
+    - find : SLEEP DELAY CUSTOMIZATION
+      replace : 定製睡眠延遲
+
+    - find : Add Input Delay
+      replace : 新增輸入延遲
+
+    - find : "Adds extra milliseconds to the client's input processing delay. Can be used to throttle input speed for testing or to reduce CPU usage on low-end machines."
+      replace : "為客戶端的輸入處理延遲增加額外的毫秒數。它用於限制測試的輸入速度或減少低效能機器上的 CPU 使用率。"
+
+    - find : Customize game loop delay
+      replace : 自定義遊戲迴圈延遲
+
+    - find : "Changes the Sleep() delay in the main game loop to a custom value (in milliseconds). Lower values make the client more responsive but use more CPU; higher values save CPU at the cost of smoothness."
+      replace : "將主遊戲迴圈中的 Sleep() 延遲更改為自定義值（以毫秒為單位）。較低的值使客戶端響應更快，但使用更多的 CPU；較高的值可以節省 CPU，但會犧牲流動性。"
+
+
+    #==================================#
+    #       PATCHES — Data.yml         #
+    #==================================#
+
+    - find : DATA CUSTOMIZATION
+      replace : 資料個性化
+
+    - find : Customize Max Emblem file size
+      replace : 自定義最大徽章檔案大小
+
+    - find : Changes the maximum allowed file size for guild emblems. Increase this if players are getting errors when uploading detailed or high-resolution guild emblems.
+      replace : 更改公會徽章檔案允許的最大大小。如果玩家在上傳詳細或高解析度徽章時收到錯誤，請增加此值。
+
+    - find : Customize Rodex tax
+      replace : 自定義 RoDEx 稅
+
+    - find : "Changes the tax percentage deducted when sending zeny through the RoDEx (mail) system. Set to 0 to remove the tax entirely, or adjust to your server's economy."
+      replace : "更改透過 RoDEx（郵件）系統傳送 zeny 時的稅收折扣百分比。設定 0 以完全刪除它，或根據伺服器的經濟情況進行調整。"
+
+    - find : Customize guild exp limit
+      replace : 自定義可捐贈給公會的經驗限制
+
+    - find : "Changes the maximum percentage of experience a player can donate to their guild. Default is 50%. Adjust to match your server's guild configuration."
+      replace : "更改玩家可以向其公會捐贈的經驗的最大百分比。預設情況下為 50%。根據您伺服器的公會配置進行調整。"
+
+    - find : Customize adventurer agency levels
+      replace : 自定義冒險家代理級別
+
+    - find : "Changes the minimum and maximum level range shown in the Adventurer Agency (party finder) window. Adjust to match your server's level cap and party requirements."
+      replace : "更改冒險家機構（隊伍查詢器）視窗中顯示的級別的最小和最大範圍。調整伺服器的等級上限和隊伍要求。"
+
+    - find : Enable Official Custom Fonts (Reforged)
+      replace : 啟用自定義官方字型（Reforged）
+
+    - find : Loads custom .ttf fonts via AddFontResourceExA at init, bypassing the broken T2Embed API on modern Windows. Prompts to copy included .ttf fonts to your client folder on first apply. Requires FixFontsCharset (auto-enabled).
+      replace : 在啟動時透過 AddFontResourceExA 載入自定義 .ttf 字型，避免現代 Windows 上損壞的 T2Embed API。首次應用時，它會要求將包含的 .ttf 複製到客戶端資料夾。需要 FixFontsCharset（自動啟用）。
+
+    - find : Fix charset for Fonts
+      replace : 修復字型字符集
+
+    - find : Fixes the character encoding (charset) used for official custom fonts (EOT and OTF) so they render correctly on all langtypes. Prevents garbled text when using custom fonts on non-Korean service types. Fixed EDI register clobber for 07-16.
+      replace : 修復官方自定義字型（EOT 和 OTF）使用的字符集，以便它們在所有語言型別上都能良好呈現。在非韓語服務型別中使用自定義字型時防止文字損壞。修復了 07-16 的 EDI 日誌破壞問題。
+
+    - find : Use Ascii on All
+      replace : 全部使用ASCII
+
+    - find : Forces ASCII text rendering regardless of the selected font or langtype. Ensures English characters always display correctly on all service types.
+      replace : 強制呈現獨立於所選字型或語言型別的 ASCII 文字。確保所有服務型別中英文字元都能正確顯示。
+
+    - find : Customize screenshot quality
+      replace : 自定義螢幕截圖質量
+
+    - find : Changes the JPEG compression quality for in-game screenshots (0-100). Higher values produce sharper images but larger files. Default quality is relatively low.
+      replace : 更改遊戲內螢幕截圖的 JPEG 壓縮質量 (0-100)。值越高，影象越清晰，但檔案也越大。預設質量相對較低。
+
+    - find : Always call SelectKoreaClientInfo()
+      replace : 始終呼叫 SelectKoreaClientInfo()
+
+    - find : Ensures SelectKoreaClientInfo() is always called alongside SelectClientInfo(), unlocking features normally restricted to the Korean service type. Recommended for most servers to enable full client functionality.
+      replace : 確保 SelectKoreaClientInfo() 始終與 SelectClientInfo() 一起呼叫，從而解鎖通常僅限於韓語服務型別的功能。建議大多數伺服器啟用完整的客戶端功能。
+
+    - find : Read data folder first
+      replace : 首先讀取data資料夾
+
+    - find : "Loads loose files from the 'data' folder before checking GRF archives. Useful for development and testing custom sprites, textures, or lua files without repacking the GRF."
+      replace : "在檢查 GRF 之前，從“資料”資料夾載入單個檔案。對於開發和測試自定義精靈、紋理或 lua 檔案很有用，無需重新打包 GRF。"
+
+    - find : Use plain text descriptions
+      replace : 使用純文字描述
+
+    - find : Forces the client to read item and skill description .txt files as plain ASCII text instead of encoded Korean. Required for English-language description files to display correctly.
+      replace : 強制客戶端以純 ASCII 格式（而不是編碼的韓語）讀取專案和技能描述 .txt 檔案。需要英文說明才能正確顯示。
+
+    - find : Always load korea ExternalSettings lua file
+      replace : 始終載入韓文luaExternalSettings
+
+    - find : Forces loading of the Korean ExternalSettings lua file on all langtypes. This file controls many client features and UI options that are otherwise unavailable outside the Korean service type.
+      replace : 強制在所有語言型別上載入韓語 luaExternalSettings 檔案。此檔案控制許多客戶端功能和 UI 選項，這些功能和 UI 選項在韓語服務型別之外不可用。
+
+    - find : Increase headgear viewID limit
+      replace : 增加頭飾viewID限制
+
+    - find : Raises the maximum headgear View ID limit from the default (1000-3000 depending on client version) up to 32000. Required for servers with large numbers of custom headgear sprites.
+      replace : 將最大頭飾檢視 ID 限制從預設值（1000-3000，具體取決於客戶端版本）增加到 32000。對於具有許多自定義頭飾精靈的伺服器來說是必需的。
+
+    - find : Remove 3D bones limit
+      replace : 刪除 3D 骨骼限制
+
+    - find : Removes the hardcoded monster ID limit for 3D Granny models, allowing custom 3D monsters beyond the official range. Required for servers that add new 3D monster sprites.
+      replace : 刪除了 3D Granny 模型的硬編碼怪物 ID 限制，允許自定義 3D 怪物超出官方範圍。對於新增新 3D 怪物精靈的伺服器來說是必需的。
+
+    - find : Load custom Quest Lua/Lub files
+      replace : 載入自定義 Quest Lua/Lub 檔案
+
+    - find : "Enables loading of custom quest lua files specified through a YAML configuration. All listed files must be placed in the 'lua files\\quest' folder. Useful for servers with custom quests that need additional quest data files."
+      replace : "允許載入由 YAML 配置指定的自定義任務 lua 檔案。列出的所有檔案都應位於“lua files\\quest”資料夾中。對於具有需要額外資料檔案的自定義任務的伺服器很有用。"
+
+    - find : Increase map quality
+      replace : 提高地圖質量
+
+    - find : Upgrades map texture rendering from 16-bit to 32-bit color depth, resulting in smoother color gradients and reduced banding on ground textures. May slightly increase memory usage.
+      replace : 將地圖紋理的渲染從 16 位顏色深度改進為 32 位顏色深度，使地面紋理的漸變更加平滑並減少條帶。它可能會稍微增加記憶體使用量。
+
+    - find : Enable effect for all maps
+      replace : 為所有地圖啟用效果
+
+    - find : Makes the client load per-map effect files from the EffectTool folder on all maps, not just select ones. Allows custom map effects (weather, ambient particles, etc.) to work everywhere.
+      replace : 使客戶端從所有地圖上的 EffectTool 資料夾載入每個地圖效果檔案，而不僅僅是選定的地圖。允許自定義地圖效果（天氣、環境粒子等）在任何地方發揮作用。
+
+    - find : Load iteminfo based on char server
+      replace : 基於字元伺服器載入iteminfo
+
+    - find : "Loads the ItemInfo lua file and passes the selected character server name as an argument. Allows different item databases per server when hosting multiple char servers (e.g., Renewal vs Pre-Renewal)."
+      replace : "載入 ItemInfo lua 檔案，並將所選字元伺服器的名稱作為引數傳遞。當託管多個字元伺服器時，允許每個伺服器使用不同的專案資料庫（例如續訂與預續訂）。"
+
+    - find : Use icons from stateiconimginfo.lub
+      replace : 使用 stateiconimginfo.lub 中的圖示
+
+    - find : Disables hardcoded status effect icons and loads them exclusively from stateiconimginfo.lub instead. Allows full customization of buff/debuff icons through lua.
+      replace : 禁用硬編碼狀態圖示並僅從 stateiconimginfo.lub 載入它們。允許您透過 lua 完全自定義 buff/debuff 圖示。
+
+    - find : Add custom DLLs
+      replace : 新增自定義 DLL
+
+    - find : Injects custom DLL loading into the client at startup. Specify the DLL filename and exported functions to call. Used for adding custom functionality like anticheat, custom rendering, or server-specific features.
+      replace : 在啟動時將自定義 DLL 的負載注入到客戶端。指定 DLL 檔案的名稱和要呼叫的匯出函式。用於新增自定義功能，例如反作弊、自定義渲染或特定於伺服器的功能。
+
+    - find : Hide build info
+      replace : 隱藏構建資訊
+
+    - find : "Hides the client's build date, time, and version information by zeroing out all related strings. Prevents players from seeing which exact client version the server uses."
+      replace : "透過將所有相關字串設定為零來隱藏客戶端的構建日期、時間和版本。防止玩家看到伺服器正在使用的客戶端的確切版本。"
+
+    - find : Disable camera lock
+      replace : 禁用相機鎖定
+
+    - find : Disables the per-map camera lock defined in ViewPointTable.txt, allowing free camera rotation on all maps. Useful for players who prefer manual camera control indoors and in dungeons.
+      replace : 禁用 ViewPointTable.txt 中定義的按地圖相機鎖定，允許在所有地圖上自由旋轉相機。對於喜歡在室內和地牢中手動控制攝像機的玩家很有用。
+
+    - find : Disable map signs
+      replace : 禁用地圖橫幅
+
+    - find : Disables the map name signs (location banners) that appear when entering a new map, controlled by mapInfo.lub. Removes visual clutter for players who find them distracting.
+      replace : 禁用輸入新地圖時出現的地圖名稱橫幅（位置橫幅），由 mapInfo.lub 控制。消除那些分散注意力的玩家的視覺噪音。
+
+    - find : Translate arrows to English
+      replace : 將箭頭翻譯成英語
+
+    - find : Translates the arrow symbols and menu button labels in the hotkey settings UI from Korean to English. Fixes unreadable Korean text in the shortcut key configuration window.
+      replace : 將熱鍵配置選單箭頭符號和按鈕標籤從韓語翻譯成英語。修復熱鍵設定視窗中的韓文亂碼。
+
+    - find : "Use 'identified' drops for Boss (MVP) mob"
+      replace : "使用“已識別”掉落物獲得 Boss（MVP）"
+
+    - find : "Forces items dropped by Boss (MVP) monsters to show their identified names in the drop announcement, so players can see exactly what dropped instead of 'Unknown Item'."
+      replace : "強制 Boss (MVP) 掉落的物品在掉落橫幅中顯示其已識別的名稱，以便玩家準確地看到掉落的物品，而不是“未知物品”。"
+
+    - find : Translate client
+      replace : 翻譯客戶
+
+    - find : Replaces hardcoded Korean text strings in the client with translations from a mapping file (defaults to <b>Translations_EN.yml</b>). Covers system messages, UI labels, and other text that cannot be changed through lua or txt files.
+      replace : 使用對映檔案中的翻譯替換客戶端上的硬編碼韓語文字字串（預設 <b>Translations_EN.yml</b>）。涵蓋系統訊息、UI 標籤以及其他無法透過 lua 或 txt 更改的文字。
+
+    - find : Customize Captcha Decomp size
+      replace : 自定義驗證碼解壓縮大小
+
+    - find : Changes the maximum zlib decompression buffer size for captcha images. Increase this if captcha images fail to load due to exceeding the default size limit.
+      replace : 更改驗證碼影象的最大 zlib 解壓縮緩衝區大小。如果驗證碼影象由於超出預設限制而無法載入，請增加此值。
+
+    - find : Restore Cps Dll
+      replace : 恢復 Cps DLL
+
+    - find : "Restores the loading of Cps.dll (Gravity's protection DLL) which was removed in newer clients. Only enable if your server requires this DLL. <b>WARNING:</b> Requires the 'Add custom DLLs' patch to be active; may crash without it."
+      replace : "恢復在新客戶端上刪除的 Cps.dll（重力保護 DLL）的載入。僅當您的伺服器需要此 DLL 時才啟用它。 <b>A警告：</b> 需要“新增自定義 DLL”補丁才能啟用；沒有它可能會崩潰。"
+
+    - find : DISABLE PROTECTION
+      replace : 禁用保護
+
+    - find : Disable Game Guard
+      replace : 禁用遊戲衛士
+
+    - find : "Disables nProtect GameGuard, Gravity's anti-cheat system built into Renewal clients. Required for servers since GameGuard expects Gravity's official servers and will block connections otherwise."
+      replace : "禁用 nProtect GameGuard，這是 Renewal 客戶端中內建的 Gravity 反作弊系統。伺服器上需要，因為 GameGuard 需要官方重力伺服器，否則會阻止連線。"
+
+    - find : SKIP LUB
+      replace : 跳過潤滑
+
+    - find : Skip SignBoard lubs
+      replace : 跳過招牌酒吧
+
+    - find : Skips loading of SignBoardList lub files. Useful if you do not use sign board features or want to avoid errors from missing files.
+      replace : 跳過載入 SignBoardList lub 檔案。如果您不使用橫幅功能或想要避免由於丟失檔案而導致的錯誤，則非常有用。
+
+    - find : Skip Towninfo lub
+      replace : 從 Towninfo 跳過 Lub
+
+    - find : Skips loading of Towninfo.lub file. Use this if you handle town information through other means or want to avoid errors from a missing file.
+      replace : 跳過載入 Towninfo.lub 檔案。如果您透過其他方式管理城市資訊或想要避免由於丟失檔案而導致的錯誤，請使用它。
+
+    - find : READ .txt FILE
+      replace : 讀取 .txt 檔案
+
+    - find : Always read msgstringtable.txt
+      replace : 始終閱讀 msgstringtable.txt
+
+    - find : Forces the client to load all UI messages from msgstringtable.txt on every langtype instead of using hardcoded Korean strings. Essential for English and other non-Korean servers.
+      replace : 強制客戶端從每個語言型別的 msgstringtable.txt 載入所有 UI 訊息，而不是使用硬編碼的韓語字串。對於英語和其他非韓語伺服器至關重要。
+
+    - find : Always read questid2display.txt
+      replace : 始終閱讀 questid2display.txt
+
+    - find : Forces loading of questid2display.txt on all langtypes instead of only langtype 0. Required for quest UI to display correct quest names and descriptions on non-Korean service types.
+      replace : 強制 questid2display.txt 在所有 langtype 上載入，而不僅僅是 langtype 0。 任務 UI 需要在非韓國服務型別上顯示正確的名稱和描述。
+
+    - find : PATH CUSTOMIZATION
+      replace : 路線定製
+
+    - find : Customize Default BGM file
+      replace : 自定義預設BGM檔案
+
+    - find : Changes the default background music played on the login screen from <b>bgm\01.mp3</b> to a custom MP3 file of your choice.
+      replace : 將登入螢幕上播放的預設背景音樂從 <b>bgm\01.mp3</b> 更改為自定義 MP3 檔案。
+
+    - find : Customize Iteminfo lub
+      replace : 自定義 Iteminfo lub
+
+    - find : Loads a custom lua file for item data instead of the default <b>Iteminfo*.lub</b>. Lets you use a renamed or restructured item database file.
+      replace : 載入專案資料的自定義 lua 檔案，而不是預設的 <b>Iteminfo*.lub</b>。允許您使用重新命名或重組的專案資料庫檔案。
+
+    - find : Customize AchievementList lub
+      replace : 自定義成就列表 lub
+
+    - find : Loads a custom lua file for achievement data instead of the default <b>AchievementList*.lub</b>. Useful for servers with custom achievement systems.
+      replace : 載入成就資料的自定義 lua 檔案，而不是預設的 <b>AchievementList*.lub</b>。對於具有自定義成就係統的伺服器很有用。
+
+    - find : Customize MonsterSizeEffect lub
+      replace : 自定義 MonsterSizeEffect lub
+
+    - find : Loads a custom lua file for monster size effects instead of the default <b>MonsterSizeEffect*.lub</b>. Controls which monsters display enlarged or reduced sprites.
+      replace : 載入怪物大小效果的自定義 lua 檔案，而不是預設的 <b>MonsterSizeEffect*.lub</b>。控制哪些怪物顯示放大或縮小的精靈。
+
+    - find : Customize Towninfo lub
+      replace : 自定義Towninfo lub
+
+    - find : Loads a custom lua file for town/city data instead of the default <b>Towninfo*.lub</b>. Controls warp portal labels and town information displayed on the world map.
+      replace : 載入城市資料的自定義 lua 檔案，而不是預設的 <b>Towninfo*.lub</b>。控制世界地圖上顯示的扭曲門戶標籤和城市資訊。
+
+    - find : Customize PetEvolutionCln lub
+      replace : 定製 PetEvolutionCln lub
+
+    - find : Loads a custom lua file for pet evolution data instead of the default <b>PetEvolutionCln*.lub</b>. Use when adding custom pet evolution paths.
+      replace : 載入寵物進化資料的自定義 lua 檔案，而不是預設的 <b>PetEvolutionCln*.lub</b>。新增自定義寵物進化路徑時使用它。
+
+    - find : Customize Tipbox lub
+      replace : 定製 Tipbox 潤滑脂
+
+    - find : Loads a custom lua file for the Tip Box (loading screen tips) instead of the default <b>Tipbox*.lub</b>. Allows custom loading tips for your server.
+      replace : 為提示框載入自定義 lua 檔案（載入螢幕提示），而不是預設的 <b>Tipbox*.lub</b>。允許為您的伺服器自定義載入提示。
+
+    - find : Customize CheckAttendance lub
+      replace : 自定義考勤lub
+
+    - find : Loads a custom lua file for the attendance check-in system instead of the default <b>CheckAttendance*.lub</b>. Use when customizing daily login reward data.
+      replace : 為考勤簽到系統載入自定義lua檔案，而不是預設的<b>CheckAttendance*.lub</b>。自定義每日登入獎勵資料時使用它。
+
+    - find : Customize PrivateAirplane lub
+      replace : 定製私人飛機俱樂部
+
+    - find : Loads a custom lua file for the Private Airship system instead of the default <b>PrivateAirplane*.lub</b>. Use when customizing airship destinations or teleport data.
+      replace : 為 Private Airship 系統載入自定義 lua 檔案，而不是預設的 <b>PrivateAirplane*.lub</b>。在自定義飛艇目的地或傳送資料時使用。
+
+    - find : Customize MapInfo lub
+      replace : 自定義 MapInfo lub
+
+    - find : Loads a custom lua file for map information instead of the default <b>MapInfo*.lub</b>. Controls map name banners and location data shown when entering maps.
+      replace : 載入地圖資訊的自定義 lua 檔案，而不是預設的 <b>MapInfo*.lub</b>。控制輸入​​地圖時顯示的地圖名稱橫幅和位置資料。
+
+    - find : Customize OngoingQuestInfoList lub
+      replace : 自定義 OngoingQuestInfoList lub
+
+    - find : Loads a custom lua file for ongoing quest information instead of the default <b>OngoingQuestInfoList*.lub</b>. Use when customizing the quest tracker display.
+      replace : 載入自定義 lua 檔案以獲取正在進行的任務資訊，而不是預設的 <b>OngoingQuestInfoList*.lub</b>。自定義任務跟蹤器顯示時使用此選項。
+
+    - find : Customize RecommendedQuestInfoList lub
+      replace : 自定義RecommendedQuestInfoList lub
+
+    - find : Loads a custom lua file for recommended quest data instead of the default <b>RecommendedQuestInfoList*.lub</b>. Use when customizing suggested quests shown to players.
+      replace : 載入推薦任務資料的自定義 lua 檔案，而不是預設的 <b>RecommendedQuestInfoList*.lub</b>。在自定義向玩家顯示的建議任務時使用此選項。
+
+    - find : Customize spopup lub
+      replace : 自定義彈出lub
+
+    - find : Loads a custom lua file for skill popup data instead of the default <b>spopup.lub</b>. Controls the popup text shown when hovering over skills.
+      replace : 載入技能彈出資料的自定義 lua 檔案，而不是預設的 <b>spopup.lub</b>。控制將滑鼠懸停在技能上時顯示的彈出文字。
+
+    - find : Customize ChangeMaterial lub
+      replace : 自定義 ChangeMaterial lub
+
+    - find : Loads a custom lua file for material change data instead of the default <b>ChangeMaterial.lub</b>. Controls the material/ingredient lists shown in crafting UIs.
+      replace : 載入材質更改資料的自定義 lua 檔案，而不是預設的 <b>ChangeMaterial.lub</b>。控制製作 UI 中顯示的材料/成分列表。
+
+    - find : Customize QuestClassificationInfo lub
+      replace : 自定義 QuestClassificationInfo lub
+
+    - find : Loads a custom lua file for quest classification data instead of the default <b>QuestClassificationInfo.lub</b>. Controls quest category labels and sorting in the quest window.
+      replace : 載入任務分類資料的自定義 lua 檔案，而不是預設的 <b>QuestClassificationInfo.lub</b>。控制任務視窗中的類別標籤和順序。
+
+    - find : Customize Rune\rune_desc lub
+      replace : 自定義 Rune\rune_desc lub
+
+    - find : Loads a custom lua file for rune descriptions instead of the default <b>Rune\rune_desc.lub</b>. Use when customizing rune tooltip text.
+      replace : 載入用於符文描述的自定義 lua 檔案，而不是預設的 <b>Rune\rune_desc.lub</b>。自定義符文工具提示文字時使用。
+
+    - find : Customize Rune\runeset_desc lub
+      replace : 自定義 Rune\runeset_desc lub
+
+    - find : Loads a custom lua file for rune set descriptions instead of the default <b>Rune\runeset_desc.lub</b>. Use when customizing rune set bonus tooltip text.
+      replace : 載入符文集描述的自定義 lua 檔案，而不是預設的 <b>Rune\runeset_desc.lub</b>。自定義符文集獎勵工具提示時使用它。
+
+    - find : Customize Rune\itemDecom lub
+      replace : 自定義 Rune\itemDecom lub
+
+    - find : Loads a custom lua file for rune item decomposition data instead of the default <b>Rune\itemDecom.lub</b>. Controls which items can be broken down in the rune system.
+      replace : 載入符文物品分解資料的自定義 lua 檔案，而不是預設的 <b>Rune\itemDecom.lub</b>。控制符文系統中哪些物品可以分解。
+
+    - find : Customize Rune\rune_info lub
+      replace : 自定義 Rune\rune_info lub
+
+    - find : Loads a custom lua file for rune information instead of the default <b>Rune\rune_info.lub</b>. Controls rune stats and properties displayed in the UI.
+      replace : 載入自定義 lua 檔案以獲取符文資訊，而不是預設的 <b>Rune\rune_info.lub</b>。控制 UI 中顯示的符文的統計資料和屬性。
+
+    - find : Customize Rune\runeset_info lub
+      replace : 自定義 Rune\runeset_info lub
+
+    - find : Loads a custom lua file for rune set information instead of the default <b>Rune\runeset_info.lub</b>. Controls rune set data and bonuses shown in the UI.
+      replace : 載入自定義 lua 檔案以獲取符文集資訊，而不是預設的 <b>Rune\runeset_info.lub</b>。控制 UI 中顯示的符文集資料和獎勵。
+
+    - find : Customize Rune\runeSystem_table lub
+      replace : 自定義Rune\runeSystem_table lub
+
+    - find : Loads a custom lua file for the rune system table instead of the default <b>Rune\runeSystem_table.lub</b>. Controls the master rune system configuration data.
+      replace : 為 rune 系統表載入自定義 lua 檔案，而不是預設的 <b>Rune\runeSystem_table.lub</b>。控制符文系統主設定。
+
+    - find : Customize Rune\runesystemid lub
+      replace : 自定義 Rune\runesystemid lub
+
+    - find : Loads a custom lua file for rune system IDs instead of the default <b>Rune\runesystemid.lub</b>. Controls the mapping of rune IDs used by the system.
+      replace : 載入符文系統 ID 的自定義 lua 檔案，而不是預設的 <b>Rune\runesystemid.lub</b>。控制系統使用的符文 ID 對映。
+
+    - find : Customize Rune\runesystemInfo lub
+      replace : 自定義Rune\runesystemInfo lub
+
+    - find : Loads a custom lua file for rune system display info instead of the default <b>Rune\runesystemInfo.lub</b>. Controls rune system UI labels and descriptions.
+      replace : 載入用於符文系統顯示資訊的自定義 lua 檔案，而不是預設的 <b>Rune\runesystemInfo.lub</b>。控制符文系統 UI 標籤和描述。
+
+    - find : Customize Rune\runeset_reward lub
+      replace : 自定義Rune\runeset_reward lub
+
+    - find : Loads a custom lua file for rune set rewards instead of the default <b>Rune\runeset_reward.lub</b>. Controls rune set completion reward data.
+      replace : 載入符文集獎勵的自定義 lua 檔案，而不是預設的 <b>Rune\runeset_reward.lub</b>。監控完成符文組的獎勵資料。
+
+    - find : Customize License File
+      replace : 自定義許可證檔案
+
+    - find : Changes the EULA license file path from the default <b>..\licence.txt</b> to a custom filename. Path is relative to the Data folder. Use to display your own server rules or terms of service.
+      replace : 將 EULA 許可證檔案路徑從預設的 <b>..\licence.txt</b> 更改為自定義名稱。該路徑是相對於資料資料夾的。用它來顯示您自己的規則或服務條款。
+
+    - find : Customize ClientInfo file
+      replace : 自定義ClientInfo檔案
+
+    - find : Changes the clientinfo XML filename from the default *clientinfo.xml to a custom name. Useful for maintaining multiple server configurations or using a non-standard filename.
+      replace : 將 clientinfo XML 從預設的 *clientinfo.xml 重新命名為自定義名稱。對於維護多個伺服器配置或使用非標準名稱很有用。
+
+    - find : Unlock all valid skills for homunculus and mercenary AI
+      replace : 解鎖對侏儒和僱傭兵 AI 有效的所有技能
+
+    - find : Removes the client-side restriction on which skills homunculus and mercenary AI can use, allowing all valid skills to be cast. Server-side skill availability still applies.
+      replace : 消除了客戶端對人造人和僱傭兵 AI 可以使用哪些技能的限制，允許施展所有有效技能。伺服器端技能的可用性仍然適用。
+
+    - find : SHARED BODY PALETTES
+      replace : 共享車身托盤
+
+    - find : Enable shared body palettes - Male & Female
+      replace : 啟用共享身體調色盤 - 男性和女性
+
+    - find : Uses one shared set of cloth/body palettes (body_%s_%d.pal) across all job classes while keeping male and female palettes separate. Greatly reduces the number of palette files needed.
+      replace : 對所有職業類別使用一組共享的服裝/身體調色盤 (body_%s_%d.pal)，將男性和女性調色盤分開。它大大減少了所需的調色盤檔案的數量。
+
+    - find : Enable shared body palettes - Unisex
+      replace : 啟用共享身體調色盤 - 男女通用
+
+    - find : Uses one shared set of cloth/body palettes (body_%d.pal) for all job classes and both genders. The simplest option -- minimizes palette files to just one set.
+      replace : 對所有職業類別和性別使用一組共享的服裝/身體調色盤 (body_%d.pal)。最簡單的選項——將調色盤檔案最小化為一組。
+
+    - find : SHARED HEAD PALETTES
+      replace : 共享頭托盤
+
+    - find : Enable shared head palettes - Male & Female
+      replace : 啟用共享頭部調色盤 - 男性和女性
+
+    - find : Uses one shared set of hair palettes (head_%s_%d.pal) across all hairstyles while keeping male and female palettes separate. Reduces the number of hair palette files needed.
+      replace : 對所有髮型使用一組共享的頭髮調色盤 (head_%s_%d.pal)，將男性和女性調色盤分開。減少所需的頭髮調色盤檔案的數量。
+
+    - find : Enable shared head palettes - Unisex
+      replace : 啟用共享頭板 - 男女皆宜
+
+    - find : Uses one shared set of hair palettes (head_%d.pal) for all hairstyles and both genders. The simplest option -- minimizes hair palette files to just one set.
+      replace : 對所有髮型和性別使用一組共享的頭髮調色盤 (head_%d.pal)。最簡單的選項——將頭髮調色盤檔案最小化為一組。
+
+    - find : MULTIPLE GRFS
+      replace : 多個GRF
+
+    - find : Enable Multiple GRFs ( INI )
+      replace : 啟用多個 GRF (INI)
+
+    - find : Allows loading up to 10 GRF files listed in an INI file (DATA.INI) in your client folder. GRFs are loaded in order, with earlier entries taking priority. The standard way to use multiple GRFs on servers.
+      replace : 允許載入客戶端資料夾中 INI 檔案 (DATA.INI) 中列出的最多 10 個 GRF 檔案。 GRF 按順序載入，優先考慮先前的條目。在伺服器上使用多個 GRF 的標準方法。
+
+    - find : Enable Multiple GRFs ( Embedded )
+      replace : 啟用多個 GRF（嵌入式）
+
+    - find : Embeds GRF filenames directly into the client executable instead of reading from an external INI file. You provide the GRF list at patch time and it gets baked into the exe. No DATA.INI file needed in the client folder.
+      replace : 將 GRF 的名稱直接嵌入到客戶端可執行檔案中，而不是從外部 INI 讀取它們。您在修補時提供 GRF 列表，並將其烘焙到 exe 中。客戶端資料夾中不需要 DATA.INI。
+
+
+    #==================================#
+    #        PATCHES — Env.yml         #
+    #==================================#
+
+    - find : ENVIRONMENT CUSTOMIZATION
+      replace : 環境定製
+
+    - find : HKLM To HKCU
+      replace : HKLM 飛往 HKCU
+
+    - find : Switches registry access from HKEY_LOCAL_MACHINE to HKEY_CURRENT_USER. Allows the client to save settings without admin privileges, which is required on shared or restricted PCs.
+      replace : 將登錄檔訪問許可權從 HKEY_LOCAL_MACHINE 更改為 HKEY_CURRENT_USER。允許客戶端在沒有管理員許可權的情況下儲存配置，這在共享或受限電腦上是必需的。
+
+    - find : Remove admin privilege requirement
+      replace : 刪除管理員許可權要求
+
+    - find : "Removes the client's requirement for administrator privileges, so it launches without the UAC elevation prompt. Useful for players who cannot or prefer not to run the game as admin."
+      replace : "刪除了客戶端對管理員許可權的要求，以便客戶端在沒有 UAC 提示的情況下啟動。對於不能或不想以管理員身份執行遊戲的玩家很有用。"
+
+    - find : Always load client plugins [Experimental]
+      replace : 始終載入客戶端外掛[實驗]
+
+    - find : "Forces loading of client plugins (3rd party DLLs in the plugins folder) regardless of the client's sound configuration. Normally plugins only load when sound is enabled."
+      replace : "無論聲音設定如何，都會強制載入客戶端外掛（外掛資料夾中的第三方 DLL）。通常外掛僅在啟用聲音時載入。"
+
+    - find : Disable multiple windows
+      replace : 禁用多個視窗
+
+    - find : Prevents launching more than one game client at a time on all langtypes. Blocks multi-clienting by showing an error if a second instance is opened.
+      replace : 防止在所有語言型別上一次啟動多個遊戲客戶端。如果開啟第二個例項，則透過顯示錯誤來阻止多客戶端。
+
+    - find : Customize minimum screen resolution
+      replace : 自定義最小螢幕解析度
+
+    - find : Changes the minimum allowed screen resolution from the default 1024x768 to custom values. Useful for supporting smaller resolutions on older hardware or for testing.
+      replace : 將允許的最小解析度從預設 1024x768 更改為自定義值。對於在舊硬體上支援較小的解析度或進行測試很有用。
+
+    - find : Ignore Debugger
+      replace : 忽略偵錯程式
+
+    - find : Disables the IsDebuggerPresent() anti-debug check, allowing the client to run under a debugger. Intended for development and reverse engineering only -- do not use on production clients distributed to players.
+      replace : 禁用 IsDebuggerPresent() 反除錯檢查，允許客戶端在偵錯程式下執行。僅用於開發和逆向工程——請勿用於交付給玩家的生產客戶端。
+
+    - find : Disable indoor RSW lighting
+      replace : 停用車內 RSW 照明
+
+    - find : Disables the IndoorRswTable.txt lookup that forces fixed camera angles and lighting on indoor maps. Grants free camera rotation indoors, similar to the NoCameraLock patch but specifically targeting RSW-based indoor restrictions.
+      replace : 禁用 IndoorRswTable.txt 查詢，該查詢強制在室內地圖上固定攝像機角度和照明。允許室內攝像機自由旋轉，類似於 NoCameraLock 補丁，但專門針對基於 RSW 的室內限制。
+
+    - find : Remove Premium Service text
+      replace : 從高階服務中刪除文字
+
+    - find : "Removes the \"Premium Service\" text from the character selection screen. This text is irrelevant on servers since there is no premium subscription system."
+      replace : "從角色選擇螢幕中刪除“高階服務”文字。由於沒有高階訂閱系統，因此本文與伺服器無關。"
+
+    - find : WINDOW FRAME CUSTOMIZATION
+      replace : 定製窗框
+
+    - find : Enable title buttons
+      replace : 啟用標題按鈕
+
+    - find : Adds standard Windows title bar buttons (Minimize, Maximize, Close) and the application icon to the game window. Makes the client behave like a normal window instead of a borderless frame.
+      replace : 將標準 Windows 標題欄按鈕（最小化、最大化、關閉）和應用程式圖示新增到遊戲視窗。使客戶端的行為像普通視窗而不是無邊框框架。
+
+    - find : Use Miniature title bar
+      replace : 使用縮圖標題欄
+
+    - find : Switches the game window to use a compact/miniature title bar instead of the standard-size one. Saves screen space while still showing window controls.
+      replace : 更改遊戲視窗以使用緊湊/縮圖標題欄，而不是標準尺寸的標題欄。節省螢幕空間，同時仍顯示視窗控制元件。
+
+    - find : Customize Window title
+      replace : 自定義視窗標題
+
+    - find : "Changes the text shown in the game window's title bar to a custom string. Use to display your server name instead of the default \"Ragnarok\" title."
+      replace : "將遊戲視窗標題欄中顯示的文字更改為自定義字串。使用它來顯示您的伺服器名稱，而不是預設的“Ragnarok”標題。"
+
+    - find : Enable Borderless full screen
+      replace : 啟用無邊框全屏
+
+    - find : Enables borderless fullscreen mode -- removes the window frame and borders when the game resolution matches your screen resolution. Provides a seamless fullscreen experience while allowing easy Alt-Tab.
+      replace : 啟用全屏無邊框模式 - 當遊戲解析度與您的螢幕匹配時刪除視窗框架和邊框。透過允許簡單的 Alt-Tab 提供流暢的全屏體驗。
+
+    - find : CLIENT ARGUMENTS
+      replace : 客戶的意見
+
+    - find : "Disable '1*1' arguments"
+      replace : "禁用“1*1”引數"
+
+    - find : Removes the requirement for launcher arguments (1rag1, 1sak1, etc.) so the client can be started directly by double-clicking the exe. Without this, the client refuses to launch unless opened through a patcher.
+      replace : 刪除了對啟動器引數（1rag1、1sak1 等）的要求，以便可以透過直接雙擊 exe 來啟動客戶端。如果沒有這個，客戶端將拒絕啟動，除非由修補程式開啟。
+
+    - find : "Ignore '/account:' argument"
+      replace : "忽略引數 '/account:'"
+
+    - find : "Makes the client ignore the <b>/account:</b> command-line argument. Prevents players from overriding the server's clientinfo.xml with a custom one, which could be used to redirect connections."
+      replace : "導致客戶端忽略 <b>/account:</b> 命令列引數。防止玩家使用自定義的 clientinfo.xml 覆蓋伺服器的 clientinfo.xml，該自定義可用於重定向連線。"
+
+    - find : ENABLE ICON
+      replace : 啟用圖示
+
+    - find : Restore Inbuilt App icon
+      replace : 恢復內建應用程式圖示
+
+    - find : Restores the original Ragnarok Online icon embedded in the executable instead of showing the generic Windows application icon. Fixes the missing icon in the taskbar and window title.
+      replace : 恢復嵌入在可執行檔案中的原始 Ragnarok Online 圖示，而不是顯示通用 Windows 圖示。修復工作列和視窗標題中丟失的圖示。
+
+    - find : Customize App icon
+      replace : 自定義應用程式圖示
+
+    - find : "Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</b><font>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include."
+      replace : "將應用程式圖示替換為自定義 .ico 檔案（任意大小和位深度）。對於 Win7 及更高版本，請使用 <b><font color='deepskyblue'>256x256 32 位以及 16x16 版本 </b><font>.<br><br> 較舊的客戶端僅限於 3 種圖示尺寸，因此您可能需要選擇要包含的解析度。"
+
+    - find : PRIORITY ALTERATION
+      replace : 優先順序變更
+
+    - find : Change Priority (Idle to Normal)
+      replace : 更改優先順序（空閒到正常）
+
+    - find : Raises the thread priority of the game when its window is inactive from Idle to Normal. Prevents the game from slowing down significantly when alt-tabbed or in the background.
+      replace : 當視窗空閒時，提高遊戲的執行緒優先順序，從“空閒”到“正常”。防止遊戲在切換或停留在後臺時速度減慢太多。
+
+    - find : Change Priority (Normal to High)
+      replace : 更改優先順序（普通到高）
+
+    - find : Raises the thread priority of the active game window from Normal to High. Gives the client more CPU time, which can improve performance on systems running many background applications.
+      replace : 將活動遊戲視窗的執行緒優先順序從“普通”提高到“高”。它為客戶端提供了更多的 CPU 時間，這可以提高具有許多後臺應用程式的系統的效能。
+
+
+    #==================================#
+    #      PATCHES — Network.yml       #
+    #==================================#
+
+    - find : NETWORK CUSTOMIZATION
+      replace : 網路定製
+
+    - find : Send MD5 hash packet
+      replace : 傳送帶有 MD5 雜湊值的資料包
+
+    - find : Makes the client send its own MD5 hash to the server on login for all langtypes. Used for integrity verification to detect modified client executables. Only enable if your server is configured to receive and check this packet.
+      replace : 使客戶端在登入所有語言型別時將自己的 MD5 雜湊傳送到伺服器。它用於完整性驗證和檢測修改的可執行檔案。僅當您的伺服器配置為接收並驗證此資料包時才啟用它。
+
+    - find : Disable nagle algorithm
+      replace : 禁用 Nagle 演算法
+
+    - find : Disables TCP Nagle buffering so packets are sent immediately. Reduces input lag and improves responsiveness at the cost of slightly more network traffic. Recommended for most servers.
+      replace : 禁用 Nagle TCP 緩衝，以便立即傳送資料包。減少輸入延遲並提高響應能力，但代價是增加一點網路流量。推薦用於大多數伺服器。
+
+    - find : Enable proxy support
+      replace : 啟用代理支援
+
+    - find : Ignores the IP addresses sent by the server when transitioning between login, char, and map servers. Keeps the client connecting to the address from clientinfo.xml instead. Required when playing through a proxy, VPN, or when the server reports internal LAN addresses.
+      replace : 在登入、字元和地圖伺服器之間傳遞時忽略伺服器傳送的 IP 地址。保持客戶端連線到 clientinfo.xml 的地址。透過代理、VPN 進行遊戲或伺服器報告內部 LAN 地址時需要。
+
+    - find : Fix HTTP emblem in client
+      replace : 修復客戶端上的 HTTP 標誌
+
+    - find : Fixes guild emblem loading via HTTP on clients that have the cheat defender enabled. Requires an HTTP emblem service running on your server.
+      replace : 修復了在作弊防禦程式處於活動狀態的客戶端上透過 HTTP 載入的公會徽章問題。需要在您的伺服器上執行 HTTP 徽章服務。
+
+    - find : Customize Merchant store URLs
+      replace : 自定義商戶商店 URL
+
+    - find : Changes the hardcoded URLs used for saving and loading Merchant Store (vending) data to custom ones. Requires an HTTP service on your server to handle merchant store requests.
+      replace : 將用於儲存和載入商家商店資料（自動售貨）的硬編碼 URL 更改為自定義 URL。需要您的伺服器上有 HTTP 服務來處理商家商店請求。
+
+    - find : Send client flags
+      replace : 傳送客戶端標誌
+
+    - find : "Sends the client's feature flags to the server during login, keeping client and server in sync about which features are supported. Prevents mismatches that can cause missing UI elements or broken functionality."
+      replace : "在登入期間將功能標誌從客戶端傳送到伺服器，使客戶端和伺服器在支援哪些功能方面保持同步。避免可能導致 UI 元素丟失或功能損壞的不匹配。"
+
+    - find : ENCRYPTION KEY CUSTOMIZATION
+      replace : 自定義加密金鑰
+
+    - find : Customize Packet Key (1st)
+      replace : 自定義資料包金鑰（第一）
+
+    - find : "Sets a custom value for the 1st packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other."
+      replace : "為第一個資料包加密金鑰設定自定義值。它必須與您伺服器上配置的金鑰匹配。 <b>A警告：</b> 不要與“禁用地圖資料包加密”結合使用 - 使用一種方法或另一種方法。"
+
+    - find : Customize Packet Key (2nd)
+      replace : 自定義資料包金鑰（第二）
+
+    - find : "Sets a custom value for the 2nd packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other."
+      replace : "為第二個資料包加密金鑰設定自定義值。它必須與您伺服器上配置的金鑰匹配。 <b>A警告：</b> 不要與“禁用地圖資料包加密”結合使用 - 使用一種方法或另一種方法。"
+
+    - find : Customize Packet Key (3rd)
+      replace : 自定義資料包金鑰（第三）
+
+    - find : "Sets a custom value for the 3rd packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other."
+      replace : "為第三個資料包加密金鑰設定自定義值。它必須與您伺服器上配置的金鑰匹配。 <b>A警告：</b> 不要與“禁用地圖資料包加密”結合使用 - 使用一種方法或另一種方法。"
+
+    - find : DISABLE ENCRYPTION
+      replace : 禁用加密
+
+    - find : Disable Map packet encryption
+      replace : 禁用地圖伺服器資料包加密
+
+    - find : "Disables packet obfuscation (encryption) for communication with the map server. Simplifies packet handling on servers that do not use encryption.<br> Also known as 'Skip Packet Obfuscation'."
+      replace : "禁用與地圖伺服器通訊的資料包混淆（加密）。簡化不使用加密的伺服器上的資料包處理。<br> 也稱為“跳過資料包混淆”。"
+
+    - find : Disable Login/Char packet encryption
+      replace : 禁用登入/字元包加密
+
+    - find : "Disables packet encryption for communication with the login and character servers. Required by most server emulators that do not implement Gravity's encryption handshake."
+      replace : "禁用與登入伺服器和字元伺服器通訊的資料包加密。大多數不實現 Gravity 加密握手的模擬器都需要。"
+
+    - find : Disable Login password encryption
+      replace : 在登入中禁用密碼加密
+
+    - find : "Disables password encryption in the old login packet (0x64) for langtypes 4 and 7. Required for servers using plaintext or bcrypt password authentication with these langtypes. <b>WARNING:</b> Conflicts with 'Use SSO Login Packet' -- do not enable both."
+      replace : "對於語言型別 4 和 7，禁用舊登入資料包 (0x64) 中的密碼加密。對於使用純文字密碼身份驗證或 bcrypt 與這些語言型別的伺服器是必需的。 <b>AWARNING：</b> 與“使用 SSO 登入資料包”衝突 - 不要同時啟用兩者。"
+
+
+    #==================================#
+    #       PATCHES — Sound.yml        #
+    #==================================#
+
+    - find : SOUND CUSTOMIZATION
+      replace : 聲音定製
+
+    - find : Enable 44.1 kHz audio sampling frequency
+      replace : 啟用音訊取樣率 44.1 kHz
+
+    - find : Upgrades the audio sampling rate from the default (22 kHz) to 44.1 kHz (CD quality). Improves sound effect and BGM clarity at a slight increase in memory usage.
+      replace : 將音訊取樣率從預設值 (22 kHz) 提高到 44.1 kHz（CD 質量）。提高音效和背景音樂的清晰度，同時略微增加記憶體使用量。
+
+    - find : Auto mute audio [Experimental]
+      replace : 自動靜音[實驗]
+
+    - find : "Automatically mutes all game audio when the client window loses focus (e.g., when alt-tabbed). Audio resumes when the window is active again. Experimental -- may not work with all sound configurations."
+      replace : "當客戶端視窗失去焦點時（例如按 alt-tab 鍵時），自動將所有遊戲音訊靜音。當視窗再次處於活動狀態時，音訊將恢復。實驗性的 - 可能不適用於所有聲音設定。"
+
+    - find : Disable BGM audio
+      replace : 禁用 BGM 音訊
+
+    - find : Disables background music loading from mp3NameTable.txt, preventing BGM from playing on any map. Use if you want a completely silent game or handle music through external means.
+      replace : 禁用從 mp3NameTable.txt 載入背景音樂，防止 BGM 在任何地圖上播放。如果您想要完全靜音的遊戲或透過外部方式驅動音樂，請使用它。
+
+
+    #==================================#
+    #      PATCHES — Special.yml       #
+    #==================================#
+
+    - find : SPECIAL CUSTOMIZATIONS
+      replace : 特別定製
+
+    - find : Enable Custom Shields
+      replace : 啟用自定義防護罩
+
+    - find : Enables custom shield sprites beyond the default set by loading shield definitions from lua files (similar to the Xray system). Required for servers with custom shield graphics.
+      replace : 透過從 lua 檔案載入定義來啟用超出預設設定的自定義遮蔽精靈（類似於 Xray 系統）。對於具有自定義遮蔽圖形的伺服器是必需的。
+
+    - find : Enable Custom Jobs (Reforged)
+      replace : 啟用自定義作業（重製版）
+
+    - find : Adds support for custom job classes beyond the official set. Jobs are defined via lua files in the data folder. Required for servers with custom classes like Druid or other fan-made jobs.
+      replace : 新增對官方集合之外的自定義作業類別的支援。作業是透過資料資料夾中的 lua 檔案定義的。對於具有自定義類（如 Druid 或其他社群製作的作業）的伺服器是必需的。
+
+    - find : Enable Custom Homunculi
+      replace : 啟用自定義 Homunculi
+
+    - find : "Enables custom homunculus types beyond the official set using lua files. Uses the same <b>'ReqJobName'</b> function as custom jobs, so no extra configuration files are needed beyond the job lua."
+      replace : "使用 lua 檔案啟用官方設定之外的自定義侏儒型別。它使用與自定義作業相同的 <b>'ReqJobName'</b> 函式，因此除了作業的 lua 之外不需要其他配置檔案。"
+
+    - find : "Add Chris' lua overrides [Experimental]"
+      replace : "新增 lua 覆蓋，由 Chris [實驗]"
+
+    - find : "Loads additional lua override files by llchrisll that extend and patch the client's existing lua tables and functions. Adds quality-of-life improvements and fixes. See <a href=\"https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua\">documentation</a> for the full list of changes. Experimental."
+      replace : "載入由 llchrisll 製作的附加 lua 覆蓋檔案，這些檔案擴充套件和修補客戶端現有的 lua 表和函式。增加生活質量的改進和修復。有關更改的完整列表，請參閱 <a href=\"https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua\"> 文件</a>。實驗性的。"
+
+    - find : Allow AP Bar for all Jobs
+      replace : 允許所有作業使用 AP Bar
+
+    - find : Displays the AP (Activity Points) bar for all job classes, not just 4th jobs. Internally treats every class as a 4th job for the AP gauge check. Useful for servers that give AP to all classes.
+      replace : 顯示所有工作類別的 AP（活動點）欄，而不僅僅是第 4 個工作。在內部，它將每個類別視為 AP 計量表檢查的第四項工作。對於為所有類別提供 AP 的伺服器很有用。
+
+    - find : Remove the limit of max number displayed in damage/heal
+      replace : 取消傷害/治療中顯示的最大數量上限
+
+    - find : Removes the cap on displayed damage, healing, and other floating numbers. Without this, very large numbers get clamped to a maximum display value. Required for high-rate servers with large damage output.
+      replace : 取消了顯示的傷害、治療和其他浮動數字的上限。如果沒有這個，非常大的數字將被限制在最大顯示值。對於具有大量損壞輸出的高速率伺服器來說是必需的。
+
+    - find : SKILL CUSTOMIZATIONS
+      replace : 技能定製
+
+    - find : Enable Custom Player skills [Experimental]
+      replace : 啟用自定義玩家技能[實驗]
+
+    - find : Enables custom player skills beyond the official skill list by loading definitions from lua files. Required for servers that add new skills. Experimental -- may require careful lua configuration.
+      replace : 透過從 lua 檔案載入定義，啟用官方列表之外的自定義玩家技能。對於新增新技能的伺服器來說是必需的。實驗性的——可能需要仔細的 lua 配置。
+
+    - find : Enable Custom Homunculus skills [Experimental]
+      replace : 啟用自定義 Homunculus 技能 [實驗]
+
+    - find : Enables custom homunculus skills beyond the official list by loading definitions from lua files. Required for servers that add new homunculus abilities. Experimental.
+      replace : 透過從 lua 檔案載入定義，啟用官方列表之外的自定義小人技能。為小矮人新增新功能的伺服器所必需的。實驗性的。
+
+    - find : Enable Custom Mercenary skills [Experimental]
+      replace : 啟用自定義僱傭兵技能[實驗]
+
+    - find : Enables custom mercenary skills beyond the official list by loading definitions from lua files. Required for servers that add new mercenary abilities. Experimental.
+      replace : 透過從 lua 檔案載入定義，啟用官方列表之外的自定義僱傭兵技能。為僱傭兵新增新技能的伺服器所必需的。實驗性的。
+
+
+    #==================================#
+    #         PATCHES — UI.yml         #
+    #==================================#
+
+    - find : UI CUSTOMIZATION
+      replace : 使用者介面定製
+
+    - find : Load GRF via Slash Command
+      replace : 透過 Slash 命令載入 GRF
+
+    - find : Adds a configurable slash command (default /greyworld) that loads a specified GRF archive at runtime via CFileMgr::AddPak. Typing the command toggles the GRF on/off with chat feedback. The state persists across sessions via the registry. Assets become available on the next map change.
+      replace : 新增一個可配置的斜線命令（預設為 /greyworld），該命令在執行時透過 CFileMgr::AddPak 載入指定的 GRF。鍵入命令可透過聊天反饋開啟/關閉 GRF。狀態透過註冊在會話之間持續存在。這些資源將在下一次地圖更改時變得可用。
+
+    - find : Allow shortcuts in WINE [Experimental]
+      replace : 允許 WINE 中的快捷方式 [實驗]
+
+    - find : Fixes keyboard shortcut handling when running the client under Wine (Linux/macOS). Experimental -- may not work on all Wine versions or configurations.
+      replace : 修復了在 Wine (Linux/macOS) 下執行客戶端時鍵盤快捷鍵的處理。實驗性的——可能不適用於所有 Wine 版本或配置。
+
+    - find : Customize missing launcher message
+      replace : 自定義缺少的啟動器訊息
+
+    - find : "Customizes the error message shown when the client is launched without a patcher. By default the message is blank -- use this to show a helpful message like \"Please use the patcher to start the game.\""
+      replace : "自定義在沒有修補程式的情況下啟動客戶端時顯示的錯誤訊息。預設情況下，該訊息為空 - 使用它來顯示有用的訊息，例如“請使用補丁程式啟動遊戲。”"
+
+    - find : Use Tilde for Matk
+      replace : 對 Matk 使用重音
+
+    - find : Displays Matk as a range using the tilde <b>(~)</b> symbol (e.g., 100~150) instead of using the plus <b>(+)</b> sign (e.g., 100+50) in the Stats Window. Matches the display style many players are familiar with.
+      replace : 在統計視窗中使用波形符 <b>(~)</b>（例如 100~150）而不是加號 <b>(+)</b>（例如 100+50）將 Matk 顯示為範圍。符合很多玩家習慣的顯示風格。
+
+    - find : Disable Swear Filter
+      replace : 禁用髒話過濾器
+
+    - find : Disables the client-side chat filter that censors words listed in <b>manner.txt</b>. Filtered words will display normally in chat instead of being replaced with asterisks.
+      replace : 禁用審查 <b>manner.txt</b> 中列出的單詞的客戶端聊天過濾器。過濾後的單詞將正常顯示在聊天中，而不是被星號替換。
+
+    - find : Skip service selection screen
+      replace : 跳過服務選擇螢幕
+
+    - find : Skips the service selection screen and goes straight to the login window. Ideal for servers that only have one service and do not need the selection step.
+      replace : 跳過服務選擇螢幕並直接進入登入視窗。非常適合具有單一服務並且不需要該選擇步驟的伺服器。
+
+    - find : "Use 'Opening' for service selection"
+      replace : "使用“開放”進行服務選擇"
+
+    - find : "Makes the 'Opening' button on the new-style login screen return to the service selection screen. Useful if players need to switch between multiple services listed in clientinfo.xml."
+      replace : "使新型登入介面上的“開啟”按鈕返回到服務選擇介面。如果玩家需要在 clientinfo.xml 中列出的多個服務之間切換，則非常有用。"
+
+    - find : Use normal guild brackets
+      replace : 使用普通的括號
+
+    - find : "Replaces the Japanese-style guild name brackets used on langtype 0 with standard square brackets [ ]. Prevents display issues with guild names on English clients."
+      replace : "將 langtype 0 中用於公會名稱的日式括號替換為標準方括號 [ ]。避免英文客戶端上公會名稱的顯示問題。"
+
+    - find : "'@ Bug fix'"
+      replace : "“@錯誤修復”"
+
+    - find : "Fixes a client bug that prevents typing the @ symbol in the chat window. Essential for servers that use @ as the prefix for GM commands (e.g., @warp, @item)."
+      replace : "修復了阻止在聊天視窗中輸入 @ 符號的客戶端錯誤。對於使用 @ 作為 GM 命令字首的伺服器（例如 @warp、@item）至關重要。"
+
+    - find : Use official login BG
+      replace : 使用官方登入BG
+
+    - find : Forces the official Gravity login background images to display on all langtypes. Without this, some langtypes show a blank or different background.
+      replace : 強制在所有語言型別上顯示官方 Gravity 登入背景影象。如果沒有這個，某些語言型別會顯示空白或不同的背景。
+
+    - find : Remove Hourly announcement
+      replace : 刪除每小時廣告
+
+    - find : Removes the hourly popup announcements about game rating and play time reminders. These are Korean regulatory requirements that are irrelevant on servers.
+      replace : 消除每小時彈出的遊戲評級廣告和遊戲時間提醒。它們與韓國對伺服器的監管要求無關。
+
+    - find : Enable flag emoticons
+      replace : 啟用標記表情符號
+
+    - find : Unlocks country flag emoticons for all langtypes. Requires a text file mapping flag constants to numbers 1-9 to define which flags are available.
+      replace : 解鎖所有語言型別的國旗表情符號。需要一個將標誌常量對映到數字 1-9 的文字檔案來定義哪些可用。
+
+    - find : Allow blank space in guild name
+      replace : 公會名稱中允許有空格
+
+    - find : "Allows spaces in guild names when creating a guild with <b>/guild \"Spaced Name\"</b>. By default, the client blocks space characters in guild names."
+      replace : "使用 <b>/guild \"Spaced Name\"</b> 建立公會時，允許在公會名稱中使用空格。預設情況下，客戶端會阻止行會名稱中的空格。"
+
+    - find : Custom inventory limit
+      replace : 自定義庫存限制
+
+    - find : "Changes the maximum number of items that can be displayed in the inventory window. Must match the server-side inventory limit (MAX_INVENTORY in rAthena) or items beyond the limit will not appear."
+      replace : "更改可在庫存視窗中顯示的最大專案數。它必須符合伺服器端限制（rAthena 中的 MAX_INVENTORY），否則超出限制的專案將不會出現。"
+
+    - find : Change limit for cash inventory expanding value
+      replace : 單位現金庫存擴張價值變更限額
+
+    - find : "Raises the maximum number of items that can be added through cash inventory expansion from the default 100 up to 999,999. Server-side adjustment may be required to match."
+      replace : "透過現金庫存擴充套件可新增的最大商品數量從預設的 100 增加到 999,999。可能需要伺服器端調整來匹配。"
+
+    - find : Always use email for Char Deletion
+      replace : 始終使用電子郵件刪除字元
+
+    - find : "Requires the account's email address as the confirmation password when deleting a character, on all langtypes. Adds an extra layer of protection against accidental or unauthorized character deletion."
+      replace : "在所有語言型別上刪除字元時，需要帳戶電子郵件地址作為確認密碼。新增額外的保護層，防止意外或未經授權的刪除。"
+
+    - find : Customize vending limit
+      replace : 自定義售貨限額
+
+    - find : "Changes the maximum zeny price a player can set per item in a vending shop. Default is 1 billion zeny. Adjust to match your server's economy or zeny cap."
+      replace : "更改玩家可以在自動售貨店中為每件商品設定的最高價格（以 zeny 為單位）。預設為 10 億澤尼。根據伺服器的經濟性或 zeny 上限進行調整。"
+
+    - find : No Help Message on Login
+      replace : 登入時沒有幫助資訊
+
+    - find : Suppresses the help/tutorial popup that appears after logging in on certain langtypes. Reduces clutter for returning players who do not need the tutorial.
+      replace : 禁止在某些語言型別上登入後出現幫助/教程彈出視窗。為已經瞭解遊戲且不需要教程的玩家減少噪音。
+
+    - find : Hide World View Interface
+      replace : 隱藏世界檢視介面
+
+    - find : Hides the World View (full map overview) button normally shown at the top-right of the screen. Useful for servers that do not support the world map feature or want a cleaner UI.
+      replace : 隱藏通常位於右上角的世界檢視按鈕。對於不支援世界地圖功能或想要更清晰的 UI 的伺服器很有用。
+
+    - find : Close cutin on Esc key
+      replace : 使用 Esc 鍵關閉角質
+
+    - find : Allows players to dismiss NPC cutin (portrait) images by pressing the ESC key. Without this, cutins can only be closed by the NPC script itself.
+      replace : 允許玩家透過按 ESC 關閉cutins（NPC肖像影象）。如果沒有這個，角質只能從NPC自己的指令碼中關閉。
+
+    - find : 'Enable "Notice" email section'
+      replace : '啟用電子郵件的“通知”部分'
+
+    - find : 'Enables the "Notice" tab in the Renewal mail window, allowing server administrators to send bulletin-style announcements that appear in players'' mailboxes as special notices.'
+      replace : '啟用續訂郵件視窗中的“通知”選項卡，允許管理員傳送時事通訊風格的公告，這些公告在玩家的郵箱中顯示為特別通知。'
+
+    - find : NPC Dialog Scroll
+      replace : 在 NPC 對話方塊中滾動
+
+    - find : Allows scrolling through NPC dialog text even when a selection menu is displayed. Without this, the dialog locks when choices appear and players cannot review previous text.
+      replace : 即使顯示選擇選單，您也可以滾動 NPC 對話文字。如果沒有這個，當選項出現時對話就會掛起，並且玩家無法檢視之前的文字。
+
+    - find : Move Item Count Upwards
+      replace : 向上移動專案計數器
+
+    - find : Moves the item quantity number upwards in the Shortcut Window so it visually aligns with skill level numbers. A cosmetic fix for cleaner-looking shortcut bars.
+      replace : 在快捷視窗中向上移動專案數量編號，使其在視覺上與技能級別編號對齊。修復了快捷欄更整潔的問題。
+
+    - find : Customize fade in/out delay
+      replace : 自定義淡入/淡出延遲
+
+    - find : Changes the duration of the screen fade-in/fade-out effect when warping within the same map. Set to 0 for instant transitions, or increase for a smoother visual effect.
+      replace : 更改在同一地圖內扭曲時螢幕淡入/淡出效果的持續時間。將其設定為 0 以實現即時過渡，或將其調高以獲得更平滑的視覺效果。
+
+    - find : Remove Jobs from Booking Window
+      replace : 從預訂視窗刪除職位
+
+    - find : "Removes specific job classes from the Party Booking (recruitment) window's job filter list. Useful for hiding disabled or unreleased classes from the party finder UI."
+      replace : "從“聚會預訂”視窗的作業過濾器列表中刪除特定作業類別。對於從聚會查詢器 UI 中隱藏禁用或未釋出的類很有用。"
+
+    - find : "Change Deletion time to relative "
+      replace : "將移除時間更改為相對時間"
+
+    - find : "Shows character deletion wait time as a countdown (e.g., \"23h 45m remaining\") instead of an absolute date/time. More intuitive for players waiting to confirm a deletion."
+      replace : "將刪除字元的等待時間顯示為倒計時（例如“剩餘 23 小時 45 分鐘”）而不是絕對日期/時間。對於等待確認擊殺的玩家來說更加直觀。"
+
+    - find : Restore chat focus
+      replace : 恢復聊天焦點
+
+    - find : Restores keyboard input focus to the chat box after clicking with the left mouse button. Fixes the issue where clicking in the game world causes the chat input to lose focus.
+      replace : 單擊左鍵後將鍵盤輸入焦點恢復到聊天框。修復了點選遊戲世界導致聊天失去焦點的問題。
+
+    - find : Disable equipment preview
+      replace : 禁用團隊預覽
+
+    - find : Removes the equipment preview button from item description windows. Use if the preview feature causes issues or is not desired on your server.
+      replace : 從專案描述視窗中刪除裝置預覽按鈕。如果預覽功能有問題或您的伺服器不需要預覽功能，請使用它。
+
+    - find : Hide Zero Date in Guild Window
+      replace : 在公會視窗中隱藏零日期
+
+    - find : "Hides the placeholder date \"1969-01-01\" shown for guild members whose join date is unknown or unset. Prevents confusing epoch dates from appearing in the guild member list."
+      replace : "隱藏為加入日期未知或未定義的公會成員顯示的佔位符日期“1969-01-01”。防止成員列表中出現令人困惑的紀元日期。"
+
+    - find : Allow all items in Shortcut
+      replace : 允許快捷方式中的所有專案
+
+    - find : Allows any item type to be placed on the shortcut bar, not just consumables and equipment. Makes it easy to quick-access items for trading, crafting, or other purposes.
+      replace : 允許您在快捷欄中放置任何型別的物品，而不僅僅是消耗品和裝置。方便快速訪問用於交易、製作或其他目的的物品。
+
+    - find : Hide in-game windows
+      replace : 隱藏遊戲內視窗
+
+    - find : Hides specific in-game UI windows by their internal Window IDs, defined in a YAML configuration file. Useful for removing unused or unwanted UI elements like the navigation window or tip box.
+      replace : 根據 YAML 檔案中定義的內部視窗 ID 隱藏特定的遊戲內 UI 視窗。對於刪除未使用或不需要的 UI 元素（例如導航視窗或提示框）非常有用。
+
+    - find : Enable WoE Flag Animation
+      replace : 啟用 WoE 標誌動畫
+
+    - find : Restores the animated WoE (War of Emperium) guild flags that Gravity disabled in later client updates. Brings back the waving flag visuals on castle maps.
+      replace : 恢復重力在以後的更新中禁用的 WoE（帝國之戰）動畫公會旗幟。帶回城堡地圖上飄揚的旗幟。
+
+    - find : Restore Battleground UI
+      replace : 恢復戰場使用者介面
+
+    - find : Restores the Battleground navigation button and Entry Queue UI that were hidden in newer clients. Required for servers that use the Battleground system.
+      replace : 恢復新客戶端中隱藏的戰場導航按鈕和進入佇列 UI。使用戰場系統的伺服器需要。
+
+    - find : Hide Item bar
+      replace : 隱藏專案欄
+
+    - find : Hides the Shortcut Item Bar toggle buttons (Open/Close) from the game interface. Use for a cleaner UI if the shortcut bar controls are not needed.
+      replace : 隱藏介面快捷方式項欄中的切換按鈕（開啟/關閉）。如果不需要快捷欄控制元件，請使用它來獲得更清晰的 UI。
+
+    - find : Disable Doram
+      replace : 停用多拉姆
+
+    - find : Removes the Doram race option from the character creation screen. Use on servers that do not support the Doram race to avoid confusion.
+      replace : 從角色建立螢幕中刪除多拉姆種族選項。在不支援 Doram 競賽的伺服器上使用此選項以避免混淆。
+
+    - find : Hide Probability UI
+      replace : 隱藏機率使用者介面
+
+    - find : Hides the item probability/drop rate window from the UI. Use on servers that do not implement the official probability display system or prefer to keep drop rates hidden.
+      replace : 隱藏 UI 專案機率/掉落率視窗。在未實現官方機率顯示系統或喜歡隱藏掉落率的伺服器上使用它。
+
+    - find : Fix NPC dialogue Select Menu Reset
+      replace : 修復 NPC 對話方塊選擇選單的重置
+
+    - find : "Fixes a bug where the NPC dialogue select menu resets its scroll position unexpectedly. Keeps the menu at the player's current selection when the dialog updates."
+      replace : "修復了 NPC 對話方塊的選擇選單意外重置其滾動位置的錯誤。當對話重新整理時，將選單保留為玩家當前的選擇。"
+
+    - find : Fix NPC dialogue Select Menu Width Expansion
+      replace : 修復 NPC 選擇選單寬度擴充套件問題
+
+    - find : "Fixes the NPC select menu becoming excessively wide when options contain color codes (^RRGGBB). Corrects the width calculation to ignore color tag characters."
+      replace : "修復了當選項包含顏色程式碼 (^RRGGBB) 時 NPC 選擇選單變得過寬的問題。修復寬度計算以忽略顏色標籤中的字元。"
+
+    - find : Restore Old NPC Select Menu Behavior
+      replace : 恢復舊的 NPC 選擇選單行為
+
+    - find : "Restores the classic NPC select menu behavior where a scrollbar appears when options exceed the visible area, instead of the newer behavior that expands the dialog window height to fit all options."
+      replace : "恢復經典的 NPC 選擇選單行為，即當選項超出可見區域時出現捲軸，而不是擴充套件對話方塊高度以容納所有選項的新行為。"
+
+    - find : Fix loading shortcuts / skill bar state
+      replace : 修復快捷方式/技能欄狀態載入
+
+    - find : Fixes a bug where shortcut bar items and skill bar positions reset every time you log in or change maps. Ensures your hotkey layout is properly saved and restored.
+      replace : 修復了每次登入或更改地圖時都會重置快捷欄專案和技能欄位置的錯誤。確保正確儲存和恢復您的熱鍵佈局。
+
+    - find : Change GoldPC Maximum Points Limit
+      replace : 更改 GoldPC 積分上限
+
+    - find : "Changes the maximum Gold PC point cap from the hardcoded limit of 300 to a custom value (up to 99,999). Must be paired with a matching server-side change in rAthena's battle.cpp."
+      replace : "將最大 Gold PC 積分上限從硬編碼限制 300 更改為自定義值（最多 99,999）。它必須伴隨 rAthena 的 Battle.cpp 中的等效伺服器端更改。"
+
+    - find : Format Barter Zeny with Commas
+      replace : 用逗號格式化 Zeny del Barter
+
+    - find : "Formats zeny amounts in the Barter shop window with thousand separators (e.g., 1,000,000 z instead of 1000000 z). Makes large prices much easier to read at a glance."
+      replace : "使用千位分隔符格式化 Barter 商店視窗中的 zeny 金額（例如 1,000,000 z 而不是 1000000 z）。它使大價格更容易一目瞭然。"
+
+    - find : CASE INSENSITIVE SEARCH
+      replace : 不區分大小寫的搜尋
+
+    - find : Case-Insensitive storage search
+      replace : 不區分大小寫的儲存搜尋
+
+    - find : "Makes the storage window search ignore uppercase/lowercase differences, so searching \"blue gem\" also finds \"Blue Gem\". Much more convenient for finding items."
+      replace : "使得儲存視窗搜尋忽略大小寫差異，因此搜尋“blue gem”也會找到“Blue Gem”。查詢物品更加方便。"
+
+    - find : Case-Insensitive cash shop search
+      replace : 商城搜尋不區分大寫字母
+
+    - find : Makes the Cash Shop search ignore uppercase/lowercase differences, so items can be found regardless of how you capitalize the search term.
+      replace : 使商城搜尋忽略大小寫差異，因此無論搜尋詞的大小寫如何，都會找到專案。
+
+    - find : GRAVITY IMAGE REMOVAL
+      replace : 從重力中刪除影象
+
+    - find : Remove gravity ads
+      replace : 刪除重力廣告
+
+    - find : "Removes Gravity's promotional advertisement images from the login screen background. Keeps the login screen clean for your server."
+      replace : "從登入螢幕背景中刪除 Gravity 宣傳影象。保持伺服器的登入螢幕乾淨。"
+
+    - find : Remove gravity logo
+      replace : 刪除重力標誌
+
+    - find : Removes the Gravity company logo from the login screen background. Useful for servers that want a custom-branded login experience.
+      replace : 從登入螢幕背景中刪除 Gravity 公司徽標。對於想要使用自己的品牌登入體驗的伺服器非常有用。
+
+    - find : FONT CUSTOMIZATION
+      replace : 字型定製
+
+    - find : Customize Font name
+      replace : 自定義字型名稱
+
+    - find : Changes the game font to a custom font of your choice for all langtypes. If the chosen font does not support the required character set, Windows will fall back to a compatible font automatically.
+      replace : 將所有語言型別的遊戲字型更改為自定義字型。如果所選字型不支援所需的字符集，Windows 將自動回退到相容字型。
+
+    - find : Customize Font height (Character)
+      replace : 自定義字型高度（字元）
+
+    - find : Sets the height of all in-game fonts to a custom value measured in character height units. Use to make text larger or smaller across the entire UI.
+      replace : 將所有遊戲內字型的高度設定為以字元高度單位測量的自定義值。使用它可以放大或縮小整個 UI 中的文字。
+
+    - find : Customize Font Height (Cell)
+      replace : 自定義字型高度（單元格）
+
+    - find : Sets the height of all in-game fonts to a custom value measured in cell height units. An alternative sizing method to Character Height for finer control.
+      replace : 將所有遊戲內字型的高度設定為以單元格高度單位測量的自定義值。字元高度的替代尺寸調整方法，可實現更精細的控制。
+
+    - find : Customize Font Height (Offset)
+      replace : 自定義字型高度（偏移）
+
+    - find : Adds a fixed offset to all font heights, making every font in the UI uniformly larger (positive values) or smaller (negative values) without overriding individual sizes.
+      replace : 為所有字型高度新增固定偏移量，使每個 UI 字型統一變大（正值）或變小（負值），而不會覆蓋各個尺寸。
+
+    - find : Enable Font Height Limits
+      replace : 啟用字型高度限制
+
+    - find : Clamps all font heights to minimum and maximum values you specify. Prevents fonts from becoming too small to read or too large for the UI layout.
+      replace : 將所有字型高度限制為您指定的最小值和最大值。防止字型變得太小而無法閱讀或太大而無法適應 UI 佈局。
+
+    - find : Customize Font Weight (All)
+      replace : 自定義字型粗細（全部）
+
+    - find : "Changes the boldness (weight) of all fonts -- both normal and bold -- to a single custom value. Values range from 100 (thin) to 900 (heavy), with 400 being normal and 700 being bold."
+      replace : "將所有字型（正常字型和粗體字型）的粗體粗細更改為單個自定義值。值範圍從 100（細）到 900（粗），其中 400 為正常，700 為粗體。"
+
+    - find : Customize Font Weight (Normal)
+      replace : 自定義字型粗細（正常）
+
+    - find : Changes the boldness (weight) of normal-weight fonts only. Does not affect fonts already marked as bold. Use to make regular UI text thinner or thicker.
+      replace : 僅更改正常粗細字型的粗體（粗細）。它不會影響那些已經標記為粗體的內容。使用它可以使常規 UI 文字變薄或變厚。
+
+    - find : Customize Font Weight (Bold)
+      replace : 自定義字型粗細（粗體）
+
+    - find : Changes the boldness (weight) of bold-weight fonts only. Does not affect normal-weight fonts. Use to make bold UI text heavier or lighter.
+      replace : 僅更改具有粗體粗細的字型的粗體（粗細）。不影響正常體重來源。使用它可以使粗體 UI 文字更重或更輕。
+
+    - find : Customize Font Weight (Offset)
+      replace : 自定義字型粗細（偏移）
+
+    - find : Adds a fixed offset to all font weights, making every font uniformly bolder (positive values) or thinner (negative values) without overriding individual weight settings.
+      replace : 為所有字型粗細新增固定偏移量，使每種字型統一更粗（正）或更細（負），而不覆蓋各個粗細。
+
+    - find : Customize Font charset
+      replace : 自定義字型字符集
+
+    - find : Overrides the character set (charset) used for all fonts to a custom value. Use to force a specific encoding like ANSI (0), Baltic (186), or UTF-8 when the default charset causes display issues.
+      replace : 使用自定義值覆蓋所有字型使用的字符集 (charset)。當預設字符集導致顯示問題時，使用它強制使用特定編碼，例如 ANSI (0)、Baltic (186) 或 UTF-8。
+
+    - find : IGNORE ERRORS
+      replace : 忽略錯誤
+
+    - find : Ignore Resource errors
+      replace : 忽略資源錯誤
+
+    - find : Suppresses most error popups for missing resources (sprites, textures, models, etc.) and redirects them to the debug output instead. The client will try to continue running, but missing files may still cause visual glitches or crashes.
+      replace : 抑制大多數因缺少資源（精靈、紋理、模型等）而導致的錯誤彈出視窗，並將它們重定向到除錯輸出。客戶端將嘗試繼續執行，但丟失的檔案仍可能導致視覺故障或崩潰。
+
+    - find : Ignore Palette errors
+      replace : 忽略調色盤錯誤
+
+    - find : Suppresses error popups for missing palette (.pal) files and redirects them to debug output. Useful when using custom jobs or hairstyles where not all palette combinations exist yet.
+      replace : 抑制缺少調色盤 (.pal) 檔案的錯誤彈出視窗，並將其重定向到除錯輸出。當使用尚未存在所有調色盤組合的自定義作業或髮型時非常有用。
+
+    - find : Ignore Lua errors
+      replace : 忽略 Lua 錯誤
+
+    - find : "Suppresses lua runtime error popups (e.g., \"attempt to call nil value\") and redirects them to debug output. Prevents the client from halting on non-critical lua errors in custom scripts."
+      replace : "抑制 lua 執行時錯誤彈出視窗（例如“嘗試呼叫 nil 值”）並將其重定向到除錯輸出。防止客戶端因自定義指令碼中的非關鍵 lua 錯誤而崩潰。"
+
+    - find : Ignore Quest errors
+      replace : 忽略任務錯誤
+
+    - find : "Suppresses quest-related error popups (e.g., \"Not found Quest Info = XXXX\") and redirects them to debug output. Useful when the server has quests that are not yet defined in the client's quest lua files."
+      replace : "抑制與任務相關的錯誤彈出視窗（例如“未找到任務資訊 = XXXX”）並將其重定向到除錯輸出。當伺服器有尚未在客戶端的任務 lua 檔案中定義的任務時很有用。"
+
+    - find : Ignore Entry Queue errors
+      replace : 忽略進入佇列錯誤
+
+    - find : Suppresses Entry Queue error popups and redirects them to debug output. Useful if the Battleground or instance queue system triggers errors on your server configuration.
+      replace : 抑制條目佇列中的錯誤彈出視窗並將它們重定向到除錯輸出。如果戰場或例項佇列系統觸發伺服器配置錯誤，則非常有用。
+
+    - find : MSGBOX CUSTOMIZATIONS
+      replace : MSGBOX 定製
+
+    - find : Change MessageBox to Beep
+      replace : 將訊息框更改為蜂鳴聲
+
+    - find : "Replaces all error/warning message popups with a system beep sound instead. The client will not pause for user input -- it plays a sound and continues running."
+      replace : "將所有錯誤/警告彈出視窗替換為系統蜂鳴聲。客戶端不會停止等待使用者輸入——它會播放聲音並繼續執行。"
+
+    - find : Show icon in MessageBox
+      replace : 在訊息框中顯示圖示
+
+    - find : "Adds an icon (error, warning, info, etc.) to message box popups that normally show only plain text. Makes it easier to distinguish between different types of client messages."
+      replace : "向通常僅顯示純文字的訊息框彈出視窗新增圖示（錯誤、警告、資訊等）。它可以更輕鬆地區分不同型別的客戶訊息。"
+
+    - find : Disable MessageBoxes
+      replace : 禁用訊息框
+
+    - find : "Completely disables all message box popups in the client. No error, warning, or info dialogs will appear. Use with caution -- errors will be silently ignored and may cause unexpected behavior."
+      replace : "完全禁用客戶端上的所有訊息框彈出視窗。不會出現錯誤、警告或資訊對話方塊。謹慎使用——錯誤將被默默地忽略，並可能導致意外的行為。"
+
+
+    #==================================#
+    #       PATCHES — Window.yml       #
+    #==================================#
+
+    - find : BASIC BUTTON VISIBILITY
+      replace : 基本按鈕可見性
+
+    - find : Hide Buttons (New UI)
+      replace : 隱藏按鈕（新 UI）
+
+    - find : Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Useful for removing buttons for features your server does not support.
+      replace : 隱藏基本資訊視窗（新樣式 UI）中 HP/SP 欄下方的選定按鈕。對於刪除伺服器不支援的功能按鈕很有用。
+
+    - find : Show Buttons (New UI)
+      replace : 顯示按鈕（新使用者介面）
+
+    - find : Restores selected hidden buttons below the HP/SP bars in the Basic Info Window (new UI style). Use to bring back buttons that were removed in newer client versions.
+      replace : 恢復基本資訊視窗（新樣式 UI）中 HP/SP 條下方選定的隱藏按鈕。使用它可以恢復在新版本的客戶端中刪除的按鈕。
+
+    - find : CHARACTER CREATION
+      replace : 角色建立
+
+    - find : Customize new Char Name field height
+      replace : 自定義新字元中名稱欄位的高度
+
+    - find : Changes the height of the character name input field in the new character creation dialog. Adjust if the default size clips text or looks misaligned with custom fonts.
+      replace : 更改新建立對話方塊中角色名稱輸入欄位的高度。如果預設大小裁剪文字或看起來與自定義字型不一致，請調整它。
+
+    - find : Increase char create Hair limits
+      replace : 增加碳生成的頭髮限制
+
+    - find : Raises the maximum hairstyle and hair color options available during character creation to custom values. Required for servers with more hair options than the default client supports.
+      replace : 將角色建立期間可用的最大發型和顏色提高到自定義值。對於毛髮選項多於客戶端預設支援的伺服器來說是必需的。
+
+    - find : Customize job id in char create dialog
+      replace : 在角色建立對話方塊中自定義作業 ID
+
+    - find : "Overrides the default starting job ID sent in the character creation packet. Use when your server starts new characters as a different class than Novice (e.g., Super Novice or a custom job)."
+      replace : "覆蓋角色建立包中傳送的預設初始作業 ID。當您的伺服器在新手以外的類別中啟動新角色時（例如超級新手或自定義工作），請使用此選項。"
+
+    - find : Fix latest new char window
+      replace : 修復新視窗最近的字元建立
+
+    - find : Fixes visual issues in the latest character creation window, including a misaligned background image and off-center window positioning. Recommended for a clean character creation experience.
+      replace : 修復了最新角色建立視窗中的視覺問題，包括背景影象未對齊和視窗偏離中心位置。推薦用於乾淨的角色建立體驗。
+
+    - find : CHARACTER CREATION (DORAM)
+      replace : 角色建立（多拉姆）
+
+    - find : Customize second job id in char create dialog
+      replace : 在角色建立對話方塊中自定義第二個作業 ID
+
+    - find : Replaces the Doram race slot in the character creation window with a custom job ID of your choice. Use to offer an alternative race or class in the second creation slot.
+      replace : 用自定義作業 ID 替換角色建立視窗中的 Doram 種族槽。用它在第二個創造槽中提供替代種族或類別。
+
+    - find : Disable Doram character creation UI [Experimental]
+      replace : 禁用 Doram Creation UI [實驗]
+
+    - find : Removes the Doram race option from the character creation UI entirely. Server-side disabling is also recommended to prevent bypasses. Experimental -- may have visual quirks.
+      replace : 從角色建立 UI 中完全刪除 Doram 種族選項。還建議在伺服器端禁用它以防止繞過。實驗性的——可能有視覺問題。
+
+    - find : FRIEND/PARTY WINDOW CUSTOMIZATION
+      replace : 自定義朋友/聚會視窗
+
+    - find : Customize party limit
+      replace : 自定義派對限制
+
+    - find : Changes the maximum number of party members shown in the party window (Alt+Z). Increase this if your server supports larger parties than the default limit.
+      replace : 更改隊伍視窗中顯示的最大隊伍成員數量 (Alt+Z)。如果您的伺服器支援的參與方數量超過預設限制，請增加該值。
+
+    - find : Remove Adventurer Agency from Party
+      replace : 將冒險家代理處從隊伍中移除
+
+    - find : Removes the Adventurer Agency (party recruitment) button from the party window. Use on servers that do not support or want the automated party matching system.
+      replace : 從隊伍視窗中刪除冒險家機構（隊伍招募）按鈕。在不支援或不需要自動派對匹配系統的伺服器上使用它。
+
+    - find : EQUIP WINDOW CUSTOMIZATION
+      replace : 自定義團隊視窗
+
+    - find : Remove Eq Swap button
+      replace : 刪除均衡器交換按鈕
+
+    - find : Removes the equipment swap button from the equipment window. Use on servers that do not support the gear swap feature or want a simpler equipment UI.
+      replace : 從團隊視窗中刪除團隊交換按鈕。在不支援裝備交換功能或想要更簡單的裝備 UI 的伺服器上使用它。
+
+    - find : Remove Eq Window title
+      replace : 刪除團隊視窗標題
+
+    - find : Removes the title bar text from the equipment window. A cosmetic change for a cleaner equipment window appearance.
+      replace : 從團隊視窗標題欄中刪除文字。進行了外觀更改，使團隊視窗的外觀更加清晰。
+
+    - find : Disable Equipment Attribute Button
+      replace : 禁用裝備屬性按鈕
+
+    - find : Disables the Equipment Attribute (Properties) button in the Equipment Window so clicking it does nothing. Use on servers where the Equipment Properties panel is not applicable.
+      replace : 禁用裝置視窗中的裝置屬性（Properties）按鈕，這樣單擊它就不會執行任何操作。在裝置屬性面板不適用的伺服器上使用它。
+
+    - find : EXP BAR CUSTOMIZATION
+      replace : 自定義經驗條
+
+    - find : Customize Experience bar limits
+      replace : 自定義經驗條限制
+
+    - find : Overrides the experience bar display limits for Base and Job levels using a custom configuration file. Required if your server has higher max levels than the client normally supports.
+      replace : 使用自定義配置檔案覆蓋基礎和工作級別的經驗欄顯示限制。如果您的伺服器的最大級別高於客戶端通常支援的級別，則為必需。
+
+    - find : Show Experience numbers
+      replace : 顯示經驗數字
+
+    - find : Displays numeric Base and Job experience values directly on top of the EXP bars in the Basic Info Window. Shows exact numbers instead of just a progress bar.
+      replace : 在基本資訊視窗中 EXP 條的正上方顯示數字基礎和工作經驗值。顯示精確的數字而不僅僅是進度條。
+
+    - find : RETURN TO LOGIN
+      replace : 返回登入
+
+    - find : Disconnect to Login Window
+      replace : 斷開與登入視窗的連線
+
+    - find : Returns to the login window instead of closing the client when disconnected from the server. Lets players reconnect without having to relaunch the game.
+      replace : 當伺服器斷開連線時，返回登入視窗而不是關閉客戶端。允許玩家重新連線而無需重新啟動遊戲。
+
+    - find : Cancel to Login Window
+      replace : 取消到登入視窗
+
+    - find : Makes the Cancel button on the character selection screen go back to the login window instead of quitting the game entirely. Convenient for switching accounts without relaunching.
+      replace : 使角色選擇螢幕上的取消按鈕返回到登入視窗，而不是完全關閉遊戲。方便更改帳戶，無需重新啟動。
+
+    - find : SHOW BUTTON
+      replace : 顯示按鈕
+
+    - find : Always show Replay button in Service Select
+      replace : 始終在服務選擇中顯示重播按鈕
+
+    - find : Shows the Replay button on the Service Select screen, allowing players to browse and watch saved replay files. Normally hidden on most langtypes.
+      replace : 在服務選擇螢幕上顯示重播按鈕，允許玩家瀏覽和檢視儲存的重播檔案。通常隱藏在大多數語言型別中。
+
+    - find : Always show Cancel button in Login
+      replace : 始終在登入中顯示取消按鈕
+
+    - find : Restores the Cancel button on the login screen, placed between the Login and Exit buttons. Allows players to go back to the Service Select screen to choose a different server.
+      replace : 將“取消”按鈕恢復到登入螢幕，位於“登入”和“退出”按鈕之間。允許玩家返回服務選擇螢幕以選擇另一個伺服器。
+
+    - find : Always show Register button in Login
+      replace : 始終在登入中顯示註冊按鈕
+
+    - find : "Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page."
+      replace : "在所有語言型別的登入螢幕上顯示註冊按鈕。單擊時，它會開啟標籤 <registrationweb> 中定義的註冊 URL。從 clientinfo.xml 中獲取並關閉客戶端。對於引導新玩家到您的註冊頁面很有用。"
+
+    - find : 4/6 LETTER LIMIT REMOVAL
+      replace : 消除 4/6 個字母的限制
+
+    - find : Remove 4/6 letter Character Name limit
+      replace : 取消角色名稱中 4/6 個字母的限制
+
+    - find : "Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for character names. Allows shorter names like \"GM\" or \"Ace\". Server-side limits may still apply."
+      replace : "取消了字元名稱 4 個字母（或某些語言型別中的 6 個字母）的最低要求。允許更短的名稱，例如“GM”或“Ace”。伺服器端限制可能仍然適用。"
+
+    - find : Remove 4/6 letter User Name limit
+      replace : 刪除使用者中 4/6 個字母的限制
+
+    - find : Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for account usernames. Server-side limits may still apply.
+      replace : 取消了使用者名稱 4 個字母（或某些語言型別中的 6 個字母）的最低要求。伺服器端限制可能仍然適用。
+
+    - find : Remove 4/6 letter Password limit
+      replace : 消除密碼中 4/6 個字母的限制
+
+    - find : Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for passwords on the client side. Server-side limits may still apply.
+      replace : 刪除了客戶端密碼的 4 個字母（或某些語言型別中的 6 個字母）的最低要求。伺服器端限制可能仍然適用。
+
+    - find : LICENSE SCREEN VISIBILITY
+      replace : 許可證螢幕可見性
+
+    - find : Always hide License Screen
+      replace : 始終隱藏許可證螢幕
+
+    - find : Skips the EULA/license agreement screen entirely on startup, going directly to the Service Select or login screen. Saves time for players on every launch.
+      replace : 啟動時完全繞過 EULA/許可協議螢幕，直接進入服務選擇或登入螢幕。節省玩家每次投擲的時間。
+
+    - find : Always show License Screen
+      replace : 始終顯示許可證螢幕
+
+    - find : Forces the EULA/license agreement screen to show on every startup for all langtypes. Use if your server requires players to accept terms of service before playing.
+      replace : 強制 EULA/許可協議螢幕出現在所有語言型別的每次啟動上。如果您的伺服器要求玩家在玩遊戲前接受服務條款，請使用此選項。
+
+    - find : TRAIT STATUS BUTTON BEHAVIOR
+      replace : 特徵狀態按鈕行為
+
+    - find : Disable Trait Status Button
+      replace : 禁用特徵狀態按鈕
+
+    - find : Disables the Trait Status button in the Status Window so clicking it does nothing. Use on pre-4th job servers where the Trait Status panel is not applicable.
+      replace : 禁用狀態視窗中的特徵狀態按鈕，以便單擊它不會執行任何操作。在特徵狀態面板不適用的第四個作業伺服器上使用它。
+
+    - find : Hide Trait Status Button
+      replace : 隱藏特徵狀態按鈕
+
+    - find : Completely hides the Trait Status expansion button from the Status Window. Use on pre-4th job servers to remove the button entirely rather than just disabling it.
+      replace : 在狀態視窗中完全隱藏特徵狀態擴充套件按鈕。在第四個作業伺服器上使用此功能可以完全刪除該按鈕，而不僅僅是禁用它。
