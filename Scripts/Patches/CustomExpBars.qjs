@@ -34,7 +34,9 @@ CustomBarLimits = function(_)
 {
 	$$(_, 1, `Load the SSN & extract the EBvals`)
 	SSN.load();
-	const {refAddr, baseBegin, afterBB} = SSN.EBvals;
+	const {refAddr, basebegin, afterBB} = SSN.EBvals;
+	if (![refAddr, basebegin, afterBB].every(IsNum))
+		throw Error("Invalid EXP bar patch addresses");
 
 	$$(_, 2.1, `Find the base level assignment/comparison after the CALLs`)
 	let code =
@@ -179,7 +181,7 @@ CustomBarLimits = function(_)
 	$$(_, 4.3, `Calculate size of mapping table`)
 	const identSize = ExpSpec.reduce( (acc, hash) => acc + (IsArr(hash.IDs) ? 4 * hash.IDs.length + 2 : 0), 0);
 
-	$$(_, 5.1, `Prepare code for base & job exp bars (will be replaced at baseBegin)`)
+	$$(_, 5.1, `Prepare code for base & job exp bars (will be replaced at basebegin)`)
 	const parts =
 	[
 		PUSH(EDX)                  //push edx
@@ -259,7 +261,7 @@ CustomBarLimits = function(_)
 	+	" FF 00 FF 00"             //part of the id to level mapping ; defAddr
 	];
 
-	const baseVir = Exe.Phy2Vir(baseBegin, CODE);
+	const baseVir = Exe.Phy2Vir(basebegin, CODE);
 
 	$$(_, 5.2, `Calculate the target addresses & the mapTblAddr value (we will be placing it right after the JMP since we have space for it)`)
 	const [, _mapTblLoop, _idTblLoop, _fetchNextIDPair, _fetchNextIDTbl, _foundIDMatch, _noMatches, _lowBase, _common1, _lowJob, _common2, mapTblAddr] = MapAddrs(baseVir, parts);
@@ -329,8 +331,8 @@ CustomBarLimits = function(_)
 	$$(_, 5.6, `Add the IDs at the allocated space`)
 	Exe.SetHex(free, identData);
 
-	$$(_, 5.7, `Put the function & the map at baseBegin`)
-	Exe.SetHex(baseBegin, code + mapData);
+	$$(_, 5.7, `Put the function & the map at basebegin`)
+	Exe.SetHex(basebegin, code + mapData);
 
 	return true;
 };
