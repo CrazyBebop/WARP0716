@@ -27,68 +27,86 @@
 ############################################################################
 
 CustomSpecials:
-    title : "特別客製化"
+    title : SPECIAL CUSTOMIZATIONS
     mutex : false
     color : deeppink
     
     patches:
         - CustomShields:
-            title : "啟用自訂防護罩"
+            title : 啟用自訂防護罩
             recommend : no
             author : Neo-Mind , CrazyBebop
-            desc : "透過從 Lua 檔案 (similar to the Xray system) 載入遮蔽定義，啟用超出預設設定的自訂遮蔽精靈。對於具有自訂遮蔽圖形的伺服器是必需的。"
+            desc : 透過從 lua 檔案載入盾牌定義（類似於 Xray 系統），啟用超出預設設定的自訂盾牌圖像。對於具有自訂盾牌圖像的伺服器是必需的。
         
         - CustomJobs:
-            title : "啟用自訂職業 (Reforged)"
+            title : 啟用自訂職業（重製）
             recommend : no
             author : CrazyBebop
-            desc : "新增對官方集合以外的自訂職業類別的支援。作業是透過資料資料夾中的 Lua 檔案定義的。對於具有自訂類別（如 Druid 或其他粉絲製作的作業）的伺服器是必需的。"
+            desc : 新增對官方集合之外的自訂職業類別的支援。職業是透過資料資料夾中的 lua 檔案定義的。對於具有自訂類（如 Druid 或其他玩家製作的職業）的伺服器是必需的。
 
         - CustomHomuns:
-            title : "啟用自訂 Homunculi"
+            title : 啟用自訂 Homunculi
             recommend : no
             author : Neo-Mind
-            desc : "使用 Lua 檔案啟用官方設定以外的自訂侏儒類型。使用與自訂職業相同的 <b>'ReqJobName'</b> 函式，因此除了作業 Lua 之外不需要額外的設定檔。"
+            desc : 使用 lua 檔案啟用官方設定之外的自訂人工生命體類型。使用與自訂職業相同的 <b>'ReqJobName'</b> 函式，因此除了職業 lua 之外不需要額外的設定檔案。
 
         - AddLuaOverrides:
-            title : "新增 Chris 的 Lua 覆蓋 [實驗]"
+            title : 新增 Chris 的 lua 覆蓋 [實驗]
             recommend : no
             author : llchrisll , Neo-Mind
-            desc : "由 llchrisll 載入額外的 Lua 覆蓋檔案，這些檔案擴充和修補用戶端現有的 Lua 表和函式。增加生活品質的改進和修復。有關變更的完整列表，請參閱 <a href=\"https://llchrisll.github.io/ROTPDocs/addons/cls/%h=lua\"> 檔案 </a>。實驗性的。"
+            desc : 由 llchrisll 載入額外的 lua 覆蓋檔案，擴充套件和修補客戶端現有的 lua 表和函式。增加使用體驗改善和修復。有關更改的完整列表，請參閱 <a href="https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua"> 文件</a>。實驗性的。
 
         - AllowAPBarforAllJobs:
-            title : "允許所有作業使用 AP Bar"
+            title : 允許所有職業使用 AP Bar
             recommend : no
             author : Skylove, Singe-Horizontal
-            desc : "顯示所有工作類別的 AP (Activity Points) 欄，而不僅僅是第 4 個工作。在內部將每個班級視為 AP 計量表檢查的第四項工作。對於為所有類別提供 AP 的伺服器很有用。"
+            desc : 顯示所有工作類別的 AP（活動點）欄，而不僅僅是第 4 個工作。在內部將每個班級視為 AP 計量表檢查的第四項工作。對於為所有類別提供 AP 的伺服器很有用。
 
         - RemoveMaxNumbersLimit:
-            title : "取消傷害/heal中顯示的最大數量限制"
+            title : 移除傷害/治療中顯示的最大數量限制
             recommend : no
             author : 4144
-            desc : "取消顯示傷害、治療和其他浮動數字的上限。如果沒有這個，非常大的數字會被限制在最大顯示值。對於具有大傷害輸出的高速率伺服器來說是必需的。"
+            desc : 取消顯示傷害、治療和其他浮動數字的上限。如果沒有這個，非常大的數字會被限制在最大顯示值。對於具有大傷害輸出的高速率伺服器來說是必需的。
+            
+        - AllHatEffectsWorldDepthOracle:
+            title : 所有 HatEffects 螢幕尺寸世界深度 [QJS]
+            recommend : no
+            author : Louis T Steinhil
+            desc : "2025-07-16 特定版本的全域 HatEffect 深度補丁，於 2026-07-14 進行即時驗證。它保留了所有原始 HatEffect STR 資源、動畫、演員附件、後設資料、拆卸、螢幕空間位置、表觀比例和 RHW。僅在兩種通用 HatEffect 渲染方法期間，演員錨點 Y 處/下方的頂點保留地面安全的四量子接觸偏置深度；上頂點使用投影矩陣 +0x10/+0x14 重建 Y 向上倒數深度，並透過 0x00554040 進行轉換。原生世界 STR NPC 保持不變。"
+
+        - AllowDualWeaponSprites:
+            title : 雙持原創武器精靈【QJS】
+            recommend : no
+            author : Louis T Steinhil
+            desc : "自帶QJS/EXE補丁；不需要武器 DLL。 D403A0 裝置掛鉤驅動每個裝備物品的庫存單物品載入器，並將原始並行 SPR/ACT 資源安裝在本機武器插槽 5 和 6 中，而不是通用組合型別 25..30。即時槽渲染器橋接方向保留地將空白項 ACT 動作 88..95 對映到填充動作 80..87。僅副手裝備也會在插槽 6 中接收其真實物品對。適用於沒有物品 ID 允許列表的每個有效物品資源。"
+
+        - AllowChatWhileBerserk:
+            title : 允許狂暴時聊天
+            recommend : no
+            author : Stingor empowered by Claude
+            desc : "獨立的 QJS/EXE 補丁。客戶端助手 Status_IsBerserkActive (0x00D8E6C0) 掃描本地狀態圖示列表中的 EFST_BERSERK (0x6B) 並在 Berserk 啟動時返回 1； CModeMgr::SendMsg 中的每個聊天通道處理程式都會在該 1 上丟棄傳出的 CZ_REQUEST_CHAT（操作碼 0xF3），因此輸入會被清除，但不會傳送任何內容。表情使用另一個命令並保持可用。這迫使助手始終返回 0，從而在狂戰士狀態下解鎖每個頻道上的聊天，而不會觸及物品/技能狂戰士限制。 NOTE：去除ONLY客戶端門； SC_BERSERK 的任何伺服器端聊天門也必須刪除才能進行聊天。"
 
 CustomSkills:
-    title : "技能客製化"
+    title : SKILL CUSTOMIZATIONS
     mutex : false
     color : deeppink
     
     patches:
         - CustomPlayerSkills:
-            title : "啟用自訂玩家技能[實驗]"
+            title : 啟用自訂玩家技能[實驗]
             recommend : no
             author : Unknown
-            desc : "透過從 Lua 檔案載入定義，啟用官方技能清單以外的自訂玩家技能。對於新增新技能的伺服器來說是必要的。實驗性的－可能需要仔細的 Lua 設定。"
+            desc : 透過從 lua 檔案載入定義，可以啟用官方技能列表之外的自訂玩家技能。對於新增新技能的伺服器來說是必需的。實驗性的——可能需要仔細的 lua 設定。
         
         - CustomHomunSkills:
-            title : "啟用自訂 Homunculus 技能 [實驗]"
+            title : 啟用自訂Homunculus技能[實驗]
             recommend : no
             author : Unknown
-            desc : "透過從 Lua 檔案載入定義，啟用官方清單以外的自訂侏儒技能。新增侏儒能力的伺服器是必需的。實驗性的。"
+            desc : 透過從 lua 檔案載入定義，啟用官方列表之外的自訂人工生命體技能。新增新人工生命體能力的伺服器是必需的。實驗性的。
         
         - CustomMerceSkills:
-            title : "啟用自訂 Mercenary 技能 [實驗]"
+            title : 啟用自訂僱傭兵技能[實驗]
             recommend : no
             author : Unknown
-            desc : "透過從 Lua 檔案載入定義，啟用官方清單以外的自訂僱傭兵技能。對於新增新僱傭兵能力的伺服器來說是必需的。實驗性的。"
+            desc : 透過從 lua 檔案載入定義，啟用官方列表之外的自訂僱傭兵技能。對於新增新僱傭兵能力的伺服器來說是必需的。實驗性的。
 

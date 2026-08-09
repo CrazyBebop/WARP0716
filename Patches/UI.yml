@@ -27,428 +27,452 @@
 ############################################################################
 
 CustomUI:
-    title : "UI 客製化"
+    title : 使用者介面 CUSTOMIZATION
     mutex : false
     color : orangered
     
     patches:
         - LoadGRFOnSlashCmd:
-            title : "透過斜線指令載入 GRF"
+            title : 透過斜線命令載入 GRF
             recommend : no
             author : Demonbytes (NoxaraRO)
-            desc : "新增可設定的斜線指令（預設 /greyworld），在執行時透過 CFileMgr::AddPak 載入指定的 GRF 檔案。輸入該指令可透過聊天回饋開啟/關閉 GRF。狀態會透過登錄檔在工作階段之間保留；資源會在下一次換地圖時生效。"
+            desc : 新增一個可設定的斜槓命令（預設/greyworld），該命令在執行時透過 CFileMgr::AddPak 載入指定的 GRF 存檔。鍵入命令可透過聊天反饋開啟/關閉 GRF。狀態透過登錄檔在會話之間持續存在。資產在下一次地圖更改時變得可用。
 
         - AllowShortcutsInWine:
-            title : "允許 Wine 中使用快捷鍵 [Experimental]"
+            title : 允許 WINE 中的快捷方式 [實驗]
             recommend : no
             author : Andrei Karas (4144)
-            desc : "修正了在 Wine (Linux/macOS) 下執行用戶端時的鍵盤快速鍵處理。實驗性的－可能不適用於所有 Wine 版本或設定。"
+            desc : 修復了在 Wine (Linux/macOS) 下執行客戶端時的鍵盤快捷鍵處理。實驗性的——可能不適用於所有 Wine 版本或設定。
         
         - CustomMissingLauncherMsg:
-            title : "自訂缺少啟動器時的訊息"
+            title : 自訂缺少的啟動器訊息
             recommend : no
             author : Neo-Mind
-            desc : "自訂在沒有修補程式的情況下啟動用戶端時顯示的錯誤訊息。預設情況下，該訊息為空——使用它來顯示有用的訊息，例如 \"Please use the patcher to start the game.\""
+            desc : 自訂在沒有修補程式的情況下啟動客戶端時顯示的錯誤訊息。預設情況下，該訊息為空白 - 使用它來顯示有用的訊息，例如“請使用補丁程式開始遊戲”。
 
         - TildeForMatk:
-            title : "使用波浪號表示 Matk"
+            title : 使用波浪號表示 Matk
             recommend : no
             author : Neo-Mind
-            desc : "使用波浪號 <b>(~)</b> 將 Matk 顯示為範圍（例如 100~150），而不是在能力值視窗中使用加號 <b>(+)</b>（例如 100+50）。符合許多玩家熟悉的顯示方式。"
+            desc : 在統計視窗中使用波形符 <b>(~)</b> 符號（例如 100~150）將 Matk 顯示為範圍，而不是使用加號 <b>(+)</b> 符號（例如 100+50）。符合很多玩家熟悉的顯示風格。
         
         - NoSwearFilter:
-            title : "停用髒話過濾器"
+            title : 禁用髒話過濾器
             recommend : no
             author : Shinryo
-            desc : "停用用戶端聊天過濾器，該過濾器會遮蔽 <b>manner.txt</b> 中列出的文字。被過濾的文字會正常顯示在聊天中，而不是被星號取代。"
+            desc : 禁用審查 <b>manner.txt</b> 中列出的單詞的客戶端聊天過濾器。過濾後的單詞將在聊天中正常顯示，而不是用星號替換。
         
         - SkipServiceSelect:
-            title : "跳過伺服器選擇畫面"
+            title : 跳過服務選擇螢幕
             recommend : no
             author : Shinryo, Skylove
-            desc : "跳過伺服器選擇畫面並直接進入登入視窗。非常適合僅具有一項服務並且不需要選取步驟的伺服器。"
+            desc : 跳過服務選擇螢幕並直接進入登入視窗。非常適合僅具有一項服務並且不需要選擇步驟的伺服器。
         
         - OpenToServiceSelect:
-            title : "使用「Opening」返回伺服器選擇"
+            title : 使用“開放”進行服務選擇
             recommend : yes
             author : CH.C (jchcc)
-            desc : "讓新版登入畫面的「Opening」按鈕返回伺服器選擇畫面。若玩家需要在 clientinfo.xml 中列出的多個伺服器之間切換，會很有用。"
+            desc : 使新型登入介面的“開啟”按鈕返回到服務選擇介面。如果玩家需要在 clientinfo.xml 中列出的多個服務之間切換，則非常有用。
         
         - GuildBrackets:
-            title : "使用一般公會括號"
+            title : 使用普通的括號
             recommend : yes
             author : Shinryo
-            desc : "將 langtype 0 使用的日式公會名稱括號替換為標準方括號 [ ]，避免英文用戶端顯示公會名稱時出現問題。"
+            desc : 將 langtype 0 上使用的日式行會名稱括號替換為標準方括號 [ ]。防止英文客戶端上的公會名稱顯示問題。
         
         - FixChatAt:
-            title : "@ 符號錯誤修正"
+            title : '@錯誤修復'
             recommend : yes
             author : Shinryo
-            desc : "修正了阻止在聊天視窗中輸入 @ 符號的用戶端錯誤。對於使用 @ 作為 GM 命令 (e.g., @warp, @item) 前綴的伺服器至關重要。"
+            desc : 修復了阻止在聊天視窗中輸入 @ 符號的客戶端錯誤。對於使用 @ 作為 GM 命令字首的伺服器（例如 @warp、@item）至關重要。
         
         - AlwaysOfficialBG:
-            title : "使用官方登入背景"
+            title : 使用官方登入BG
             recommend : no
             author : Shinryo
-            desc : "強制在所有 langtypes 上顯示官方 Gravity 登入背景圖片。如果沒有這個，一些 langtypes 顯示空白或不同的背景。"
+            desc : 強制在所有語言型別上顯示官方 Gravity 登入背景影象。如果沒有這個，某些語言型別會顯示空白或不同的背景。
         
         - NoHourly:
-            title : "刪除每小時公告"
+            title : 刪除每小時公告
             recommend : yes
             author : Ai4rei/AN ,Skylove
-            desc : "刪除每小時關於遊戲評級和遊戲時間提醒的彈出公告。這些是韓國的監管要求，與伺服器無關。"
+            desc : 刪除每小時關於遊戲評級和遊戲時間提醒的彈出公告。這些是韓國的監管要求，與伺服器無關。
 
         - EnableFlagEmotes:
-            title : "啟用旗幟表情符號"
+            title : 啟用標記表情符號
             recommend : no
             author : Neo-Mind
-            desc : "為所有 langtypes 解鎖國旗表情符號。需要一個文字檔，將旗幟常數對應到 1-9 的數字，以定義可用旗幟。"
+            desc : 解鎖所有語言型別的國旗表情符號。需要一個將標誌常量對映到數字 1-9 的文字檔案來定義哪些標誌可用。
 
         - AllowSpaceInGName:
-            title : "公會名稱中允許有空格"
+            title : 公會名稱中允許有空格
             recommend : no
             author : Shakto
-            desc : "使用 <b>/guild \"Spaced Name\"</b> 建立公會時允許在公會名稱中使用空格。預設情況下，用戶端會阻止公會名稱中的空格字元。"
+            desc : 使用 <b>/guild“空格名稱”</b> 建立公會時允許在公會名稱中使用空格。預設情況下，客戶端會阻止公會名稱中的空格字元。
 
         - CustomInventoryLimit:
-            title : "自訂背包限制"
+            title : 自訂庫存限制
             recommend : no
             author : CH.C (jchcc) , Neo-Mind
-            desc : "變更背包視窗可顯示的最大物品數。必須與伺服器端背包限制（rAthena 的 MAX_INVENTORY）一致，否則超出限制的物品不會顯示。"
+            desc : 更改可在清單視窗中顯示的最大專案數。必須符合伺服器端庫存限制（rAthena 中的 MAX_INVENTORY），否則超出限制的物品將不會出現。
 
         - CustomInventoryExpandingLimit:
-            title : "變更商城背包擴充上限"
+            title : 現金庫存增值限額變更
             recommend : no
             author : 4144,Skylove
-            desc : "將商城背包擴充可增加的最大物品數從預設 100 提高到 999,999。可能需要同步調整伺服器端設定。"
-            
+            desc : 將可透過現金庫存擴充套件新增的最大商品數量從預設的 100 提高至 999,999。可能需要伺服器端調整來匹配。
+
+        - BiggerInventoryWindow:
+            title : 更大的庫存視窗
+            recommend : no
+            author : Stingor
+            desc : 提高庫存視窗可調整大小的最大尺寸。 Stock 客戶端將拖動調整大小限制為 320x240；這可以讓你設定一個更大的最大值（預設1280x1024），這樣你就可以將庫存拖得更大，並一次看到更多的物品欄位。視窗背景是平鋪的，因此它可以在任何尺寸下正確渲染。這僅更改視窗 SIZE，而不更改專案 CAPACITY（為此使用“自訂庫存限制”）。
+
         - DeleteCharWithEmail:
-            title : "刪除角色時一律使用 email"
+            title : 始終使用電子郵件進行字元刪除
             recommend : no
             author : Neo-Mind
-            desc : "在所有 langtypes 中，刪除角色時都要求使用帳號 email 地址作為確認密碼。增加一層保護，避免意外或未授權的角色刪除。"
+            desc : 在所有語言型別上刪除字元時，需要帳戶的電子郵件地址作為確認密碼。新增額外的保護層，防止意外或未經授權的字元刪除。
         
         - CustomVendingLimit:
-            title : "自訂露天商店上限"
+            title : 自訂售貨限額
             recommend : no
             author : Neo-Mind
-            desc : "變更玩家在露天商店中每件物品可設定的最高 zeny 價格。預設為 10 億 zeny，可依伺服器經濟或 zeny 上限調整。"
+            desc : 更改玩家可以在自動售貨店中為每件商品設定的最高 zeny 價格。預設值為 10 億 zeny。進行調整以匹配您伺服器的經濟或 zeny 上限。
         
         - NoHelpMsg:
-            title : "登入時不顯示說明訊息"
+            title : 登入時沒有幫助訊息
             recommend : yes
             author : Neo-Mind
-            desc : "抑制某些 langtypes 登入後出現的說明/教學彈出視窗，減少不需要教學的回鍋玩家受到干擾。"
+            desc : 禁止在某些語言型別上登入後出現幫助/教程彈出視窗。減少不需要教程的迴歸玩家的混亂。
         
         - HideWorldView:
-            title : "隱藏世界視圖介面"
+            title : 隱藏世界檢視介面
             recommend: no
             author : Neo-Mind
-            desc : "隱藏通常顯示在螢幕右上角的世界視圖 (full map overview) 按鈕。對於不支援世界地圖功能或想要更清晰的 UI 的伺服器很有用。"
+            desc : 隱藏通常顯示在螢幕右上角的世界檢視（完整地圖概述）按鈕。對於不支援世界地圖功能或想要更清晰的 UI 的伺服器很有用。
         
         - CloseCutinOnEsc:
-            title : "按 Esc 關閉 cutin 圖像"
+            title : 按 Esc 鍵關閉角質
             recommend : no
             author : Andrei Karas (4144) , Neo-Mind
-            desc : "允許玩家按 ESC 鍵關閉 NPC cutin（立繪）圖像。若不套用此修補，cutin 只能由 NPC 腳本本身關閉。"
+            desc : 允許玩家透過按 ESC 鍵來消除 NPC 角質（肖像）影象。如果沒有這個，角質只能由 NPC 指令碼本身關閉。
             
         - EnableNoticeMails:
-            title: "啟用 \"Notice\" email部分"
+            title: 啟用“通知”電子郵件部分
             recommend : no
             author : Neo-Mind
-            desc : "啟用續訂郵件視窗中的 \"Notice\" 分頁，允許伺服器管理員傳送公告式公告，這些公告作為特別通知出現在玩家的郵箱中。"
+            desc : 啟用續訂郵件視窗中的“通知”選項卡，允許伺服器管理員傳送公告式的公告，這些公告會作為特別通知出現在玩家的郵箱中。
 
         - EnableNpcDialogueScrolling:
-            title     : "NPC 對話捲動"
+            title     : NPC 對話方塊滾動
             recommend : no
             author    : Skylove
-            desc      : "即使顯示選取選單，也允許捲動 NPC 對話文字。如果沒有這個，當選取出現時對話會鎖定，並且玩家無法查看先前的文字。"
+            desc      : 即使顯示選擇選單，也允許滾動 NPC 對話方塊文字。如果沒有這個，當選擇出現時對話方塊會鎖定，並且玩家無法檢視之前的文字。
 
         - MoveUpItemCount:
-            title : "向上移動物品數量"
+            title : 向上移動專案計數
             recommend : no
             author : Neo-Mind
-            desc : "將快捷列視窗中的物品數量數字向上移動，使其在視覺上與技能等級數字對齊。這是讓快捷列更整齊的外觀修正。"
+            desc : 在快捷方式視窗中向上移動專案數量編號，使其在視覺上與技能級別編號對齊。對快捷工具欄進行了外觀修復，使快捷工具欄看起來更簡潔。
         
         - CustomFadeDelay:
-            title : "自訂淡入/淡出延遲"
+            title : 自訂淡入/淡出延遲
             recommend : no
             author : Andrei Karas (4144) , Neo-Mind
-            desc : "變更在同一張地圖內傳送時，畫面淡入/淡出效果的持續時間。設為 0 可立即切換，提高數值則可讓視覺效果更平滑。"
+            desc : 更改在同一地圖內扭曲時螢幕淡入/淡出效果的持續時間。設定為 0 可實現即時過渡，或增加值可實現更平滑的視覺效果。
         
         - RemoveBookingJobs:
-            title : "從組隊招募視窗移除職業"
+            title : 從預訂視窗中刪除職位
             recommend : no
             author : Neo-Mind
-            desc : "從組隊招募視窗的職業篩選清單中移除特定職業。適合用來在組隊搜尋 UI 中隱藏停用或尚未開放的職業。"
+            desc : 從聚會預訂（招聘）視窗的職位過濾器列表中刪除特定職位類別。對於從聚會查詢器 UI 中隱藏禁用或未釋出的類很有用。
             
         - RelativeDelay4CharDel:
-            title : "將刪除時間變更為相對時間"
+            title : 將刪除時間更改為相對時間
             recommend : no
             author : Functor , Neo-Mind
-            desc : "將字元刪除等待時間顯示為倒數計時 (e.g., \"23h 45m remaining\") 而不是絕對日期 /time 。對於等待確認刪除的玩家來說更加直覺。"
+            desc : 將字元刪除等待時間顯示為倒計時（例如，“剩餘 23 小時 45 分鐘”）而不是絕對日期/時間。對於等待確認刪除的玩家來說更加直觀。
         
         - RestoreChatFocus:
-            title : "還原聊天焦點"
+            title : 恢復聊天焦點
             recommend : no
             author : Andrei Karas (4144)
-            desc : "點擊滑鼠左鍵後將鍵盤輸入焦點還原到聊天框。修正了在遊戲世界中點擊導致聊天輸入失去焦點的問題。"
+            desc : 單擊滑鼠左鍵後將鍵盤輸入焦點恢復到聊天框。修復了點選遊戲世界導致聊天輸入失去焦點的問題。
 
-        - OpaqueChatBg:
-            title : "使聊天視窗背景不透明"
+        - ChatBgMainPanel:
+            title : 自訂主聊天面板背景顏色和不透明度
             recommend : no
             author : Stingor
-            desc : "刪除聊天視窗背景的半透明效果。預設情況下，背景繪製在 40% alpha (0x66) 處，讓遊戲世界清晰可見。此修補強制其 100% 不透明 (0xFF) ，產生純黑色背景。"
+            desc : 設定 MAIN 聊天面板的顏色和不透明度 - 其背景和活動選項卡。開啟 RGB 顏色選擇器和不透明度值（0 = 透明，255 = 不透明）。預設為黑色，不透明度為 40% (0x66)。
 
-        - CustomChatBgOpacity:
-            title : "自訂聊天視窗背景色彩與不透明度"
+        - ChatBgDetached:
+            title : 自訂獨立聊天視窗背景顏色和不透明度
             recommend : no
             author : Stingor
-            desc : "變更聊天視窗背景的色彩和不透明度。開啟色彩選取器 (RGB) 和單獨的不透明度滑桿 (0 = fully transparent, 255 = fully opaque) 。預設背景為純黑色，不透明度為 40% (0x66) 。"
+            desc : 設定 DETACHED 聊天視窗的顏色和不透明度 - 它們的外邊框/框架和背景。開啟 RGB 顏色選擇器和不透明度值（0 = 透明，255 = 不透明）。預設為黑色，不透明度為 40% (0x66)。
+
+        - ChatBgWhisper:
+            title : 自訂耳語 (1:1) 聊天視窗背景顏色和不透明度
+            recommend : no
+            author : Stingor
+            desc : "設定 1:1 私語（私人訊息）聊天視窗背景的顏色和不透明度。開啟 RGB 顏色選擇器和不透明度值（0 = 透明，255 = 不透明）。保持欄位不變以保持其預設值。預設為黑色，不透明度為 40% (0x66)。"
 
         - NoEquipPreview:
-            title : "停用裝備預覽"
+            title : 禁用裝置預覽
             recommend : no
             author : X-EcutiOnner
-            desc : "從物品描述視窗中移除裝備預覽按鈕。若預覽功能造成問題，或伺服器不需要此功能，可使用此修補。"
+            desc : 從專案描述視窗中刪除裝置預覽按鈕。如果預覽功能導致問題或您的伺服器不需要該功能，請使用該功能。
+
+        - ReduceExpensiveUIRender:
+            title : 減少昂貴的 UI 渲染
+            recommend : no
+            author : Louis T Steinhil , Stingor , CrazyBebop
+            desc : 當沒有任何變化時跳過 ALT+S 技能樹重繪，而不是每幀重建網格。提示輸入最小空閒重繪間隔，以便角色預覽保持動畫效果。
         
         - HideZeroDateInGuildWin:
-            title : "在公會視窗中隱藏零日期"
+            title : 在公會視窗中隱藏零日期
             recommend : no
             author : Andrei Karas (4144)
-            desc : "隱藏為加入日期未知或未設定的公會成員顯示的佔位符日期 \"1969-01-01\"。防止公會成員清單中令人困惑的紀元日期。"
+            desc : 隱藏為加入日期未知或未設定的公會成員顯示的佔位符日期“1969-01-01”。防止在公會成員列表中出現令人困惑的紀元日期。
         
         - ShortcutForAll:
-            title : "允許所有物品放入快捷列"
+            title : 允許快捷方式中的所有專案
             recommend : no
             author : CH.C (jchcc)
-            desc : "允許任何物品類型放入快捷列，不限於消耗品和裝備。可更方便地快速取用交易、製作或其他用途的物品。"
+            desc : 允許將任何物品型別放置在快捷欄上，而不僅僅是消耗品和裝置。可以輕鬆快速訪問用於交易、製作或其他目的的物品。
         
         - HideGameWindows:
-            title : "隱藏遊戲內視窗"
+            title : 隱藏遊戲內視窗
             recommend : no
             author : CH.C (jchcc)
-            desc : "透過在 YAML 設定檔中定義的內部 Window IDs 隱藏特定的遊戲內 UI 視窗。對於刪除未使用或不需要的 UI 元素（例如導覽視窗或提示框）非常有用。"
+            desc : 透過 YAML 設定檔案中定義的內部視窗 ID 隱藏特定的遊戲內 UI 視窗。對於刪除未使用或不需要的 UI 元素（例如導航視窗或提示框）非常有用。
         
         - EnableFlagAnimation:
-            title : "啟用 WoE 標誌動畫"
+            title : 啟用 WoE 標誌動畫
             recommend : no
             author : Sapito Sucio
-            desc : "還原 Gravity 在以後的用戶端更新中停用的動畫 WoE (War of Emperium) 公會標誌。在城堡地圖上帶回飄揚的旗幟視覺效果。"
+            desc : 恢復重力在以後的客戶端更新中禁用的動畫 WoE（帝國之戰）公會標誌。在城堡地圖上帶回飄​​揚的旗幟視覺效果。
 
         - RestoreBattlegroundUI:
-            title : "還原 Battleground UI"
+            title : 恢復戰場使用者介面
             recommend : no
             author : Skylove, Sprite Smith
-            desc : "還原新用戶端中隱藏的 Battleground 導覽按鈕和 Entry Queue UI。對於使用 Battleground 系統的伺服器是必要的。"
+            desc : 恢復了新客戶端中隱藏的戰場導航按鈕和進入佇列 UI。對於使用戰場系統的伺服器來說是必需的。
 
         - HideItemba:
-            title : "隱藏物品快捷列"
+            title : 隱藏專案欄
             recommend : no
             author : Skylove
-            desc : "從遊戲介面隱藏物品快捷列的開啟/關閉切換按鈕。若不需要快捷列控制項，可讓 UI 更乾淨。"
+            desc : 在遊戲介面中隱藏快捷方式專案欄切換按鈕（開啟/關閉）。如果不需要快捷欄控制元件，則可使用更清晰的 UI。
 
         - DisableDoram:
-            title: "停用 Doram"
+            title: 禁用多拉姆
             recommend: no
             author: Skylove
-            desc: "從角色建立畫面中刪除 Doram 種族選項。在不支援 Doram 種族的伺服器上使用以避免混淆。"
+            desc: 從角色建立螢幕中刪除多拉姆種族選項。在不支援 Doram 競賽的伺服器上使用以避免混淆。
 
         - HideProbabilityUI:
-            title : "隱藏機率 UI"
+            title : 隱藏機率使用者介面
             recommend : no
             author : Skylove
-            desc: "從 UI 中隱藏物品機率/掉落率視窗。在未實現官方機率顯示系統或喜歡隱藏掉落率的伺服器上使用。"
+            desc: 從 UI 中隱藏物品機率/掉落率視窗。在未實現官方機率顯示系統或喜歡隱藏掉落率的伺服器上使用。
 
         - FixSelectMenuReset:
-            title : "修正 NPC 對話選取選單重置"
+            title : 修復 NPC 對話方塊選擇選單重置
             recommend : no
             author : Victor Hugo
-            desc: "修正了 NPC 對話選取選單意外重置其捲動位置的錯誤。當對話更新時，將選單保留為玩家目前的選取。"
+            desc: "修復了 NPC 對話選擇選單意外重置其滾動位置的錯誤。當對話方塊更新時，將選單保留為玩家當前的選擇。"
 
         - FixSelectMenuWidthExpansion:
-            title : "修正 NPC 對話選取選單寬度擴充"
+            title : 修復 NPC 對話方塊選擇選單寬度擴充套件
             recommend : no
             author : Victor Hugo
-            desc: "修正了當選項包含色彩代碼 (^RRGGBB) 時 NPC 選取選單變得過寬的問題。更正寬度計算以忽略色彩標籤字元。"
+            desc: "修復了當選項包含顏色程式碼 (^RRGGBB) 時 NPC 選擇選單變得過寬的問題。更正寬度計算以忽略顏色標籤字元。"
 
         - FixSelectMenuHeightExpansion:
-            title : "還原舊的 NPC 選取選單行為"
+            title : 恢復舊的 NPC 選擇選單行為
             recommend : no
             author : Victor Hugo
-            desc: "還原經典的 NPC 選取選單行為，即當選項超出可見區域時出現捲軸，而不是擴充對話視窗高度以適合所有選項的新行為。"
+            desc: "恢復經典的 NPC 選擇選單行為，其中當選項超出可見區域時會出現捲軸，而不是擴充套件對話方塊視窗高度以適合所有選項的新行為。"
 
         - FixSkillbarReset:
-            title : "修復載入快捷鍵/技能列狀態"
+            title : 修復載入快捷鍵/技能欄狀態
             recommend : yes
             author : Victor Hugo
-            desc : "修正了每次登入或變更地圖時快捷列物品和技能欄位置都會重設的錯誤。確保您的熱鍵佈局正確儲存和還原。"
+            desc : 修復了每次登入或更改地圖時快捷欄專案和技能欄位置都會重置的錯誤。確保您的熱鍵佈局正確儲存和恢復。
 
         - ChangeGoldPCMaxPoints:
-            title : "變更 GoldPC 最大點數限制"
+            title : 更改 GoldPC 最大積分限制
             recommend : no
             author : Skylove
-            desc: "將 Gold PC 點數上限從硬編碼的 300 變更為自訂值（最高 99,999）。必須搭配 rAthena 的 battle.cpp 中對應的伺服器端變更。"
+            desc: "將最大 Gold PC 積分上限從硬編碼限制 300 更改為自訂值（最多 99,999）。必須與 rAthena 的 Battle.cpp 中匹配的伺服器端更改配對。"
 
         - CustomBarterZenySep:
-            title : "以逗號格式化 Barter Zeny"
+            title : 使用逗號格式化 Barter Zeny
             recommend : no
             author : Victor Hugo
-            desc : "在 Barter 商店視窗中以千分位分隔符格式化 zeny 金額（例如 1,000,000 z，而不是 1000000 z），讓高額價格更容易閱讀。"
+            desc : 在易貨商店視窗中使用千位分隔符格式化 zeny 金額（例如，1,000,000 z 而不是 1000000 z）。使大價格更容易一目瞭然。
 
 CaseInsensitiveSearch:
-    title: "不區分大小寫搜尋"
+    title: CASE INSENSITIVE SEARCH
     mutex: false
     
     patches:
         - InsensitiveStorageSearch:
-            title : "不區分大小寫的倉庫搜尋"
+            title : 不區分大小寫的儲存搜尋
             recommend : no
             author : CH.C (jchcc), Neo-Mind
-            desc : "使儲存視窗搜尋忽略大小寫 差異，因此搜尋 \"blue gem\" 也會找到 \"Blue Gem\" 。尋找物品更加方便。"
+            desc : 使儲存視窗搜尋忽略大小寫差異，因此搜尋“blue gem”也會找到“Blue Gem”。查詢物品更加方便。
         
         - InsensitiveShopSearch:
-            title : "不區分大小寫的商城搜尋"
+            title : 不區分大小寫的現金商店搜尋
             recommend : no
             author : Neo-Mind
-            desc : "讓商城搜尋忽略大小寫差異，因此無論搜尋字詞如何大小寫，都可以找到商品。"
+            desc : 使商城搜尋忽略大小寫差異，因此無論您如何大寫搜尋詞，都可以找到專案。
         
 NoGravityImages:
-    title : "移除 Gravity 圖片"
+    title : GRAVITY IMAGE REMOVAL
     mutex : false
     
     patches:
         - NoGravityAds:
-            title : "移除 Gravity 廣告"
+            title : 去除重力廣告
             recommend : yes
             author : Shinryo
-            desc : "從登入畫面背景移除 Gravity 的促銷廣告圖片，讓伺服器登入畫面更乾淨。"
+            desc : 從登入螢幕背景中刪除 Gravity 的促銷廣告影象。保持伺服器的登入螢幕乾淨。
         
         - NoGravityLogo:
-            title : "移除 Gravity 標誌"
+            title : 去除重力標誌
             recommend : yes
             author : Shinryo
-            desc : "從登入畫面背景移除 Gravity 公司標誌。對想要自訂品牌登入體驗的伺服器很有用。"
+            desc : 從登入螢幕背景中刪除 Gravity 公司徽標。對於需要自訂品牌登入體驗的伺服器很有用。
 
 CustomFont:
-    title : "字型客製化"
+    title : FONT CUSTOMIZATION
     mutex : false
     
     patches:
         - CustomFontName:
-            title : "自訂字型名稱"
+            title : 自訂字型名稱
             recommend : no
             author : Ai4rei/AN
-            desc : "將遊戲字型變更為您為所有 langtypes 選取的自訂字型。如果所選字型不支援所需的字元集，Windows 將自動改用相容字型。"
+            desc : 將遊戲字型更改為您為所有語言型別選擇的自訂字型。如果所選字型不支援所需的字符集，Windows 將自動回退到相容字型。
         
         - CustomFontHeight:
-            title : "自訂字型高度(Character)"
+            title : 自訂字型高度（字元）
             recommend : no
             author : Yommy , Neo-Mind
-            desc : "將所有遊戲內字型的高度設定為以字元高度單位測量的自訂值。用於放大或縮小整個 UI 中的文字。"
+            desc : 將所有遊戲內字型的高度設定為以字元高度單位測量的自訂值。用於放大或縮小整個 UI 中的文字。
 
         - CustomFontCellHeight:
-            title : "自訂字型高度(Cell)"
+            title : 自訂字型高度（單元格）
             recommend : no
             author : Neo-Mind
-            desc : "將所有遊戲內字型的高度設定為以儲存格高度單位測量的自訂值。字元高度的替代尺寸調整方法，可實現更精細的控制。"
+            desc : 將所有遊戲內字型的高度設定為以單元格高度單位測量的自訂值。字元高度的替代尺寸調整方法，可實現更精細的控制。
           
         - CustomFontHgtOffset:
-            title : "自訂字型高度(Offset)"
+            title : 自訂字型高度（偏移）
             recommend : no
             author : Neo-Mind
-            desc : "為所有字型高度增加固定偏移量，使 UI 中每種字型統一變大（正值）或變小（負值），而不覆蓋個別尺寸。"
+            desc : 為所有字型高度新增固定偏移量，使 UI 中的每個字型統一變大（正值）或變小（負值），而不會覆蓋各個尺寸。
         
         - CustomFontHgtLimits:
-            title : "啟用字型高度限制"
+            title : 啟用字型高度限制
             recommend : no
             author : Neo-Mind
-            desc : "將所有字型高度限制為您指定的最小值和最大值。防止字型變得太小而無法閱讀或太大而無法適應 UI 佈局。"
+            desc : 將所有字型高度限制為您指定的最小值和最大值。防止字型變得太小而無法閱讀或太大而無法適應 UI 佈局。
         
         - CustomFontWeight:
-            title : "自訂字型粗細(All)"
+            title : 自訂字型粗細（全部）
             recommend : no
             author : Neo-Mind
-            desc : "將所有字型（一般與粗體）的粗細（weight）改為單一自訂值。數值範圍從 100（細）到 900（粗），其中 400 為一般、700 為粗體。"
+            desc : 將所有字型（正常字型和粗體）的粗體（粗細）更改為單個自訂值。值範圍從 100（細）到 900（粗），其中 400 為正常值，700 為粗體。
         
         - CustomNormalFontWeight:
-            title : "自訂字型粗細(Normal)"
+            title : 自訂字型粗細（正常）
             recommend : no
             author : Neo-Mind
-            desc : "僅變更一般字重字型的粗細（weight），不影響已標記為粗體的字型。可讓一般 UI 文字變細或變粗。"
+            desc : 僅更改正常粗細字型的粗體（粗細）。不影響已標記為粗體的字型。用於使常規 UI 文字變細或變粗。
         
         - CustomBoldFontWeight:
-            title : "自訂字型粗細(Bold)"
+            title : 自訂字型粗細（粗體）
             recommend : no
             author : Neo-Mind
-            desc : "僅變更粗體字型的粗細（weight），不影響一般字重的字型。可讓粗體 UI 文字更粗或更細。"
+            desc : 僅更改粗體字型的粗體（粗細）。不影響正常粗細的字型。用於使粗體 UI 文字更重或更輕。
         
         - CustomFontWgtOffset:
-            title : "自訂字型粗細(Offset)"
+            title : 自訂字型粗細（偏移）
             recommend : no
             author : Neo-Mind
-            desc : "為所有字型粗細新增固定偏移量，使每種字型統一加粗（正值）或變細（負值），而不覆蓋個別粗細設定。"
+            desc : 為所有字型粗細新增固定偏移量，使每種字型統一變粗（正值）或變細（負值），而不覆蓋各個粗細設定。
         
         - CustomFontCharset:
-            title : "自訂字型字元集"
+            title : 自訂字型字符集
             recommend : no
             author : Neo-Mind
-            desc : "將所有字型使用的字元集 (charset) 覆蓋為自訂值。當預設字元集導致顯示問題時，用於強制使用特定編碼，例如 ANSI (0) 、 Baltic (186) 或 UTF-8 。"
+            desc : 將所有字型使用的字符集 (charset) 覆蓋為自訂值。當預設字符集導致顯示問題時，用於強制使用特定編碼，例如 ANSI (0)、Baltic (186) 或 UTF-8。
+
+        - CustomCodePage:
+            title : 覆蓋客戶端內碼表
+            recommend : no
+            author : Louis T Steinhil
+            desc : 使用僅 QJS 的靜態補丁強制 2025-07-16 客戶端的多位元組內碼表。 UTF-8使用65001；此補丁不新增 DLL 匯入或執行時掛鉤。
 
 IgnoreErrors:
-    title : "忽略錯誤"
+    title : IGNORE ERRORS
     mutex : false
     
     patches:
         - IgnoreRsrcErr:
-            title : "忽略資源錯誤"
+            title : 忽略資源錯誤
             recommend : no
             author : Shinryo, Andrei Karas (4144) , Ai4rei/AN
-            desc : "抑制大多數缺少資源 (sprites, textures, models, etc.) 的錯誤彈出視窗，並將它們重新導向到偵錯輸出。用戶端將嘗試繼續執行，但遺失的檔案仍可能導致視覺異常或當機。"
+            desc : 抑制大多數因缺少資源（精靈、紋理、模型等）而導致的錯誤彈出視窗，並將它們重定向到除錯輸出。客戶端將嘗試繼續執行，但丟失的檔案仍可能導致視覺故障或崩潰。
         
         - IgnorePalErr:
-            title : "忽略色盤錯誤"
+            title : 忽略調色盤錯誤
             recommend : no
             author : Shinryo , Ai4rei/AN
-            desc : "抑制缺少色盤 (.pal) 檔案的錯誤彈出視窗，並將它們重新導向到偵錯輸出。當使用尚未存在所有色盤組合的自訂職業或髮型時非常有用。"
+            desc : 抑制缺少調色盤 (.pal) 檔案的錯誤彈出視窗並將其重定向到除錯輸出。當使用尚未存在所有調色盤組合的自訂職業或髮型時非常有用。
         
         - IgnoreLuaErr:
-            title : "忽略 Lua 錯誤"
+            title : 忽略 Lua 錯誤
             recommend : no
             author : Andrei Karas (4144), X-EcutiOnner
-            desc : "抑制 Lua 執行時錯誤彈出視窗 (e.g., \"attempt to call nil value\") 並將其重新導向到偵錯輸出。防止用戶端因自訂腳本中的非關鍵 Lua 錯誤而停止。"
+            desc : 抑制 lua 執行時錯誤彈出視窗（例如，“嘗試呼叫 nil 值”）並將其重定向到除錯輸出。防止客戶端因自訂指令碼中的非關鍵 lua 錯誤而停止。
         
         - IgnoreQuestErr:
-            title : "忽略任務錯誤"
+            title : 忽略任務錯誤
             recommend : no
             author : Andrei Karas (4144), X-EcutiOnner
-            desc : "抑制與任務相關的錯誤彈出視窗 (e.g., \"Not found Quest Info = XXXX\") 並將它們重新導向到偵錯輸出。當伺服器具有尚未在用戶端的任務 Lua 檔案中定義的任務時很有用。"
+            desc : 抑制與任務相關的錯誤彈出視窗（例如，“未找到任務資訊 = XXXX”）並將其重定向到除錯輸出。當伺服器有尚未在客戶端的任務 lua 檔案中定義的任務時很有用。
         
         - IgnoreEntryQueueErr:
-            title : "忽略 Entry Queue 錯誤"
+            title : 忽略進入佇列錯誤
             recommend : no
             author : X-EcutiOnner , Skylove
-            desc : "抑制 Entry Queue 錯誤彈出視窗並將其重新導向到偵錯輸出。如果 Battleground 或實例佇列系統在您的伺服器設定上觸發錯誤，則非常有用。"
+            desc : 抑制進入佇列錯誤彈出視窗並將其重定向到除錯輸出。如果戰場或例項佇列系統觸發伺服器設定錯誤，則非常有用。
 
 MessageBox:
-    title : "MSGBOX 客製"
+    title : MSGBOX CUSTOMIZATIONS
     mutex : true
     
     patches:
         - MsgBox2Beep:
-            title : "將 MessageBox 改為蜂鳴聲"
+            title : 將訊息框更改為蜂鳴聲
             recommend : no
             author : Andrei Karas (4144)
-            desc : "將所有錯誤/警告訊息彈出視窗替換為系統蜂鳴聲。用戶端不會因使用者輸入而暫停——它會播放聲音並繼續執行。"
+            desc : 將所有錯誤/警告訊息彈出視窗替換為系統蜂鳴聲。客戶端不會因使用者輸入而暫停——它會播放聲音並繼續執行。
         
         - ShowMsgIcon:
-            title : "在 MessageBox 中顯示圖示"
+            title : 在訊息框中顯示圖示
             recommend : no
             author : Andrei Karas (4144)
-            desc : "將圖示 (error, warning, info, etc.) 新增至通常只顯示純文字的 MessageBox 彈出視窗。可以更輕鬆地區分不同類型的用戶端訊息。"
+            desc : 向通常僅顯示純文字的訊息框彈出視窗新增圖示（錯誤、警告、資訊等）。可以更輕鬆地區分不同型別的客戶端訊息。
         
         - NoMsgBox:
-            title : "停用 MessageBox"
+            title : 禁用訊息框
             recommend : no
             author : Andrei Karas (4144)
-            desc : "完全停用用戶端中的所有 MessageBox 彈出視窗。不會出現錯誤、警告或資訊對話框。謹慎使用－錯誤將被默默地忽略，並可能導致意外的行為。"
+            desc : 完全禁用客戶端中的所有訊息框彈出視窗。不會出現錯誤、警告或資訊對話方塊。謹慎使用——錯誤將被默默地忽略，並可能導致意外的行為。
