@@ -95,6 +95,9 @@ inputs:
     
     $newFont:
         type: D_FontName
+
+    $customCodePage:
+        type: D_Int32
     
     $maxFriends:
         type: D_Int8

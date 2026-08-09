@@ -9,93 +9,158 @@
 *   the Free Software Foundation, either version 3 of the License, or      *
 *   (at your option) any later version.                                    *
 *                                                                          *
-*   This program is distributed in the hope that it will be useful,        *
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
-*   GNU General Public License for more details.                           *
-*                                                                          *
-*   You should have received a copy of the GNU General Public License      *
-*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
-*                                                                          *
-*                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Stingor, Claude Sonnet                                 *
+*   Author(s)     : Stingor empowered by Claude                            *
 *   Created Date  : 2026-06-13                                             *
-*   Last Modified : 2026-06-13                                             *
+*   Last Modified : 2026-06-22                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Patches the ARGB color constant used for the chat window background.
+/// \brief Recolours the chat window background, split into 3 patches.
 ///
-///        The chat window initialization stores 0x66000000 (ARGB: A=40%,
-///        R=0, G=0, B=0) at this+0xD8.  The renderer multiplies the white
-///        background tile (sysbox_bg.bmp) by this color, producing a
-///        semi-transparent dark overlay.
+///        By default the chat background is drawn as 40% black (semi-transparent),
+///        letting the game world show through. These patches let you pick any
+///        colour and opacity instead.
 ///
-///        OpaqueChatBg        - Forces fully opaque black (A=0xFF, RGB=black).
-///        CustomChatBgOpacity - Lets the user choose any RGB color and alpha.
+///        ChatBgMainPanel - the main chat window: its background and its active tab.
+///        ChatBgDetached  - the detached chat windows: their border and background.
+///        ChatBgWhisper   - the 1:1 whisper (private message) window background.
 ///
-ChatBgOpacity = function(_)
+///        Each patch asks for an opacity (0 = transparent, 255 = opaque) and a
+///        colour. Leave a value unchanged to keep its default.
+///
+
+//=========================================================================
+// Main chat window
+//=========================================================================
+ChatBgMainPanel = function(_)
 {
-	$$(_, 1.1, `Find the chat window background ARGB color initialization`)
-	// MOV dword ptr [reg+0D8h], 66000000h
-	// Pattern: C7 <ModRM> D8 00 00 00 | 00 00 00 66
-	//          ^^^^^^^^^^^^^^^^^^^^^^^^  ^---------^
-	//          field offset 0xD8          ARGB value (little-endian: B G R A)
-	// The 4-byte ARGB value starts at pattern offset +6.
-	const addr = Exe.FindHex("C7 ?? D8 00 00 00 00 00 00 66");
-	if (addr < 0)
-		throw Error("Chat background color pattern not found");
+	$$(_, 1.1, `Find the main chat background colour`)
+	const ctorAddr = Exe.FindHex("C7 ?? D8 00 00 00 00 00 00 66");
+	if (ctorAddr < 0) throw Error("Main chat background pattern not found");
+	const CTOR_ARGB_OFF = 6;
 
-	const ARGB_OFF = 6; // offset of the 4-byte ARGB value within the pattern
+	$$(_, 1.2, `Find the active-tab colour`)
+	const tabAddr = Exe.FindHex(
+		"3B 9E 14 01 00 00" + " B9 00 00 00 66" + " B8 00 00 00 99" + " 0F 44 C1");
+	if (tabAddr < 0) throw Error("Main chat active-tab pattern not found");
+	const TAB_ARGB_OFF = 7;
 
-	if (_ === "OpaqueChatBg")
-	{
-		$$(_, 2.1, `Set to fully opaque black: ARGB = 0xFF000000`)
-		// Little-endian byte order: B=00 G=00 R=00 A=FF
-		Exe.SetHex(addr + ARGB_OFF, "00 00 00 FF");
-	}
-	else
-	{
-		$$(_, 2.1, `Get the desired opacity (alpha) from the user`)
-		const alphaVar = "$chatBgAlpha";
-		const alpha = Exe.GetUserInput(
-			alphaVar, D_Uint8,
-			"Chat Background Opacity",
-			"Enter opacity (0 = fully transparent, 255 = fully opaque)",
-			0xFF,
-			{ min: 0, max: 255 }
-		);
-		if (alpha === false)
-			Cancel("Opacity", 255);
+	$$(_, 2.1, `Ask for the opacity`)
+	// WARP returns false when a value is left unchanged from its default; we treat
+	// that as "keep the default" instead of cancelling the whole patch.
+	const alphaIn = Exe.GetUserInput("$mainChatAlpha", D_Uint8,
+		"Main Chat Opacity", "Enter opacity (0 = transparent, 255 = opaque). Leave as-is to keep default.",
+		0x66, { min: 0, max: 255 });
+	const alpha = (alphaIn === false) ? 0x66 : alphaIn;
 
-		$$(_, 2.2, `Get the desired RGB color from the user`)
-		const colorVar = "$chatBgColor";
-		const color = Exe.GetUserInput(
-			colorVar, D_Color,
-			"Chat Background Color",
-			"Select the background color",
-			0x000000,
-			ROC.ClrSettings
-		);
-		if (color === false)
-			Cancel("Color", "#000000");
+	$$(_, 2.2, `Ask for the colour`)
+	// Leaving the picker on the default (#000000) keeps black.
+	const colorIn = Exe.GetUserInput("$mainChatColor", D_Color,
+		"Main Chat Background Colour", "Select the main chat colour",
+		0x000000, ROC.ClrSettings);
+	const color = (colorIn === false) ? 0x000000 : colorIn;
 
-		$$(_, 2.3, `Combine alpha + RGB and write as little-endian ARGB DWORD`)
-		// D_Color returns 0xRRGGBB; memory layout for ARGB little-endian is B G R A
-		const r = (color >> 16) & 0xFF;
-		const g = (color >>  8) & 0xFF;
-		const b =  color        & 0xFF;
-		const hx = [b, g, r, alpha]
-			.map(v => v.toString(16).toUpperCase().padStart(2, "0"))
-			.join(" ");
-		Exe.SetHex(addr + ARGB_OFF, hx);
-	}
+	$$(_, 2.3, `Apply the colour to the background and the active tab`)
+	// The colour picker returns the value as B-G-R; the client stores it as
+	// blue, green, red, alpha (in that byte order), so reorder before writing.
+	const r =  color        & 0xFF;
+	const g = (color >>  8) & 0xFF;
+	const b = (color >> 16) & 0xFF;
+	const hx = [b, g, r, alpha]
+		.map(v => v.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+
+	Exe.SetHex(ctorAddr + CTOR_ARGB_OFF, hx); // background
+	Exe.SetHex(tabAddr  + TAB_ARGB_OFF,  hx); // active tab
 
 	return true;
 };
 
-OpaqueChatBg        = ChatBgOpacity;
-CustomChatBgOpacity = ChatBgOpacity;
+//=========================================================================
+// Detached chat windows
+//=========================================================================
+ChatBgDetached = function(_)
+{
+	$$(_, 1.1, `Find the detached window border colour`)
+	const outerAddr = Exe.FindHex(
+		"8B 86 EC 00 00 00" + " 68 00 00 00 66" + " FF B6 E8 00 00 00");
+	if (outerAddr < 0) throw Error("Detached window border pattern not found");
+	const OUTER_ARGB_OFF = 7;
+
+	$$(_, 1.2, `Find the detached window background colour`)
+	const subAddr = Exe.FindHex(
+		"C7 86 D4 00 00 00 00 00 00 66" + " 89 86 C4 00 00 00");
+	if (subAddr < 0) throw Error("Detached window background pattern not found");
+	const SUB_ARGB_OFF = 6;
+
+	$$(_, 2.1, `Ask for the opacity`)
+	// WARP returns false when a value is left unchanged from its default; we treat
+	// that as "keep the default" instead of cancelling the whole patch.
+	const alphaIn = Exe.GetUserInput("$detachedChatAlpha", D_Uint8,
+		"Detached Chat Opacity", "Enter opacity (0 = transparent, 255 = opaque). Leave as-is to keep default.",
+		0x66, { min: 0, max: 255 });
+	const alpha = (alphaIn === false) ? 0x66 : alphaIn;
+
+	$$(_, 2.2, `Ask for the colour`)
+	// Leaving the picker on the default (#000000) keeps black.
+	const colorIn = Exe.GetUserInput("$detachedChatColor", D_Color,
+		"Detached Chat Background Colour", "Select the detached chat colour",
+		0x000000, ROC.ClrSettings);
+	const color = (colorIn === false) ? 0x000000 : colorIn;
+
+	$$(_, 2.3, `Apply the colour to the border and the background`)
+	// The colour picker returns the value as B-G-R; the client stores it as
+	// blue, green, red, alpha (in that byte order), so reorder before writing.
+	const r =  color        & 0xFF;
+	const g = (color >>  8) & 0xFF;
+	const b = (color >> 16) & 0xFF;
+	const hx = [b, g, r, alpha]
+		.map(v => v.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+
+	Exe.SetHex(outerAddr + OUTER_ARGB_OFF, hx); // border
+	Exe.SetHex(subAddr   + SUB_ARGB_OFF,   hx); // background
+
+	return true;
+};
+
+//=========================================================================
+// Whisper (1:1 private message) window
+//=========================================================================
+ChatBgWhisper = function(_)
+{
+	$$(_, 1.1, `Find the whisper window background colour`)
+	const frameAddr = Exe.FindHex(
+		"8B 46 14" + " 68 00 00 00 66" + " FF 76 18" + " 83 E8 02");
+	if (frameAddr < 0) throw Error("Whisper window background pattern not found");
+	const FRAME_ARGB_OFF = 4;
+
+	$$(_, 2.1, `Ask for the opacity`)
+	// WARP returns false when a value is left unchanged from its default; we treat
+	// that as "keep the default" instead of cancelling the whole patch.
+	const alphaIn = Exe.GetUserInput("$whisperChatAlpha", D_Uint8,
+		"Whisper Chat Opacity", "Enter opacity (0 = transparent, 255 = opaque). Leave as-is to keep default.",
+		0x66, { min: 0, max: 255 });
+	const alpha = (alphaIn === false) ? 0x66 : alphaIn;
+
+	$$(_, 2.2, `Ask for the colour`)
+	// Leaving the picker on the default (#000000) keeps black.
+	const colorIn = Exe.GetUserInput("$whisperChatColor", D_Color,
+		"Whisper Chat Background Colour", "Select the 1:1 whisper window colour",
+		0x000000, ROC.ClrSettings);
+	const color = (colorIn === false) ? 0x000000 : colorIn;
+
+	$$(_, 2.3, `Apply the colour to the whisper window background`)
+	// The colour picker returns the value as B-G-R; the client stores it as
+	// blue, green, red, alpha (in that byte order), so reorder before writing.
+	const r =  color        & 0xFF;
+	const g = (color >>  8) & 0xFF;
+	const b = (color >> 16) & 0xFF;
+	const hx = [b, g, r, alpha]
+		.map(v => v.toString(16).toUpperCase().padStart(2, "0")).join(" ");
+
+	Exe.SetHex(frameAddr + FRAME_ARGB_OFF, hx); // whisper window background
+
+	return true;
+};

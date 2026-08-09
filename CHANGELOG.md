@@ -1,3 +1,100 @@
+# CrazyBebop - 2025-07-16 build (July 29, 2026)
+
+> **EXE update - grab the new Ragexe.** These fixes live in the injected EXE itself, not in a WARP patch, so re-WARPing the exe you already have will **not** pick them up.
+>
+> Get it through **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**: unzip, run it, and use the **RAGEXE** tab. Then re-apply your patch set if you use one.
+>
+> If you have already patched your own executable, WARPGATE keeps yours and will not overwrite it. Choose ours from the RAGEXE tab (your copy is saved as a `.bak`), or re-patch starting from the new one.
+
+## July 29 Update
+
+### The "exit" button on server select now actually exits ([#17](https://github.com/CrazyBebop/WARP0716/issues/17))
+
+Reported by gidzdlcrz: on the service/server select screen, pressing the second button made the window vanish and left you with nothing on screen. The only way out was to close the client.
+
+The button was renamed to "exit" in an earlier build, but only the label changed. It still performed a cancel, and cancel on that screen closes the window and then sends a message the client ignores while it is on the server list, so nothing replaces it.
+
+It now uses the client's own exit path, which was already present and simply never shown: a confirmation dialog, and a clean shutdown if you accept. Pressing cancel on that dialog returns you to the server list with everything intact.
+
+### Multi-connection clientinfo.xml: switching servers mid-session now works
+
+If your `clientinfo.xml` lists more than one `<connection>`, players can pick a server on the service select screen. That worked from a fresh start, but not after you had already played: log in to one server, go all the way in-game, back out to the server list, pick a **different** server, and the client would fail to connect.
+
+The old code kept its own private copy of every server's address and port and looked yours up by position in that list. That copy went stale once you had been in-game, and it could also drift out of step with the on-screen list if any `<connection>` was missing an `<address>`. It was capped at 8 servers, silently.
+
+It now reads the address and port the client itself resolved for the connection you picked, so there is nothing of ours to go stale, no cap, and no way for the list positions to disagree. Verified against two live servers: pick the second or third entry after a full in-game session and you land on the right one.
+
+### Leaner startup, and the 8 server limit is gone
+
+The old code scanned your entire `clientinfo.xml` at startup and built its own private copy of every server's address and port before the login screen even appeared. That work scaled with the length of your server list, and it was capped at 8 servers.
+
+None of that happens now. The client reads the address and port for the server you picked, at the moment it connects. Startup does strictly less work, there is no cap on how many servers you can list, and there is no second copy of your server list to fall out of step with the file.
+
+### clientinfo.xml problems now tell you what is wrong
+
+Previously a missing, unreadable or incomplete `clientinfo.xml` just produced a failed connection with no explanation. The client now names the actual problem: the file could not be opened, or it has no usable `<clientinfo>`/`<connection>`, or the server you picked has no `<address>`.
+
+---
+
+# CrazyBebop - 2025-07-16 build (July 20, 2026)
+
+> **Patch update - re-WARP to apply.** Adds one new patch for Skill Tree performance; re-apply WARP to use it.
+
+## July 20 Update
+
+### New patch: Reduce expensive UI rendering ([#45](https://github.com/CrazyBebop/WARP0716/pull/45))
+
+The ALT+S Skill Tree rebuilds its entire icon grid every single frame, even when nothing on it has changed. This patch skips that rebuild unless something actually changed: tab, hover, scroll, skill points, window size, or the client's own dirty flag.
+
+Measured on a test client with the Skill Tree open, comparing both states on one running process: the stock client repainted on every frame and sat around 90% CPU, while the gated version repainted **zero times across 256 consecutive idle frames** and dropped under 1%.
+
+Thanks to YlenXWalker and Stingor.
+
+**Idle repaint interval.** The repaint being skipped is also what draws the character preview in the corner of the window, and that preview's animation is driven by a timer. Skipping every frame therefore leaves it frozen while the window sits idle. When you apply the patch it now asks for a minimum repaint interval:
+
+- **Off** - cheapest, the preview stops animating while idle
+- **200 / 400 / 600 / 800 ms** - preview keeps animating
+
+Default is 600 ms. The preview sprite only advances about every 600 ms, so repainting faster than that redraws the same frame for no benefit, and longer intervals cost less.
+
+---
+
+# CrazyBebop - 2025-07-16 build (July 15, 2026)
+
+> **Patch update - re-WARP to apply.** This adds four community patches and fixes the mob/boss bar resize crash; re-apply WARP with the updated patches to use them.
+
+## July 15 Update
+
+### Resize Mob & Boss Bars no longer crash ([#22](https://github.com/CrazyBebop/WARP0716/issues/22))
+
+The **ResizeNormalBar**, **ResizeMiniBossBar**, and **ResizeBossBar** patches now work on the 2025-07-16 client. This was actually two separate bugs stacked on top of each other:
+
+1. **Patcher crash when enabling more than one.** Each Resize\*Bar patch reopened the shared `MobHP` code tag, so applying a second one re-ran the tag setup and crashed the WARP patcher (access violation, `0xC0000005`). Fixed with a guard: the shared hook is built once and each bar only writes its own width/height.
+
+2. **Client crash on mob-bar render.** The patcher crash was hiding a second problem. WARP's automatic mob-bar hook detection mis-reads the 07-16 client and builds a malformed hook, which crashed the *client* the moment a monster HP bar was drawn (for example, clicking a mob). The hook location itself was correct; only the auto-generated code was wrong. Replaced with a hardcoded, verified 07-16 hook that reads the monster type from the correct field.
+
+Confirmed in-game: Boss, Mini-boss, and Normal bars each render at their configured size with no crash.
+
+Thanks to Gardosen for reporting it, and to themidgargospel for the extra detail in the thread.
+
+### New patch: HatEffect world-depth occlusion ([#43](https://github.com/CrazyBebop/WARP0716/pull/43))
+
+Makes hat effects behave like special effects: they are now correctly occluded by buildings, walls, and other world geometry instead of drawing on top of everything. Thanks to YlenXWalker.
+
+### New patch: Dual weapon and off-hand sprites ([#42](https://github.com/CrazyBebop/WARP0716/pull/42))
+
+Adds an option to render dual-wield and off-hand weapons with their original weapon sprites. Thanks to YlenXWalker.
+
+### New patch: Custom client codepage ([#37](https://github.com/CrazyBebop/WARP0716/pull/37))
+
+A QJS-only patch that forces the client's text codepage, so text renders correctly regardless of the OS locale. Thanks to YlenXWalker.
+
+### Chat background patches split, plus Bigger Inventory ([#35](https://github.com/CrazyBebop/WARP0716/pull/35))
+
+The main chat-background patch was split out and detached/whisper chat-background patches were added, which also fixes a red/blue color swap in the old opacity patch (the color value was being read as BGR). Also adds a **BiggerInventoryWindow** patch. Thanks to Stingor.
+
+---
+
 # CrazyBebop — 2025-07-16 build (May 15, 2026)
 
 > **Binary patch — re-WARP required.** Unlike the May 6 / Apr 21 hotfixes, this one changes the `CustomJobs` patch itself, not just Lua data. You must re-apply the WARP patch with the updated `CustomJobs.qjs` for it to take effect — dropping new Lua files alone will **not** enable it.

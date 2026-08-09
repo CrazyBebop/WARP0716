@@ -1,0 +1,600 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil, CrazyBebop                           *
+*   Created Date  : 2026-07-02                                             *
+*   Last Modified : 2026-07-20                                             *
+*                                                                          *
+*   Description   : Gates the 2025-07-16 ALT+S Skill Tree repaint so its   *
+*                   immediate-mode grid is rebuilt only after a render     *
+*                   input changes. The static vtable/code-cave patch keeps *
+*                   the last render nodes on idle frames.                  *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Consolidated UI FPS patch for the 2025-07-16 client.
+///
+/// `UINewSkillListWnd::DrawContent` clears and rebuilds its complete render-node
+/// list every frame. The grid body repeats texture-key creation, texture-cache
+/// lookup, and an O(n) GetSkillInfoAt walk for every skill node. This patch
+/// redirects only the verified DrawContent vtable slot to a static EXE gate.
+/// The original draw runs on the first frame and whenever dirty/tab/hover/scroll/
+/// points/size changes; idle frames return before the node-list clear, retaining
+/// the last geometry.
+///
+/// Older experimental mutations are repaired: the global display-character
+/// draw, Skill Tree RealDraw, factory AddChild calls, animated avatar frame, and
+/// level-label branch are restored to their original bytes. No DLL, recv hook,
+/// or runtime code patching is used.
+///
+ReduceExpensiveUIRender = function(_)
+{
+	$$(_, 1, `Reduce expensive UI rendering`);
+
+	ReduceExpensiveUIRender.gate.repaintFloorMs = ReduceExpensiveUIRender.askRepaintFloor(_);
+
+	ReduceExpensiveUIRender.restoreDisplayCharacterDraw(_);
+	ReduceExpensiveUIRender.preserveSkillTreeRealDraw(_);
+	ReduceExpensiveUIRender.preserveFactoryAddChild(_);
+	ReduceExpensiveUIRender.restoreSkillTreeAvatarFrame(_);
+	ReduceExpensiveUIRender.preserveSkillTreeLevelText(_);
+	ReduceExpensiveUIRender.installSkillTreeRepaintGate(_);
+
+	return true;
+};
+
+///
+/// \brief Ask how often the gate is allowed to repaint while the window sits idle.
+///
+/// The gate skips the whole DrawContent, which also owns the character preview draw, and the
+/// preview's frame index is timer-derived. With no time input the preview freezes on idle
+/// frames. A minimum repaint interval keeps it animating; longer intervals cost less.
+///
+ReduceExpensiveUIRender.askRepaintFloor = function(_)
+{
+	const choices = [
+		"Off - cheapest, preview freezes while idle",
+		"200 ms",
+		"400 ms",
+		"600 ms",
+		"800 ms"
+	];
+
+	const sel = Exe.GetUserInput(
+		'$skillTreeRepaintFloor',
+		D_Choice,
+		"Skill Tree idle repaint",
+		"This patch skips the Skill Tree repaint when nothing changed. That same repaint draws " +
+		"the character preview, so with no repaint the preview <b>stops animating</b> while the " +
+		"window sits idle.<br><br>" +
+		"Choose a minimum repaint interval to keep it animating. The preview sprite only advances " +
+		"about every 600 ms, so repainting faster than that redraws the same frame for no benefit. " +
+		"Longer intervals are cheaper.<br><br>" +
+		"<b>Off</b> is the cheapest and matches the original behaviour of this patch.",
+		"600 ms",
+		{ choices: choices }
+	);
+
+	if (!sel)
+	{
+		$$(_, 1.01, `Repaint interval not chosen, leaving idle repaint Off`);
+		return 0;
+	}
+
+	const ms = parseInt(sel, 10) || 0;   // the "Off" entry parses to NaN -> 0
+	$$(_, 1.01, `Skill Tree idle repaint: ${ms > 0 ? ms + "ms" : "Off"}`);
+	return ms;
+};
+
+ReduceExpensiveUIRender.normalizeHex = function(hex)
+{
+	return hex.toLowerCase().replace(/\s+/g, "");
+};
+
+ReduceExpensiveUIRender.hexMatches = function(bytes, patterns)
+{
+	const normalized = ReduceExpensiveUIRender.normalizeHex(bytes);
+	for (const pattern of patterns)
+	{
+		if (normalized === ReduceExpensiveUIRender.normalizeHex(pattern))
+			return true;
+	}
+	return false;
+};
+
+ReduceExpensiveUIRender.bytesToHex = function(bytes)
+{
+	return bytes.map(value => (value & 0xFF).toString(16).padStart(2, "0")).join(" ");
+};
+
+ReduceExpensiveUIRender.asm = function()
+{
+	const bytes = [];
+	const labels = {};
+	const fixups = [];
+	const put32 = function(out, pos, value)
+	{
+		const v = value >>> 0;
+		out[pos] = v & 0xFF;
+		out[pos + 1] = (v >>> 8) & 0xFF;
+		out[pos + 2] = (v >>> 16) & 0xFF;
+		out[pos + 3] = (v >>> 24) & 0xFF;
+	};
+
+	return {
+		bytes,
+		emit: function(...values)
+		{
+			for (const value of values)
+				bytes.push(value & 0xFF);
+		},
+		dword: function(value)
+		{
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			put32(bytes, pos, value);
+		},
+		label: function(name)
+		{
+			if (Object.prototype.hasOwnProperty.call(labels, name))
+				throw Error(`ReduceExpensiveUIRender: duplicate label ${name}`);
+			labels[name] = bytes.length;
+		},
+		call: function(target)
+		{
+			bytes.push(0xE8);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		jcc: function(opcode, target)
+		{
+			bytes.push(0x0F, opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		finish: function(baseVir)
+		{
+			const out = bytes.slice();
+			for (const fixup of fixups)
+			{
+				if (typeof fixup.target === "string" &&
+					!Object.prototype.hasOwnProperty.call(labels, fixup.target))
+					throw Error(`ReduceExpensiveUIRender: unresolved label ${fixup.target}`);
+				const targetVir = typeof fixup.target === "string"
+					? baseVir + labels[fixup.target]
+					: fixup.target;
+				put32(out, fixup.pos, targetVir - (baseVir + fixup.pos + 4));
+			}
+			return ReduceExpensiveUIRender.bytesToHex(out);
+		}
+	};
+};
+
+ReduceExpensiveUIRender.assertBytes = function(label, virAddr, expected)
+{
+	const phyAddr = ReduceExpensiveUIRender.tryVir2Phy(virAddr);
+	if (phyAddr < 0)
+		throw Error(`ReduceExpensiveUIRender: ${label} is not mapped`);
+
+	const size = ReduceExpensiveUIRender.normalizeHex(expected).length / 2;
+	const actual = Exe.GetHex(phyAddr, size);
+	if (!ReduceExpensiveUIRender.hexMatches(actual, [expected]))
+		throw Error(`ReduceExpensiveUIRender: ${label} mismatch, got ${actual}`);
+	return phyAddr;
+};
+
+ReduceExpensiveUIRender.tryVir2Phy = function(virAddr)
+{
+	try
+	{
+		const phyAddr = Exe.Vir2Phy(virAddr, CODE);
+		return phyAddr >= 0 ? phyAddr : -1;
+	}
+	catch (e)
+	{
+		return -1;
+	}
+};
+
+ReduceExpensiveUIRender.findByContext = function(context, offset)
+{
+	const found = Exe.FindHex(context);
+	return found >= 0 ? found + offset : -1;
+};
+
+ReduceExpensiveUIRender.findFallback = function(virAddr, len, patterns)
+{
+	const phyAddr = ReduceExpensiveUIRender.tryVir2Phy(virAddr);
+	if (phyAddr < 0)
+		return -1;
+
+	if (ReduceExpensiveUIRender.hexMatches(Exe.GetHex(phyAddr, len), patterns))
+		return phyAddr;
+	return -1;
+};
+
+ReduceExpensiveUIRender.restoreDisplayCharacterDraw = function(_)
+{
+	const original = "55 8B EC 6A FF 68 10 14 E9 00";
+	const disabled = "C3 8B EC 6A FF 68 10 14 E9 00";
+
+	const addr = ReduceExpensiveUIRender.findFallback(
+		0x007F2790,
+		10,
+		[original, disabled]
+	);
+	if (addr < 0)
+		throw Error('ReduceExpensiveUIRender: UIDisplayCharacter::Draw not found');
+
+	const bytes = Exe.GetHex(addr, 10);
+	if (ReduceExpensiveUIRender.hexMatches(bytes, [disabled]))
+	{
+		Exe.SetHex(addr, "55");
+		$$(_, 1.1, `Restored UIDisplayCharacter::Draw at 0x${addr.toString(16).toUpperCase()}`);
+		return;
+	}
+
+	$$(_, 1.1, `Preserve UIDisplayCharacter::Draw at 0x${addr.toString(16).toUpperCase()}`);
+};
+
+ReduceExpensiveUIRender.skillTreeRealDrawOriginal =
+	"55 8B EC 6A FF 68 BD A3 EC 00 64 A1 00 00 00 00 50 83 EC 74";
+
+ReduceExpensiveUIRender.skillTreeRealDrawDisabled =
+	"C3 8B EC 6A FF 68 BD A3 EC 00 64 A1 00 00 00 00 50 83 EC 74";
+
+ReduceExpensiveUIRender.preserveSkillTreeRealDraw = function(_)
+{
+	const original = ReduceExpensiveUIRender.skillTreeRealDrawOriginal;
+	const disabled = ReduceExpensiveUIRender.skillTreeRealDrawDisabled;
+	const addr = ReduceExpensiveUIRender.findFallback(
+		0x00977E80,
+		20,
+		[original, disabled]
+	);
+	if (addr < 0)
+		throw Error('ReduceExpensiveUIRender: UINewSkillListWnd::RealDraw not found');
+
+	const bytes = Exe.GetHex(addr, 20);
+	if (ReduceExpensiveUIRender.hexMatches(bytes, [disabled]))
+	{
+		Exe.SetHex(addr, "55");
+		$$(_, 1.2, `Restored UINewSkillListWnd::RealDraw at 0x${addr.toString(16).toUpperCase()}`);
+		return;
+	}
+
+	if (!ReduceExpensiveUIRender.hexMatches(bytes, [original]))
+		throw Error('ReduceExpensiveUIRender: unexpected Skill Tree RealDraw prologue');
+
+	$$(_, 1.2, `Preserve UINewSkillListWnd::RealDraw at 0x${addr.toString(16).toUpperCase()}`);
+};
+
+ReduceExpensiveUIRender.nops8 = "90 90 90 90 90 90 90 90";
+
+ReduceExpensiveUIRender.factoryAddChildSites = [
+	{
+		name: "factory #1 AddChild",
+		pattern: "56 8B CF E8 E4 68 18 00",
+		fallbackVir: [0x00894E94, 0x00893E94]
+	},
+	{
+		name: "factory #2 AddChild",
+		pattern: "56 8B CB E8 0F 67 18 00",
+		fallbackVir: [0x00895069, 0x00894069]
+	}
+];
+
+ReduceExpensiveUIRender.findFactoryAddChild = function(site)
+{
+	for (const virAddr of site.fallbackVir)
+	{
+		const phyAddr = ReduceExpensiveUIRender.findFallback(
+			virAddr,
+			8,
+			[site.pattern, ReduceExpensiveUIRender.nops8]
+		);
+		if (phyAddr >= 0)
+			return phyAddr;
+	}
+
+	const found = Exe.FindHex(site.pattern);
+	if (found >= 0)
+		return found;
+
+	return -1;
+};
+
+ReduceExpensiveUIRender.preserveFactoryAddChild = function(_)
+{
+	for (const site of ReduceExpensiveUIRender.factoryAddChildSites)
+	{
+		const addr = ReduceExpensiveUIRender.findFactoryAddChild(site);
+		if (addr < 0)
+			throw Error(
+				'ReduceExpensiveUIRender: unable to find ' +
+				site.name
+			);
+
+		const bytes = Exe.GetHex(addr, 8);
+		if (ReduceExpensiveUIRender.hexMatches(bytes, [ReduceExpensiveUIRender.nops8]))
+		{
+			Exe.SetHex(addr, site.pattern);
+			$$(_, 1.3, `Restored ${site.name} at 0x${addr.toString(16).toUpperCase()}`);
+			continue;
+		}
+
+		if (!ReduceExpensiveUIRender.hexMatches(bytes, [site.pattern]))
+			throw Error('ReduceExpensiveUIRender: unexpected ' + site.name + ' bytes');
+
+		$$(_, 1.3, `Preserve ${site.name} at 0x${addr.toString(16).toUpperCase()}`);
+	}
+};
+
+ReduceExpensiveUIRender.avatarFrameContext =
+	"F3 0F 2C C0 99 F7 FE 8B F0 89 B5 24 FF FF FF 83 FE 03";
+
+ReduceExpensiveUIRender.restoreSkillTreeAvatarFrame = function(_)
+{
+	const original = "8B F0";
+	const frozen = "33 F6";
+
+	let addr = ReduceExpensiveUIRender.findByContext(
+		ReduceExpensiveUIRender.avatarFrameContext,
+		7
+	);
+	if (addr < 0)
+		addr = ReduceExpensiveUIRender.findFallback(
+			0x00974BC9,
+			2,
+			[original, frozen]
+		);
+	if (addr < 0)
+		throw Error('ReduceExpensiveUIRender: Skill Tree avatar frame site not found');
+
+	const bytes = Exe.GetHex(addr, 2);
+	if (ReduceExpensiveUIRender.hexMatches(bytes, [frozen]))
+	{
+		Exe.SetHex(addr, original);
+		$$(_, 1.4, `Restored animated Skill Tree avatar at 0x${addr.toString(16).toUpperCase()}`);
+		return;
+	}
+
+	if (!ReduceExpensiveUIRender.hexMatches(bytes, [original]))
+		throw Error('ReduceExpensiveUIRender: unexpected Skill Tree avatar bytes');
+
+	$$(_, 1.4, `Preserve animated Skill Tree avatar at 0x${addr.toString(16).toUpperCase()}`);
+};
+
+ReduceExpensiveUIRender.skillLevelContext =
+	"E8 35 51 DC FF 83 C4 04 83 BD 78 FF FF FF 00 0F 84 7B 02 00 00 84 C0 0F 84 F8 01 00 00";
+
+ReduceExpensiveUIRender.skillLevelOriginal =
+	"83 BD 78 FF FF FF 00 0F 84 7B 02 00 00";
+
+ReduceExpensiveUIRender.skillLevelSkipped =
+	"E9 83 02 00 00 90 90 90 90 90 90 90 90";
+
+ReduceExpensiveUIRender.preserveSkillTreeLevelText = function(_)
+{
+	let addr = ReduceExpensiveUIRender.findByContext(
+		ReduceExpensiveUIRender.skillLevelContext,
+		8
+	);
+	if (addr < 0)
+		addr = ReduceExpensiveUIRender.findFallback(
+			0x00975C7E,
+			13,
+			[
+				ReduceExpensiveUIRender.skillLevelOriginal,
+				ReduceExpensiveUIRender.skillLevelSkipped
+			]
+		);
+	if (addr < 0)
+		throw Error('ReduceExpensiveUIRender: Skill Tree level text site not found');
+
+	const bytes = Exe.GetHex(addr, 13);
+	if (ReduceExpensiveUIRender.hexMatches(bytes, [ReduceExpensiveUIRender.skillLevelSkipped]))
+	{
+		Exe.SetHex(addr, ReduceExpensiveUIRender.skillLevelOriginal);
+		$$(_, 1.5, `Restored Skill Tree level text at 0x${addr.toString(16).toUpperCase()}`);
+		return;
+	}
+
+	if (!ReduceExpensiveUIRender.hexMatches(bytes, [ReduceExpensiveUIRender.skillLevelOriginal]))
+		throw Error('ReduceExpensiveUIRender: unexpected Skill Tree level text bytes');
+
+	$$(_, 1.5, `Preserve Skill Tree level text at 0x${addr.toString(16).toUpperCase()}`);
+};
+
+ReduceExpensiveUIRender.gate = {
+	drawContentVir: 0x00977E80,
+	vtableSlotVir: 0x0103F6B0,
+	skillPointLevelVir: 0x015FB9FC,
+	tickCountIatVir: 0x00FC120C,   // kernel32!GetTickCount IAT slot, 24 call sites in-image
+	repaintFloorMs: 0,             // set from user input at apply time; 0 = original behaviour
+	stateSize: 0x28,
+	state: {
+		valid: 0x00,
+		self: 0x04,
+		width: 0x08,
+		height: 0x0C,
+		hovered: 0x10,
+		tab: 0x14,
+		scroll: 0x18,
+		points: 0x1C,
+		skillPointLevel: 0x20,
+		lastTick: 0x24
+	},
+	fields: [
+		{object: 0x14, state: 0x08},
+		{object: 0x18, state: 0x0C},
+		{object: 0x250, state: 0x10},
+		{object: 0x254, state: 0x14},
+		{object: 0x258, state: 0x18},
+		{object: 0x26C, state: 0x1C}
+	]
+};
+
+ReduceExpensiveUIRender.buildSkillTreeRepaintGate = function(stateVir)
+{
+	const gate = ReduceExpensiveUIRender.gate;
+	const a = ReduceExpensiveUIRender.asm();
+
+	a.emit(0x56, 0x8B, 0xF1);              // PUSH ESI / MOV ESI,ECX
+	a.emit(0x83, 0x3D); a.dword(stateVir + gate.state.valid); a.emit(0x00);
+	a.jcc(0x84, "paint");                  // first call always paints
+	a.emit(0x3B, 0x35); a.dword(stateVir + gate.state.self);
+	a.jcc(0x85, "paint");                  // a recreated window needs a new baseline
+	a.emit(0x80, 0xBE); a.dword(0x271); a.emit(0x00);
+	a.jcc(0x85, "paint");                  // native dirty byte
+
+	for (const field of gate.fields)
+	{
+		a.emit(0x8B, 0x86); a.dword(field.object);
+		a.emit(0x3B, 0x05); a.dword(stateVir + field.state);
+		a.jcc(0x85, "paint");
+	}
+
+	a.emit(0xA1); a.dword(gate.skillPointLevelVir);
+	a.emit(0x3B, 0x05); a.dword(stateVir + gate.state.skillPointLevel);
+	a.jcc(0x85, "paint");
+	// LGRO test change (2026-07-20): the skipped DrawContent also owns the avatar draw at
+	// 0x00978287, and the preview's frame index is timer-derived, so a gate with no time
+	// input freezes the character preview on idle frames. A minimum repaint interval keeps
+	// it animating, and because the whole DrawContent runs on those frames it repaints
+	// cleanly.
+	//
+	// NOTE: do NOT "fix" this by calling the avatar draw directly on the skip path. Verified
+	// broken on a live client - the head ghosts. DrawContent is immediate-mode and begins by
+	// repainting the panel with CUIComponent__DrawFilledRect; that fill is what erases the
+	// previous frame. Drawing the avatar without it composites the new head onto the old
+	// pixels. (The call at 0x00977EBE is CUIComponent__NotifyParentDraw, the standard parent
+	// notification made by ~160 UI draw sites, not a render-node clear.)
+	if (gate.repaintFloorMs > 0)
+	{
+		a.emit(0xFF, 0x15); a.dword(gate.tickCountIatVir);            // CALL [GetTickCount]
+		a.emit(0x2B, 0x05); a.dword(stateVir + gate.state.lastTick);  // SUB EAX,[lastTick]
+		a.emit(0x3D); a.dword(gate.repaintFloorMs);                   // CMP EAX,floor
+		a.jcc(0x83, "paint");                                         // JAE (unsigned: wrap-safe)
+	}
+	a.emit(0x5E, 0xC3);                    // unchanged grid: retain prior render nodes
+
+	a.label("paint");
+	a.emit(0x8B, 0xCE);
+	a.call(gate.drawContentVir);
+	a.emit(0x89, 0x35); a.dword(stateVir + gate.state.self);
+	for (const field of gate.fields)
+	{
+		a.emit(0x8B, 0x86); a.dword(field.object);
+		a.emit(0xA3); a.dword(stateVir + field.state);
+	}
+	a.emit(0xA1); a.dword(gate.skillPointLevelVir);
+	a.emit(0xA3); a.dword(stateVir + gate.state.skillPointLevel);
+	a.emit(0xC7, 0x05); a.dword(stateVir + gate.state.valid);
+	a.emit(0x01, 0x00, 0x00, 0x00);
+	if (gate.repaintFloorMs > 0)
+	{
+		a.emit(0xFF, 0x15); a.dword(gate.tickCountIatVir);            // CALL [GetTickCount]
+		a.emit(0xA3); a.dword(stateVir + gate.state.lastTick);        // MOV [lastTick],EAX
+	}
+	a.emit(0x5E, 0xC3);
+
+	return a;
+};
+
+ReduceExpensiveUIRender.installSkillTreeRepaintGate = function(_)
+{
+	const gate = ReduceExpensiveUIRender.gate;
+
+	// These sites prove the retained-node contract used by the gate: the native
+	// function clears its node list on entry, draws the modern grid, draws the
+	// avatar, then clears the native dirty byte before returning.
+	ReduceExpensiveUIRender.assertBytes(
+		"DrawContent render-node clear",
+		0x00977EBE,
+		"E8 6D 4C 0A 00"
+	);
+	ReduceExpensiveUIRender.assertBytes(
+		"DrawContent grid call",
+		0x00978280,
+		"E8 AB D4 FF FF"
+	);
+	ReduceExpensiveUIRender.assertBytes(
+		"DrawContent avatar call",
+		0x00978287,
+		"E8 74 C4 FF FF"
+	);
+	ReduceExpensiveUIRender.assertBytes(
+		"DrawContent dirty clear",
+		0x0097828C,
+		"C6 86 71 02 00 00 00"
+	);
+
+	// The repaint floor calls kernel32!GetTickCount through the IAT. Confirm the slot really
+	// is that import by proving the client itself calls through it.
+	if (gate.repaintFloorMs > 0)
+	{
+		const slot = gate.tickCountIatVir;
+		const slotHex = [0, 8, 16, 24].map(s => ((slot >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ");
+		if (Exe.FindHex("FF 15 " + slotHex) < 0)
+			throw Error(
+				`ReduceExpensiveUIRender: no CALL DWORD PTR [0x${slot.toString(16).toUpperCase()}] in the image; ` +
+				'the GetTickCount IAT slot is wrong for this build'
+			);
+	}
+
+	let vtablePhy = -1;
+	try
+	{
+		vtablePhy = Exe.Vir2Phy(gate.vtableSlotVir);
+	}
+	catch (e)
+	{
+		vtablePhy = -1;
+	}
+	if (vtablePhy < 0)
+		throw Error('ReduceExpensiveUIRender: DrawContent vtable slot is not mapped');
+	const currentDraw = Exe.GetUint32(vtablePhy);
+	if (currentDraw !== gate.drawContentVir)
+		throw Error(
+			`ReduceExpensiveUIRender: unexpected DrawContent vtable target 0x${currentDraw.toString(16).toUpperCase()}`
+		);
+
+	const [statePhy, stateVir] = Exe.Allocate(gate.stateSize, 4);
+	Exe.SetHex(statePhy, "00 ".repeat(gate.stateSize).trim());
+
+	const code = ReduceExpensiveUIRender.buildSkillTreeRepaintGate(stateVir);
+	const [codePhy, codeVir] = Exe.Allocate(code.bytes.length, 0x10);
+	Exe.SetHex(codePhy, code.finish(codeVir));
+
+	Exe.SetUint32(vtablePhy, codeVir);
+	$$(_, 1.6, `Gate Skill Tree repaint at vtable 0x${vtablePhy.toString(16).toUpperCase()}`);
+};
+
+ReduceExpensiveUIRender.validate = function()
+{
+	return Exe.BuildDate === 20250716;
+};
+

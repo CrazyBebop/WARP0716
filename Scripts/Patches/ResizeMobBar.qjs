@@ -20,9 +20,9 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
+*   Author(s)     : CH.C (jchcc), Neo-Mind, CrazyBebop                     *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2024-08-08                                             *
+*   Last Modified : 2026-07-15                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -75,6 +75,13 @@ ResizeMobBar.cleanup = function(patchName)
 	const cacheKey = 'MBAR';
 	CACHE.restoreEntry(cacheKey, patchName);
 
+	//
+	// restoreEntry tears down the shared 'MobHP' tag (delUser -> cleanTag). Clear the
+	// "tag open" flag so the re-stage below (or a later fresh enable) re-opens the tag
+	// and re-hooks instead of skipping it. (see #22)
+	//
+	CACHE.del('MBAR_TagOpen');
+
 	$$(_, 1.2, `Check if any users are still present`)
 	if (!CACHE.hasUsers(cacheKey))
 		return;
@@ -104,6 +111,63 @@ ResizeMobBar.stage = function(patchName)
 		[bossW, bossH]
 	] = this.Members.map(name => CACHE.entry(cacheKey, name));
 
+	//
+	// === 2025-07-16 build override ===
+	// MBAR mode-2 auto-detection mis-parses this client's instruction layout:
+	// it extracts the wrong MobType ([eax+0xA0] instead of the actor's
+	// [edi+0x304]) and wrong RetnAddr/fill offsets, so the generated trampoline
+	// is malformed and crashes the client the moment a mob HP bar renders.
+	// The hook SITE it finds is correct (0xC54CA0 - the mob HP gauge creation,
+	// gauge stored at actor[EDI+0x300], sized via push 5; push 60). So for this
+	// build we bypass the broken auto-gen and emit a hardcoded, correct
+	// trampoline for that exact site. (fixes CrazyBebop/WARP0716#22 at runtime)
+	//
+	if (Exe.BuildDate === 20250716)
+	{
+		const HOOK_VIR = 0x00C54CA0; // mov ecx,eax; push 5; push 60  (6 bytes overwritten)
+		const RETN_VIR = 0x00C54CA6; // resume at: mov [edi+0x300], eax ; call SetRenderTargetSize
+
+		// One shared trampoline; CACHE.allocate returns the SAME address on every
+		// stage (fixed-size placeholder buffer).
+		const [tramPhy, tramVir] = CACHE.allocate(cacheKey, 'TblBuilder', ["90 ".repeat(0x50).trim()], 0x10);
+
+		// actor = EDI ; HP gauge -> [edi+0x300] ; mob-type flag -> [edi+0x304]
+		const p32   = v   => " 68" + (v >>> 0).toHex(4);         // push <imm32>
+		const cmpTy = n   => " 80 BF 04 03 00 00 0" + n;         // cmp byte ptr [edi+0x304], n
+		const jne   = rel => " 75" + (rel & 0xFF).toHex(1);      // jne short <rel8>
+		const movcx = " 8B C8";                                  // mov ecx, eax
+		const jmpR  = off => " E9" + ((RETN_VIR - (tramVir + off + 5)) >>> 0).toHex(4);
+
+		const firstStage = !CACHE.has('MBAR_TagOpen');
+		if (firstStage)
+		{
+			Exe.BeginTag(CACHE.getTag(cacheKey));
+			CACHE.put('MBAR_TagOpen', true);
+
+			// Build the skeleton once with stock 60x5 for all three parts; each
+			// bar then overwrites only its own two push immediates below. This is
+			// order-independent (no cross-stage size reads). Layout: boss part 26
+			// bytes, mini part 26 bytes, normal part 17 bytes.
+			const code =
+				cmpTy(2) + jne(17) + p32(5) + p32(60) + movcx + jmpR(21) +
+				cmpTy(1) + jne(17) + p32(5) + p32(60) + movcx + jmpR(47) +
+				                     p32(5) + p32(60) + movcx + jmpR(64);
+			Exe.SetHex(tramPhy, code);
+			Exe.SetJMP(Exe.Vir2Phy(HOOK_VIR, CODE), tramVir, 1); // E9 + 1 NOP = 6 bytes
+		}
+
+		// Overwrite THIS bar's own height/width immediates in its part.
+		// Members = [Normal, MiniBoss, Boss]; push-imm offsets (height, width):
+		const idx  = this.Members.indexOf(patchName);
+		const hOff = [53, 36, 10][idx]; // push <height> imm32
+		const wOff = [58, 41, 15][idx]; // push <width>  imm32
+		const [myW, myH] = CACHE.entry(cacheKey, patchName);
+		Exe.SetInt32(tramPhy + hOff, myH);
+		Exe.SetInt32(tramPhy + wOff, myW);
+
+		return;
+	}
+
 	const parts =
 	[//0
 		CMP(BYTE_PTR, MBAR.MobType, 2)  //cmp byte ptr [regC + mobType], 2  OR  cmp regC, 2
@@ -128,8 +192,22 @@ ResizeMobBar.stage = function(patchName)
 	+	JMP(Filler(3))                  //jmp <retnAddr>
 	];
 
-	$$(_, 1.2, `Activate the tag`)
-	Exe.BeginTag(CACHE.getTag(cacheKey));
+	$$(_, 1.2, `Activate the tag (once)`)
+	//
+	// All three Resize*Bar patches share ONE trampoline at ONE hook site, and
+	// stage() re-runs on every apply (and on the cleanup transfer). Re-invoking
+	// Exe.BeginTag on the still-open shared 'MobHP' tag hard-crashes the patcher
+	// (0xC0000005). So open the tag + place the hook only on the first stage; on
+	// later stages just rewrite the trampoline body (its address is stable) under
+	// the already-open tag. The flag is cleared in cleanup() when the tag is torn
+	// down, so a re-stage / later fresh enable re-opens + re-hooks. (fixes CrazyBebop/WARP0716#22)
+	//
+	const firstStage = !CACHE.has('MBAR_TagOpen');
+	if (firstStage)
+	{
+		Exe.BeginTag(CACHE.getTag(cacheKey));
+		CACHE.put('MBAR_TagOpen', true);
+	}
 
 	$$(_, 2.1, `Allocate space for it`)
 	const [free, freeVir] = CACHE.allocate(cacheKey, 'TblBuilder', parts, 0x10);
@@ -147,8 +225,9 @@ ResizeMobBar.stage = function(patchName)
 	$$(_, 2.3, `Add at allocated space`)
 	Exe.SetHex(free, code);
 
-	$$(_, 2.4, `Setup a JMP to it at hook address`)
-	Exe.SetJMP(MBAR.HookAddr, freeVir, MBAR.OvrdSize - 5); //NOPs at the end to keep it clean.
+	$$(_, 2.4, `Setup a JMP to it at hook address (only on the first stage; trampoline addr is stable across re-stages)`)
+	if (firstStage)
+		Exe.SetJMP(MBAR.HookAddr, freeVir, MBAR.OvrdSize - 5); //NOPs at the end to keep it clean.
 };
 
 ///

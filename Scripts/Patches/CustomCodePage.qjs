@@ -1,0 +1,133 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-07-04                                             *
+*   Last Modified : 2026-07-04                                             *
+*                                                                          *
+*   Description   : Overrides the 2025-07-16 client's multibyte codepage   *
+*                   selection by patching the langtype mapper and global   *
+*                   codepage slots. This is a QJS-only static patch and    *
+*                   does not add runtime DLL imports.                      *
+*                                                                          *
+\**************************************************************************/
+
+CustomCodePage = function(_)
+{
+	const codePage = CustomCodePage.getCodePage();
+	if (codePage < 0)
+		return true;
+
+	CustomCodePage.patchStaticCodePage(_, codePage);
+
+	return true;
+};
+
+CustomCodePage.getCodePage = function()
+{
+	const codePage = Exe.GetUserInput(
+		'$customCodePage',
+		D_Int32,
+		"Client Code Page",
+		"Enter the codepage to force for client multibyte text conversion. Use 65001 for UTF-8, or -1 to leave the client unchanged.",
+		65001,
+		{min: -1, max: 65001, saveDefault: true}
+	);
+	if (codePage === false)
+		Cancel("Codepage override disabled");
+
+	return Number(codePage);
+};
+
+CustomCodePage.patchStaticCodePage = function(_, codePage)
+{
+	if (Exe.BuildDate !== 20250716)
+		throw Error("CustomCodePage supports only the 2025-07-16 client");
+
+	if (codePage !== 65001)
+		CustomCodePage.patchSetMbcp(codePage);
+	CustomCodePage.patchLangtypeCodePageMapper(codePage);
+	CustomCodePage.patchGlobalCodePageAssignments(codePage);
+
+	if (typeof PatchDiagnostics !== "undefined" &&
+	    typeof PatchDiagnostics.add === "function")
+		PatchDiagnostics.add('CustomCodePage.patchStaticCodePage', {
+			codePage
+		});
+};
+
+CustomCodePage.patchSetMbcp = function(codePage)
+{
+	const setMbcp = Exe.FindFunc("_setmbcp", "ucrtbase.dll");
+	if (setMbcp < 0)
+		throw Error("CustomCodePage: _setmbcp import not found");
+
+	const addr = Exe.Vir2Phy(0x008D1EFC, CODE);
+	if (addr < 0)
+		throw Error("CustomCodePage: _setmbcp call site is not mapped");
+
+	if (Exe.GetUint8(addr) !== 0x68 ||
+	    Exe.GetUint32(addr + 1) !== 949 ||
+	    Exe.GetUint8(addr + 5) !== 0xFF ||
+	    Exe.GetUint8(addr + 6) !== 0x15 ||
+	    Exe.GetUint32(addr + 7) !== setMbcp)
+		throw Error("CustomCodePage: _setmbcp call site mismatch");
+
+	Exe.SetUint32(addr + 1, codePage);
+};
+
+CustomCodePage.patchLangtypeCodePageMapper = function(codePage)
+{
+	const addr = Exe.Vir2Phy(0x00A6F060, CODE);
+	if (addr < 0)
+		throw Error("CustomCodePage: codepage mapper is not mapped");
+
+	const prologue = "55 8B EC 8B 45 08 83 C0 80 83 F8 6E";
+	if (Exe.GetHex(addr, prologue.byteCount()).trim().toUpperCase() !== prologue)
+		throw Error("CustomCodePage: codepage mapper prologue mismatch");
+
+	Exe.SetHex(addr, " B8" + codePage.toHex() + " C3");
+};
+
+CustomCodePage.patchGlobalCodePageAssignments = function(codePage)
+{
+	const assignments = [
+		0x00A724D2, 0x00A724E8, 0x00A72503, 0x00A7251E,
+		0x00A72539, 0x00A72551, 0x00A7256E, 0x00A7258B,
+		0x00A725A8, 0x00A725C2, 0x00A725DC, 0x00A725F9,
+		0x00A72614
+	];
+
+	for (const virAddr of assignments)
+	{
+		const addr = Exe.Vir2Phy(virAddr, CODE);
+		if (addr < 0)
+			throw Error(`CustomCodePage: global assignment 0x${virAddr.toString(16)} is not mapped`);
+
+		if (Exe.GetHex(addr, 6).trim().toUpperCase() !== "C7 05 18 B8 59 01")
+			throw Error(`CustomCodePage: global assignment opcode mismatch at 0x${virAddr.toString(16)}`);
+
+		Exe.SetUint32(addr + 6, codePage);
+	}
+};
+
+CustomCodePage.validate = () =>
+	Exe.BuildDate === 20250716;

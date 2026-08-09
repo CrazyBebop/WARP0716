@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Custom Jobs Guide — WARP 07-16</title>
+<title>Custom Jobs Guide: WARP 07-16</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css?v=20260318">
@@ -39,7 +39,7 @@
   </div>
   <div class="overview-cell">
     <div class="overview-cell-label">Job ID Range</div>
-    <div class="overview-cell-value"><code>4345</code> &ndash; <code>10000</code> (hardcoded max)</div>
+    <div class="overview-cell-value"><code>4345</code> to <code>10000</code> (hardcoded max)</div>
   </div>
   <div class="overview-cell">
     <div class="overview-cell-label">Template</div>
@@ -52,39 +52,46 @@
 <h2><span class="step-badge">1</span> Choose a Job ID</h2>
 <p>Pick an unused ID between <strong>4345</strong> and <strong>10000</strong>. The ID must match on both client and server.</p>
 <div class="callout callout-warn">
-  <strong>Warning:</strong> IDs below 4345 collide with stock jobs (baby, transcendent, extended, Doram). The 4345 floor is also where the CustomJobs <strong>Phase 5</strong> patch starts skipping the client's built-in <code>convert_job_to_trans_or_baby</code> subtraction path &mdash; IDs at or below it get their sprite indices mangled by that legacy logic. Stay above 4345.
+  <strong>Warning:</strong> IDs below 4345 collide with stock jobs (baby, transcendent, extended, Doram). The 4345 floor is also where the CustomJobs <strong>Phase 5</strong> patch starts skipping the client's built-in <code>convert_job_to_trans_or_baby</code> subtraction path; IDs at or below it get their sprite indices mangled by that legacy logic. Stay above 4345.
 </div>
-<p>For this guide, we'll use <code>EXAMPLE_JOB</code> with ID <code>4435</code>. A complete working example is included in the WARP &mdash; see the <code>Inputs/Luafiles514/</code> folder and <code>docs/CustomJobs/example/</code> for all the files.</p>
+<p>For this guide, we'll use <code>EXAMPLE_JOB</code> with ID <code>4435</code>. A complete working example is included in the WARP; see the <code>Inputs/Luafiles514/</code> folder and <code>docs/CustomJobs/example/</code> for all the files.</p>
+<div class="callout callout-info">
+  <strong>Tip: start from the working example.</strong> The shipped <code>EXAMPLE_JOB</code> (ID 4435) already renders correctly out of the box. The most reliable way to build your own job is to copy that working set, then change <strong>one thing at a time</strong> (the ID, then the name, then the sprites), testing after each change. Rewriting several files at once, or pointing a value at another job, is the usual reason a job that "should work" ends up stuck on the Novice sprite.
+</div>
 </div>
 
 <!-- ══════════════════ STEP 2 ══════════════════ -->
 <div class="section" id="step-2">
 <h2><span class="step-badge">2</span> Client-Side Lua Files</h2>
-<p>The CustomJobs patch uses <strong>7 separate <code>.lua</code> files</strong> in <code>data/luafiles514/lua files/JobInfo/</code>. Each file handles one aspect of the custom job. Your custom entries are loaded at runtime &mdash; stock job data is loaded from the GRF automatically.</p>
+<p>The CustomJobs patch uses <strong>7 separate <code>.lua</code> files</strong> in <code>data/luafiles514/lua files/JobInfo/</code>. Each file handles one aspect of the custom job. Your custom entries are loaded at runtime; stock job data is loaded from the GRF automatically.</p>
 
 <div class="callout callout-info">
   <strong>Loose data or GRF:</strong> These files can live in the <code>data/</code> folder as loose files <strong>or</strong> packed into a GRF (listed in DATA.INI). The patch loads them via the client's file system, which checks both.
 </div>
 
-<h3>PCIds.lua &mdash; Job ID Definition</h3>
-<p>Defines your custom job's numeric ID. This is the master ID that all other files reference. It must match the server-side <code>JOB_</code> enum value exactly. Each custom job needs a unique ID in the range 4345&ndash;10000.</p>
+<div class="callout callout-info">
+  <strong>Exact filenames matter.</strong> The patch loads these seven files by name: <code>PCIds.lua</code>, <code>PCPaths.lua</code>, <code>PCPals.lua</code>, <code>PCHands.lua</code>, <code>PCImfs.lua</code>, <code>PCNames.lua</code>, and <code>PCFuncs.lua</code> (each is also tried with a <code>.lub</code> extension). A misspelled name such as <code>PCName.lua</code> (missing the "s") is silently skipped and its data never loads. Match the spelling and capitalization exactly.
+</div>
+
+<h3>PCIds.lua: Job ID Definition</h3>
+<p>Defines your custom job's numeric ID. This is the master ID that all other files reference. It must match the server-side <code>JOB_</code> enum value exactly. Each custom job needs a unique ID in the range 4345 to 10000.</p>
 <div class="code-label">PCIds.lua</div>
 <pre><code>PCIds = PCIds or {}
 PCIds.EXAMPLE_JOB = 4435</code></pre>
 <div class="callout callout-info">
-  <strong>Note:</strong> The <code>PCIds = PCIds or {}</code> guard ensures the table exists even if the stock GRF hasn't loaded yet. All 7 files use this pattern &mdash; do not remove it.
+  <strong>Note:</strong> The <code>PCIds = PCIds or {}</code> guard ensures the table exists even if the stock GRF hasn't loaded yet. All 7 files use this pattern; do not remove it.
 </div>
 <div class="callout callout-info">
-  <strong>Stock job constants are auto-populated.</strong> The shipped <code>PCIds.lua</code> contains a <code>do</code>-block that fills in every standard job ID (NOVICE, SWORDMAN, LORD_KNIGHT, LORD_KNIGHT2, PALADIN2, RUNE_KNIGHT, all baby / transcendent / 4th-class variants, mounted *2 forms) before your custom IDs are added. That means in <code>PCNames.lua</code> / <code>PCPaths.lua</code> / etc. you can write <code>PCNames[PCIds.LORD_KNIGHT2] = "..."</code> instead of the raw <code>PCNames[4014] = "..."</code> &mdash; both forms work. Aliases are provided for both rAthena (<code>LORD_KNIGHT2</code>, <code>RUNE_KNIGHT_T</code>) and legacy WARP (<code>LORD_MOUNT</code>, <code>RUNE_KNIGHT_H</code>) naming conventions.
+  <strong>Stock job constants are auto-populated.</strong> The shipped <code>PCIds.lua</code> contains a <code>do</code>-block that fills in every standard job ID (NOVICE, SWORDMAN, LORD_KNIGHT, LORD_KNIGHT2, PALADIN2, RUNE_KNIGHT, all baby / transcendent / 4th-class variants, mounted *2 forms) before your custom IDs are added. That means in <code>PCNames.lua</code> / <code>PCPaths.lua</code> / etc. you can write <code>PCNames[PCIds.LORD_KNIGHT2] = "..."</code> instead of the raw <code>PCNames[4014] = "..."</code>; both forms work. Aliases are provided for both rAthena (<code>LORD_KNIGHT2</code>, <code>RUNE_KNIGHT_T</code>) and legacy WARP (<code>LORD_MOUNT</code>, <code>RUNE_KNIGHT_H</code>) naming conventions.
 </div>
 
-<h3>PCNames.lua &mdash; Display Name</h3>
+<h3>PCNames.lua: Display Name</h3>
 <p>Sets the name shown in the <strong>BasicInfo window</strong>, <strong>character select screen</strong>, and <strong>party window</strong>. This is the human-readable name players see in the UI. Without this entry, your custom job will display as "Poring".</p>
 <div class="code-label">PCNames.lua</div>
 <pre><code>PCNames = PCNames or {}
 PCNames[PCIds.EXAMPLE_JOB] = "Example Job"
 
--- You can also rename stock jobs. Both forms work — pick whichever:
+-- You can also rename stock jobs. Both forms work, pick whichever:
 PCNames[PCIds.WARLOCK]      = "Dark Wizard"     -- by name
 PCNames[4055]               = "Dark Wizard"     -- by raw ID (same thing)
 PCNames[PCIds.LORD_KNIGHT2] = "Holy Knight"     -- mounted variant
@@ -113,14 +120,17 @@ PCNames["LT_0"][PCIds.EXAMPLE_JOB] = "예제 직업"     -- Korean
 PCNames["LT_1"][PCIds.EXAMPLE_JOB] = "Example Job"   -- English
 PCNames[PCIds.EXAMPLE_JOB]         = "Example Job"   -- ultimate fallback</code></pre>
 
-<h3>PCPaths.lua &mdash; Sprite Folder Name</h3>
-<p>Maps your job ID to the body sprite <strong>folder/file name</strong>. This value must match your <code>.spr</code> and <code>.act</code> filenames exactly &mdash; it is <strong>case-sensitive</strong> and <strong>ASCII only</strong> (no Korean characters). The client appends the CP949 gender suffix automatically.</p>
+<h3>PCPaths.lua: Sprite Folder Name</h3>
+<p>Maps your job ID to the body sprite <strong>folder/file name</strong>. This value must match your <code>.spr</code> and <code>.act</code> filenames exactly; it is <strong>case-sensitive</strong> and <strong>ASCII only</strong> (no Korean characters). The client appends the CP949 gender suffix automatically.</p>
 <p>Example: if you set <code>"EXAMPLE_JOB"</code>, the client looks for <code>EXAMPLE_JOB_³².spr</code> (male) and <code>EXAMPLE_JOB_¿©.spr</code> (female) in the body sprite directory.</p>
 <div class="code-label">PCPaths.lua</div>
 <pre><code>PCPaths = PCPaths or {}
 PCPaths[PCIds.EXAMPLE_JOB] = "EXAMPLE_JOB"</code></pre>
+<div class="callout callout-warn">
+  <strong>This is a plain text string, not a link to another job.</strong> A very common mistake is trying to "clone" a stock job by writing <code>PCPaths[PCIds.EXAMPLE_JOB] = PCPaths[PCIds.LORD_KNIGHT]</code>. That does not work. Stock jobs load their sprite paths from the GRF, so they are never stored in this Lua table; <code>PCPaths[PCIds.LORD_KNIGHT]</code> reads back as <code>nil</code>, your job ends up with no body path, and it falls back to the Novice sprite. Always give <code>PCPaths</code> a literal folder-name string, then place matching sprite files (Step 3). To reuse another job's look, copy that job's <code>.spr</code> and <code>.act</code> out of the GRF and rename them to your path, including the <code>costume_1/</code> copies.
+</div>
 
-<h3>PCPals.lua &mdash; Palette Prefix</h3>
+<h3>PCPals.lua: Palette Prefix</h3>
 <p>Controls which palette files are used when players change hair/clothes colors via <code>@dye</code> or the stylist NPC. Palette files follow the pattern <code>jobname_gender_N.pal</code> where N is the color index. For most custom jobs, inherit from an existing job (Novice is the safest default). If you create your own palette files, set this to your custom prefix string.</p>
 <div class="code-label">PCPals.lua</div>
 <pre><code>PCPals = PCPals or {}
@@ -128,24 +138,24 @@ PCPaths[PCIds.EXAMPLE_JOB] = "EXAMPLE_JOB"</code></pre>
 -- where PCPals hasn't been populated from GRF yet.
 PCPals[PCIds.EXAMPLE_JOB] = (PCPals[PCIds.NOVICE] or "")</code></pre>
 
-<h3>PCHands.lua &mdash; Weapon Sprite Folder</h3>
+<h3>PCHands.lua: Weapon Sprite Folder</h3>
 <p>Determines which weapon/hand sprite folder is used when your job equips weapons. Each weapon type (sword, axe, bow, etc.) has separate sprites organized by job. Inheriting from an existing job means your custom job uses that job's weapon animations. For a unique look, create your own weapon sprite folder and set the name here.</p>
 <div class="code-label">PCHands.lua</div>
 <pre><code>PCHands = PCHands or {}
 PCHands[PCIds.EXAMPLE_JOB] = (PCHands[PCIds.NOVICE] or "")</code></pre>
 
-<h3>PCImfs.lua &mdash; IMF Animation Reference</h3>
+<h3>PCImfs.lua: IMF Animation Reference</h3>
 <p>Links your job to its IMF (animation timing) files. IMF files control head positioning and animation frame timing. You <strong>must</strong> also have actual <code>.imf</code> binary files in <code>data/imf/</code> (see Step 4). This Lua entry tells the client which IMF prefix to look up. Without it, your character will render without a head.</p>
 <div class="code-label">PCImfs.lua</div>
 <pre><code>PCImfs = PCImfs or {}
 PCImfs[PCIds.EXAMPLE_JOB] = (PCImfs[PCIds.NOVICE] or "")</code></pre>
 
 <div class="callout callout-info">
-  <strong>About the <code>(... or "")</code> guard</strong> used in PCPals / PCHands / PCImfs: the fallback handles the case where the parent table hasn't been merged with stock GRF data at the moment your custom file is loaded. Without the guard, indexing a missing parent returns <code>nil</code>, which the binary's lookup treats as an invalid string. If you want to express fallback chains more explicitly (especially across tiered job chains), use the <strong>Inheritance Tables</strong> described after PCFuncs.lua below &mdash; they re-run the full lookup against the parent ID instead of capturing a one-shot snapshot.
+  <strong>About the <code>(... or "")</code> guard</strong> used in PCPals / PCHands / PCImfs: the fallback handles the case where the parent table hasn't been merged with stock GRF data at the moment your custom file is loaded. Without the guard, indexing a missing parent returns <code>nil</code>, which the binary's lookup treats as an invalid string. Note that a stock parent such as <code>PCHands[PCIds.LORD_KNIGHT]</code> is never in this Lua table either, so it is always <code>nil</code>: the <code>(... or "")</code> collapses it to an empty string, which the client reads as "use the default", not as a copy of that job's weapon or palette. If you want to express fallback chains more explicitly (especially across tiered job chains), use the <strong>Inheritance Tables</strong> described after PCFuncs.lua below; they re-run the full lookup against the parent ID instead of capturing a one-shot snapshot.
 </div>
 
-<h3>PCFuncs.lua &mdash; Core Helper Functions</h3>
-<p>Contains the internal helper functions that the CustomJobs binary patch calls at runtime (<code>ReqPCPath</code>, <code>ReqPCJobName</code>, <code>GetValFromTbl</code>, etc.). It also auto-populates display names for stock jobs from the GRF, mirrors those names onto their peco/dragon/mado mounted variants, and wraps <code>InitSkillTreeView</code> so <code>JOB_SKILL_TIER</code> overrides (used by multi-tier custom job chains) take effect. <strong>Do not remove or rename any functions in this file</strong> &mdash; the binary patch depends on them. You should not need to edit this file; add your custom job data to the other 6 files instead. The WARP Inputs include a working copy.</p>
+<h3>PCFuncs.lua: Core Helper Functions</h3>
+<p>Contains the internal helper functions that the CustomJobs binary patch calls at runtime (<code>ReqPCPath</code>, <code>ReqPCJobName</code>, <code>GetValFromTbl</code>, etc.). It also auto-populates display names for stock jobs from the GRF, mirrors those names onto their peco/dragon/mado mounted variants, and wraps <code>InitSkillTreeView</code> so <code>JOB_SKILL_TIER</code> overrides (used by multi-tier custom job chains) take effect. <strong>Do not remove or rename any functions in this file</strong>; the binary patch depends on them. You should not need to edit this file; add your custom job data to the other 6 files instead. The WARP Inputs include a working copy.</p>
 
 <div class="callout callout-info">
   <strong>No re-WARP needed:</strong> Lua files are loaded at <strong>runtime</strong>, not baked into the exe at patch time. You can add new custom jobs by editing the Lua files without re-WARPing. Only the initial WARP patch (to enable CustomJobs) is required.
@@ -161,7 +171,7 @@ PCImfs[PCIds.EXAMPLE_JOB] = (PCImfs[PCIds.NOVICE] or "")</code></pre>
   <tr><td><code>PCPalInheritTbl</code></td><td><code>MapPCPal(jobid, lt)</code></td></tr>
   <tr><td><code>PCHandInheritTbl</code></td><td><code>MapPCHandPath(jobid, lt)</code></td></tr>
 </table>
-<p>Each entry maps a job ID to its <strong>parent</strong> job ID. When a primary lookup (<code>PCPaths[jobid]</code>) returns nil, the binary asks the matching <code>Map*</code> function, which reads the inherit table to find the parent and re-runs the full lookup against it &mdash; so chains traverse correctly even multiple levels deep.</p>
+<p>Each entry maps a job ID to its <strong>parent</strong> job ID. When a primary lookup (<code>PCPaths[jobid]</code>) returns nil, the binary asks the matching <code>Map*</code> function, which reads the inherit table to find the parent and re-runs the full lookup against it; so chains traverse correctly even multiple levels deep.</p>
 <div class="code-label">PCFuncs.lua (or any of the data files)</div>
 <pre><code>PCPathInheritTbl = PCPathInheritTbl or {}
 PCImfInheritTbl  = PCImfInheritTbl  or {}
@@ -178,7 +188,7 @@ PCPathInheritTbl[PCIds.EXAMPLE_JOB_2ND] = PCIds.EXAMPLE_JOB
 <h3>Skill Tree Files (optional)</h3>
 <p>If your custom job has skills, you also need two files in <code>data/luafiles514/lua files/skillinfoz/</code>:</p>
 
-<h4>jobinheritlist.lub &mdash; Skill Inheritance</h4>
+<h4>jobinheritlist.lub: Skill Inheritance</h4>
 <p>Defines which parent job your custom job inherits skills from. Add your job's ID to the <code>JOBID</code> table and a <code>JOB_INHERIT_LIST</code> entry:</p>
 <div class="code-label">jobinheritlist.lub</div>
 <pre><code>-- In the JOBID table:
@@ -187,7 +197,7 @@ JOBID.JT_EXAMPLE_JOB = 4435
 -- In the JOB_INHERIT_LIST table:
 [JOBID.JT_EXAMPLE_JOB] = JOBID.JT_NOVICE   -- inherits from Novice</code></pre>
 
-<h4>skilltreeview.lub &mdash; Skill Tree Tab Name</h4>
+<h4>skilltreeview.lub: Skill Tree Tab Name</h4>
 <p>Controls the tab label shown in the skill tree window. Without this, your job's tab will say "Etc":</p>
 <div class="code-label">skilltreeview.lub</div>
 <pre><code>-- In the SKILL_TREEVIEW_FOR_JOB table:
@@ -197,22 +207,22 @@ JOBID.JT_EXAMPLE_JOB = 4435
 JobSkillTab.ChangeSkillTabName(JOBID.JT_EXAMPLE_JOB, "Example Job")</code></pre>
 
 <div class="callout callout-warn">
-  <strong>Important:</strong> Unlike the JobInfo <code>.lua</code> files above, these skillinfoz files must use the <code>.lub</code> extension &mdash; the stock client loader only recognizes <code>.lub</code> for this path. Place them in your <code>data/</code> folder or in a GRF with higher priority than the stock GRF in DATA.INI. These files <strong>replace</strong> the stock version entirely, so you must include ALL existing entries plus your additions. The <a href="https://llchrisll.github.io/ROTPDocs/" style="color:var(--gold-dim)">llchrisll Translation Project</a> includes these files and can be used as a base.
+  <strong>Important:</strong> Unlike the JobInfo <code>.lua</code> files above, these skillinfoz files must use the <code>.lub</code> extension; the stock client loader only recognizes <code>.lub</code> for this path. Place them in your <code>data/</code> folder or in a GRF with higher priority than the stock GRF in DATA.INI. These files <strong>replace</strong> the stock version entirely, so you must include ALL existing entries plus your additions. The <a href="https://llchrisll.github.io/ROTPDocs/" style="color:var(--gold-dim)">llchrisll Translation Project</a> includes these files and can be used as a base.
 </div>
 <div class="callout callout-info">
-  <strong>Naming convention &mdash; <code>JT_</code> vs <code>JOB_</code>:</strong> The skillinfoz <code>.lub</code> files use the <code>JOBID.JT_<em>NAME</em></code> form, while the server-side rAthena code in Step 7 uses <code>JOB_<em>NAME</em></code>. Both refer to the same numeric ID; the prefixes are just convention &mdash; <code>JOBID</code> is the client's Lua jobid table, <code>JOB_</code> is the server's C++ enum. Keep the bare <code><em>NAME</em></code> portion identical on both sides to avoid confusion.
+  <strong>Naming convention, <code>JT_</code> vs <code>JOB_</code>:</strong> The skillinfoz <code>.lub</code> files use the <code>JOBID.JT_<em>NAME</em></code> form, while the server-side rAthena code in Step 7 uses <code>JOB_<em>NAME</em></code>. Both refer to the same numeric ID; the prefixes are just convention; <code>JOBID</code> is the client's Lua jobid table, <code>JOB_</code> is the server's C++ enum. Keep the bare <code><em>NAME</em></code> portion identical on both sides to avoid confusion.
 </div>
 
 <h3>Multi-Tier Job Chains (advanced)</h3>
 <p>For job systems with multiple tiers (like Night Watch: Gunslinger &rarr; Rebellion &rarr; Night Watch), the skill tree tabs are controlled by <strong>tiers</strong>. The C++ assigns tier 0 to the root job (whose parent is Novice). Tiers 0 and 1 merge on the first tab. Override tiers for higher classes via <code>JOB_SKILL_TIER</code> in PCIds.lua:</p>
 <div class="code-label">PCIds.lua</div>
 <pre><code>-- Example: 3-tier job chain (Base &rarr; 2nd &rarr; 3rd)
--- The base class is NOT listed — C++ naturally gives it tier 0
+-- The base class is NOT listed, C++ naturally gives it tier 0
 -- (same as Novice), so they merge on the first tab.
 JOB_SKILL_TIER = JOB_SKILL_TIER or {}
 JOB_SKILL_TIER[PCIds.EXAMPLE_JOB_2ND] = 1   -- 2nd tab
 JOB_SKILL_TIER[PCIds.EXAMPLE_JOB_3RD] = 2   -- 3rd tab</code></pre>
-<p>The <code>InitSkillTreeView</code> wrapper in PCFuncs.lua reads this table at runtime. Use consecutive tier numbers (0, 1, 2) &mdash; skipping a tier creates an empty tab. Tab names are set via <code>ChangeSkillTabName</code> in skilltreeview.lub (same convention as Night Watch &mdash; base class name first, then "2nd", "3rd"):</p>
+<p>The <code>InitSkillTreeView</code> wrapper in PCFuncs.lua reads this table at runtime. Use consecutive tier numbers (0, 1, 2); skipping a tier creates an empty tab. Tab names are set via <code>ChangeSkillTabName</code> in skilltreeview.lub (same convention as Night Watch: base class name first, then "2nd", "3rd"):</p>
 <div class="code-label">skilltreeview.lub</div>
 <pre><code>-- 3 named tabs + auto "Etc" tab (matches Night Watch: "Gunslinger", "2nd", "3rd")
 JobSkillTab.ChangeSkillTabName(JOBID.JT_EXAMPLE_BASE, "Base Job", "2nd", "3rd")
@@ -236,7 +246,7 @@ Shrink_Map[PCIds.EXAMPLE_JOB_B] = Scales[1]</code></pre>
 
 <h3>Mount Support</h3>
 <div class="callout callout-info">
-  <strong>Stock mounts work automatically:</strong> Knight, Lord Knight, Crusader, Paladin, Rune Knight (5 dragon colors), Royal Guard, Mechanic, Ranger, and the 4th-class jobs already have <code>Halter_Table</code> + sprite/name data populated from the GRF. You do not need to add anything for stock job mounts &mdash; this section only applies to <strong>custom</strong> jobs.
+  <strong>Stock mounts work automatically:</strong> Knight, Lord Knight, Crusader, Paladin, Rune Knight (5 dragon colors), Royal Guard, Mechanic, Ranger, and the 4th-class jobs already have <code>Halter_Table</code> + sprite/name data populated from the GRF. You do not need to add anything for stock job mounts; this section only applies to <strong>custom</strong> jobs.
 </div>
 <p>To enable the Boarding Halter (item 12622) for a custom job, define the mount ID and halter mapping in PCIds.lua:</p>
 <div class="code-label">PCIds.lua</div>
@@ -246,7 +256,7 @@ PCMounts.EXAMPLE_JOB_RIDING = 4437   -- riding sprite job ID
 
 Halter_Table = Halter_Table or {}
 Halter_Table[PCIds.EXAMPLE_JOB] = PCMounts.EXAMPLE_JOB_RIDING</code></pre>
-<p>When the Boarding Halter is used, rAthena applies <code>SC_ALL_RIDING</code> and the client calls <code>GetHalter(jobid)</code>; the returned riding ID becomes the actor's effective job for sprite/name resolution. That means the riding ID needs <strong>its own complete entry set</strong> across all five Lua data tables &mdash; treat it as a separate custom job:</p>
+<p>When the Boarding Halter is used, rAthena applies <code>SC_ALL_RIDING</code> and the client calls <code>GetHalter(jobid)</code>; the returned riding ID becomes the actor's effective job for sprite/name resolution. That means the riding ID needs <strong>its own complete entry set</strong> across all five Lua data tables; treat it as a separate custom job:</p>
 <table>
   <tr><th>File</th><th>Required entry</th></tr>
   <tr><td><code>PCPaths.lua</code></td><td><code>PCPaths[PCMounts.EXAMPLE_JOB_RIDING] = "EXAMPLE_RIDING"</code></td></tr>
@@ -255,7 +265,7 @@ Halter_Table[PCIds.EXAMPLE_JOB] = PCMounts.EXAMPLE_JOB_RIDING</code></pre>
   <tr><td><code>PCHands.lua</code></td><td><code>PCHands[PCMounts.EXAMPLE_JOB_RIDING] = (PCHands[PCIds.NOVICE] or "")</code></td></tr>
   <tr><td><code>PCImfs.lua</code></td><td><code>PCImfs[PCMounts.EXAMPLE_JOB_RIDING] = (PCImfs[PCIds.NOVICE] or "")</code></td></tr>
 </table>
-<p>Plus the actual asset files for the riding variant: body <code>.spr</code>/<code>.act</code>, <code>costume_1/</code> <code>.spr</code>/<code>.act</code>, IMF (male + female), and icon BMP (<code>icon_jobs_<em>RIDING_ID</em>.bmp</code> + <code>_die.bmp</code>) &mdash; all the same artifacts a base custom job needs (Steps 3-5). If you support multiple mount types (like Rune Knight's five dragon colors), each gets its own ID and full entry set, and <code>Halter_Table</code> can map the same base job to multiple mounts via additional Lua logic.</p>
+<p>Plus the actual asset files for the riding variant: body <code>.spr</code>/<code>.act</code>, <code>costume_1/</code> <code>.spr</code>/<code>.act</code>, IMF (male + female), and icon BMP (<code>icon_jobs_<em>RIDING_ID</em>.bmp</code> + <code>_die.bmp</code>); all the same artifacts a base custom job needs (Steps 3-5). If you support multiple mount types (like Rune Knight's five dragon colors), each gets its own ID and full entry set, and <code>Halter_Table</code> can map the same base job to multiple mounts via additional Lua logic.</p>
 
 <h3>Doram Race</h3>
 <div class="callout callout-info">
@@ -273,7 +283,7 @@ PCRace[PCIds.MY_DORAM_2NDCLASS] = "doram"</code></pre>
   <tr><td>Male base sprite</td><td><code>data/sprite/µµ¶÷Á·/¸öÅë/³²/<em>EXAMPLE_DORAM</em>_³².spr</code></td></tr>
   <tr><td>Female base sprite</td><td><code>data/sprite/µµ¶÷Á·/¸öÅë/¿©/<em>EXAMPLE_DORAM</em>_¿©.spr</code></td></tr>
 </table>
-<p>(Same <code>.act</code>, <code>costume_1/</code>, IMF, palette, and icon rules as Step 3 &mdash; just with <code>µµ¶÷Á·</code> instead of <code>ÀÎ°£Á·</code> for the body sprites.)</p>
+<p>(Same <code>.act</code>, <code>costume_1/</code>, IMF, palette, and icon rules as Step 3, just with <code>µµ¶÷Á·</code> instead of <code>ÀÎ°£Á·</code> for the body sprites.)</p>
 </div>
 
 <!-- ══════════════════ STEP 3 ══════════════════ -->
@@ -322,7 +332,7 @@ PCRace[PCIds.MY_DORAM_2NDCLASS] = "doram"</code></pre>
 </table>
 
 <div class="callout callout-info">
-  <strong>Note:</strong> Base sprite filenames use UPPERCASE to match the PCPaths value. Costume filenames use <strong>lowercase</strong> with a <code>_1</code> suffix. Costume files can be copies of the base sprites &mdash; they just need to exist.
+  <strong>Note:</strong> Base sprite filenames use UPPERCASE to match the PCPaths value. Costume filenames use <strong>lowercase</strong> with a <code>_1</code> suffix. Costume files can be copies of the base sprites; they just need to exist.
 </div>
 
 <h3>Korean Folder Reference</h3>
@@ -343,8 +353,8 @@ PCRace[PCIds.MY_DORAM_2NDCLASS] = "doram"</code></pre>
 <div class="section" id="step-4">
 <h2><span class="step-badge">4</span> IMF Files</h2>
 <p>IMF files control head positioning and animation timing. Place them in <code>data/imf/</code>:</p>
-<pre><code>data/imf/example_job_³².imf    (male — ³² is CP949 for 남)
-data/imf/example_job_¿©.imf    (female — ¿© is CP949 for 여)</code></pre>
+<pre><code>data/imf/example_job_³².imf    (male, ³² is CP949 for 남)
+data/imf/example_job_¿©.imf    (female, ¿© is CP949 for 여)</code></pre>
 <p>Copy from any existing job. The <code>example/</code> folder includes working IMF files.</p>
 
 <div class="callout callout-critical">
@@ -368,7 +378,7 @@ icon_jobs_4435_die.bmp      (dead icon, 24x24 BMP)</code></pre>
 <!-- ══════════════════ STEP 6 ══════════════════ -->
 <div class="section" id="step-6">
 <h2><span class="step-badge">6</span> WARP Patch</h2>
-<p>Enable the <strong>CustomJobs (Reforged)</strong> patch in WARP. MaxJob is hardcoded to <strong>10000</strong> &mdash; no configuration needed.</p>
+<p>Enable the <strong>CustomJobs (Reforged)</strong> patch in WARP. MaxJob is hardcoded to <strong>10000</strong>; no configuration needed.</p>
 <p>When applying the patch, WARP will prompt you for two options:</p>
 
 <h3>Copy Lua Files</h3>
@@ -378,13 +388,13 @@ icon_jobs_4435_die.bmp      (dead icon, 24x24 BMP)</code></pre>
 <p>How Lua loading errors are reported:</p>
 <table>
   <tr><th>Option</th><th>Behavior</th></tr>
-  <tr><td><strong>Silent</strong></td><td>Errors swallowed &mdash; files that fail to load are silently skipped</td></tr>
+  <tr><td><strong>Silent</strong></td><td>Errors swallowed; files that fail to load are silently skipped</td></tr>
   <tr><td><strong>Log File</strong></td><td>Errors written to <code>customjobs_error.log</code> in the client folder</td></tr>
   <tr><td><strong>Popup</strong> (default)</td><td>Windows MessageBox with the Lua error details</td></tr>
 </table>
 
 <div class="callout callout-info">
-  <strong>GRF support:</strong> Custom Lua files work from the loose <code>data/</code> folder <strong>or</strong> packed into a GRF listed in <code>DATA.INI</code>. The patch uses the client's native file loader which checks both. No re-WARP needed when adding new jobs &mdash; just update the Lua files.
+  <strong>GRF support:</strong> Custom Lua files work from the loose <code>data/</code> folder <strong>or</strong> packed into a GRF listed in <code>DATA.INI</code>. The patch uses the client's native file loader which checks both. No re-WARP needed when adding new jobs; just update the Lua files.
 </div>
 </div>
 
@@ -393,27 +403,27 @@ icon_jobs_4435_die.bmp      (dead icon, 24x24 BMP)</code></pre>
 <h2><span class="step-badge">7</span> Server-Side (rAthena)</h2>
 <p>Your rAthena server needs to know about the new job. This requires changes to <strong>7 source files</strong> and <strong>4 database files</strong>. After editing, rebuild the server.</p>
 
-<h3>A. Job ID &mdash; <code>src/common/mmo.hpp</code></h3>
+<h3>A. Job ID: <code>src/common/mmo.hpp</code></h3>
 <p>Add your job to the <code>e_job</code> enum, before <code>JOB_MAX</code>:</p>
 <div class="code-label">mmo.hpp</div>
 <pre><code>JOB_EXAMPLE_JOB = 4435,
 JOB_MAX,</code></pre>
 
-<h3>B. Map ID &mdash; <code>src/map/map.hpp</code></h3>
+<h3>B. Map ID: <code>src/map/map.hpp</code></h3>
 <p>Add a corresponding <code>MAPID</code> entry to the <code>e_mapid</code> enum (before the 2-1 Jobs section):</p>
 <div class="code-label">map.hpp</div>
 <pre><code>MAPID_EXAMPLE_JOB,</code></pre>
 
-<h3>C. Job Conversion &mdash; <code>src/map/pc.cpp</code></h3>
+<h3>C. Job Conversion: <code>src/map/pc.cpp</code></h3>
 <p>Add entries to <strong>both</strong> conversion switch statements:</p>
 <div class="code-label">pc.cpp</div>
-<pre><code>// In pc_jobid2mapid() — converts job ID to map ID:
+<pre><code>// In pc_jobid2mapid(), converts job ID to map ID:
 case JOB_EXAMPLE_JOB:    return MAPID_EXAMPLE_JOB;
 
-// In pc_mapid2jobid() — converts map ID back to job ID:
+// In pc_mapid2jobid(), converts map ID back to job ID:
 case MAPID_EXAMPLE_JOB:  return JOB_EXAMPLE_JOB;</code></pre>
 
-<h3>D. Job Validation &mdash; <code>src/map/pc.hpp</code></h3>
+<h3>D. Job Validation: <code>src/map/pc.hpp</code></h3>
 <p>Update the <code>pcdb_checkid</code> macro so the server recognizes your job ID as valid. Add or extend the range to include your job:</p>
 <div class="code-label">pc.hpp</div>
 <pre><code>// In the pcdb_checkid_sub macro, add a range check:
@@ -422,7 +432,7 @@ case MAPID_EXAMPLE_JOB:  return JOB_EXAMPLE_JOB;</code></pre>
   <strong>Tip:</strong> If you have multiple custom jobs, use a range: <code>JOB_FIRST_CUSTOM</code> to <code>JOB_LAST_CUSTOM</code>.
 </div>
 
-<h3>E. Script Constants &mdash; <code>src/map/script_constants.hpp</code></h3>
+<h3>E. Script Constants: <code>src/map/script_constants.hpp</code></h3>
 <p>Export the job constant so NPC scripts can reference it. Add <strong>both</strong> entries:</p>
 <div class="code-label">script_constants.hpp</div>
 <pre><code>// Near the other job exports:
@@ -431,7 +441,7 @@ export_constant(JOB_EXAMPLE_JOB);
 // Near the EAJ_ exports:
 export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
 
-<h3>F. Job Name &mdash; <code>src/char/inter.cpp</code></h3>
+<h3>F. Job Name: <code>src/char/inter.cpp</code></h3>
 <p>Add a case to the job name function so the char-server can display the name. Pick an unused <code>msg_txt</code> ID (check <code>conf/msg_conf/char_msg.conf</code>):</p>
 <div class="code-label">inter.cpp</div>
 <pre><code>case JOB_EXAMPLE_JOB:
@@ -440,7 +450,7 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
 <div class="code-label">char_msg.conf</div>
 <pre><code>833: Example Job</code></pre>
 
-<h3>G. Database Files &mdash; <code>db/re/</code> (or <code>db/pre-re/</code>)</h3>
+<h3>G. Database Files: <code>db/re/</code> (or <code>db/pre-re/</code>)</h3>
 <p>Add your job to <strong>four</strong> YAML database files. The easiest approach is to add your job to an existing group (e.g., Knight or Novice). Find a <code>Jobs:</code> block and add your job name:</p>
 <div class="code-label">db/re/job_stats.yml</div>
 <pre><code>    Jobs:
@@ -455,10 +465,10 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
   <tr><td><code>job_exp.yml</code></td><td>EXP table (base + job)</td></tr>
 </table>
 <div class="callout callout-critical">
-  <strong>Critical:</strong> Without these DB entries, the map-server will crash on startup with <code>"Job Example_Job does not exist"</code>. The job name in YAML must match the enum name with <code>JOB_</code> removed and underscores preserved.
+  <strong>Critical:</strong> Without these DB entries, the map-server will crash on startup with <code>"Job Example_Job does not exist"</code>. The YAML job name is the constant name without the <code>JOB_</code> prefix (here <code>Example_Job</code>); match the capitalization style of the neighboring entries in the same file.
 </div>
 
-<h3>H. Skill Tree (optional) &mdash; <code>db/import/skill_tree.yml</code></h3>
+<h3>H. Skill Tree (optional): <code>db/import/skill_tree.yml</code></h3>
 <div class="code-label">skill_tree.yml</div>
 <pre><code>- Job: Example_Job
   Inherit:
@@ -495,12 +505,12 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
       <span class="checklist-progress-label">0 / 15</span>
     </div>
     <ul class="checklist">
-      <li><input type="checkbox" data-id="c-pcids"><span><code>PCIds.lua</code> &mdash; Job ID defined</span></li>
-      <li><input type="checkbox" data-id="c-pcnames"><span><code>PCNames.lua</code> &mdash; Display name</span></li>
-      <li><input type="checkbox" data-id="c-pcpaths"><span><code>PCPaths.lua</code> &mdash; Sprite path</span></li>
-      <li><input type="checkbox" data-id="c-pcpals"><span><code>PCPals.lua</code> &mdash; Palette name</span></li>
-      <li><input type="checkbox" data-id="c-pchands"><span><code>PCHands.lua</code> &mdash; Weapon sprites</span></li>
-      <li><input type="checkbox" data-id="c-pcimfs"><span><code>PCImfs.lua</code> &mdash; IMF reference</span></li>
+      <li><input type="checkbox" data-id="c-pcids"><span><code>PCIds.lua</code>; Job ID defined</span></li>
+      <li><input type="checkbox" data-id="c-pcnames"><span><code>PCNames.lua</code>; Display name</span></li>
+      <li><input type="checkbox" data-id="c-pcpaths"><span><code>PCPaths.lua</code>; Sprite path</span></li>
+      <li><input type="checkbox" data-id="c-pcpals"><span><code>PCPals.lua</code>; Palette name</span></li>
+      <li><input type="checkbox" data-id="c-pchands"><span><code>PCHands.lua</code>; Weapon sprites</span></li>
+      <li><input type="checkbox" data-id="c-pcimfs"><span><code>PCImfs.lua</code>; IMF reference</span></li>
       <li><input type="checkbox" data-id="c-spr-m"><span>Male base sprite <code>.spr</code> + <code>.act</code></span></li>
       <li><input type="checkbox" data-id="c-spr-f"><span>Female base sprite <code>.spr</code> + <code>.act</code></span></li>
       <li><input type="checkbox" data-id="c-cos-m"><span>Male costume_1 sprite <code>.spr</code> + <code>.act</code></span></li>
@@ -520,17 +530,17 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
       <span class="checklist-progress-label">0 / 11</span>
     </div>
     <ul class="checklist">
-      <li><input type="checkbox" data-id="s-mmo"><span><code>mmo.hpp</code> &mdash; JOB_ enum entry (before JOB_MAX)</span></li>
-      <li><input type="checkbox" data-id="s-map"><span><code>map.hpp</code> &mdash; MAPID_ enum entry</span></li>
-      <li><input type="checkbox" data-id="s-pc"><span><code>pc.cpp</code> &mdash; Both conversion switch cases</span></li>
-      <li><input type="checkbox" data-id="s-pchpp"><span><code>pc.hpp</code> &mdash; pcdb_checkid macro range</span></li>
-      <li><input type="checkbox" data-id="s-const"><span><code>script_constants.hpp</code> &mdash; export_constant + EAJ_ export</span></li>
-      <li><input type="checkbox" data-id="s-inter"><span><code>inter.cpp</code> &mdash; Job name msg_txt case</span></li>
-      <li><input type="checkbox" data-id="s-stats"><span><code>job_stats.yml</code> &mdash; HP/SP/weight entry</span></li>
-      <li><input type="checkbox" data-id="s-aspd"><span><code>job_aspd.yml</code> &mdash; Attack speed entry</span></li>
-      <li><input type="checkbox" data-id="s-base"><span><code>job_basepoints.yml</code> &mdash; Stat points entry</span></li>
-      <li><input type="checkbox" data-id="s-exp"><span><code>job_exp.yml</code> &mdash; EXP table entry</span></li>
-      <li><input type="checkbox" data-id="s-skill"><span><code>skill_tree.yml</code> &mdash; Skill tree (optional)</span></li>
+      <li><input type="checkbox" data-id="s-mmo"><span><code>mmo.hpp</code>; JOB_ enum entry (before JOB_MAX)</span></li>
+      <li><input type="checkbox" data-id="s-map"><span><code>map.hpp</code>; MAPID_ enum entry</span></li>
+      <li><input type="checkbox" data-id="s-pc"><span><code>pc.cpp</code>; Both conversion switch cases</span></li>
+      <li><input type="checkbox" data-id="s-pchpp"><span><code>pc.hpp</code>; pcdb_checkid macro range</span></li>
+      <li><input type="checkbox" data-id="s-const"><span><code>script_constants.hpp</code>; export_constant + EAJ_ export</span></li>
+      <li><input type="checkbox" data-id="s-inter"><span><code>inter.cpp</code>; Job name msg_txt case</span></li>
+      <li><input type="checkbox" data-id="s-stats"><span><code>job_stats.yml</code>; HP/SP/weight entry</span></li>
+      <li><input type="checkbox" data-id="s-aspd"><span><code>job_aspd.yml</code>; Attack speed entry</span></li>
+      <li><input type="checkbox" data-id="s-base"><span><code>job_basepoints.yml</code>; Stat points entry</span></li>
+      <li><input type="checkbox" data-id="s-exp"><span><code>job_exp.yml</code>; EXP table entry</span></li>
+      <li><input type="checkbox" data-id="s-skill"><span><code>skill_tree.yml</code>; Skill tree (optional)</span></li>
     </ul>
     <button class="checklist-reset">Reset</button>
   </div>
@@ -540,7 +550,7 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
 <!-- ══════════════════ EXAMPLES ══════════════════ -->
 <div class="section" id="examples">
 <h2>Example Files</h2>
-<p>The <code>example/</code> folder contains a complete working example using job ID <strong>4435</strong> (with baby variant <strong>4436</strong>) and Novice placeholder sprites. The folder mirrors the actual <code>data/</code> directory structure with correct CP949-encoded Korean paths &mdash; you can copy the contents directly into your client's <code>data/</code> folder or pack them into a GRF.</p>
+<p>The <code>example/</code> folder contains a complete working example using job ID <strong>4435</strong> (with baby variant <strong>4436</strong>) and Novice placeholder sprites. The folder mirrors the actual <code>data/</code> directory structure with correct CP949-encoded Korean paths; you can copy the contents directly into your client's <code>data/</code> folder or pack them into a GRF.</p>
 <div class="file-tree">
 <span class="ft-dir">example/data/</span>
 ├── <span class="ft-dir">imf/</span>
@@ -573,7 +583,7 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
     ├── <span class="ft-file">icon_jobs_4435.bmp</span> + <span class="ft-file">_die.bmp</span>
     └── <span class="ft-file">icon_jobs_4436.bmp</span> + <span class="ft-file">_die.bmp</span>   <em>(baby)</em>
 </div>
-<p>The WARP Inputs also include this example &mdash; enable the CustomJobs patch and these files work out of the box.</p>
+<p>The WARP Inputs also include this example; enable the CustomJobs patch and these files work out of the box.</p>
 </div>
 
 <!-- ══════════════════ TROUBLESHOOTING ══════════════════ -->
@@ -607,9 +617,19 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
     <div class="trouble-cell">Ensure PCPaths value matches sprite filename (case-sensitive, ASCII)</div>
   </div>
   <div class="trouble-item">
+    <div class="trouble-cell">Job stays Novice after "inheriting" a stock job</div>
+    <div class="trouble-cell"><code>PCPaths</code> (or PCHands/PCPals/PCImfs) set to <code>[PCIds.LORD_KNIGHT]</code> or another stock job, which reads back as <code>nil</code></div>
+    <div class="trouble-cell">Give <code>PCPaths</code> a literal folder-name string (e.g. <code>"EXAMPLE_JOB"</code>) and add the matching sprite files. Stock jobs are not stored in these Lua tables, so you cannot copy them by reference.</div>
+  </div>
+  <div class="trouble-item">
+    <div class="trouble-cell">Sprite appears, then the client errors or crashes after a minute</div>
+    <div class="trouble-cell">Missing <code>costume_1/</code> sprite files</div>
+    <div class="trouble-cell">Add the <code>costume_1/</code> <code>.spr</code> and <code>.act</code> for both genders (lowercase name with the <code>_1</code> suffix). They can be copies of the base sprite; they just need to exist.</div>
+  </div>
+  <div class="trouble-item">
     <div class="trouble-cell">"CustomJobs Error" popup</div>
     <div class="trouble-cell">Lua file has syntax error or can't be found</div>
-    <div class="trouble-cell">Check the error message &mdash; fix the Lua syntax or file path. Set error display to "Log File" for persistent diagnostics</div>
+    <div class="trouble-cell">Check the error message; fix the Lua syntax or file path. Set error display to "Log File" for persistent diagnostics</div>
   </div>
   <div class="trouble-item">
     <div class="trouble-cell">"file not found" for all Lua files</div>
@@ -626,8 +646,8 @@ export_constant2("EAJ_EXAMPLE_JOB",MAPID_EXAMPLE_JOB);</code></pre>
 
 <footer>
   <span class="footer-brand"><a href="https://github.com/CrazyBebop/WARP0716" style="color:inherit;text-decoration:none">WARP 07-16</a></span>
-  <span>Custom Jobs Guide &mdash; <a href="https://github.com/CrazyBebop" style="color:var(--gold-dim);text-decoration:none">CrazyBebop</a></span>
-  <span>Last updated <time datetime="2026-05-15">2026-05-15</time></span>
+  <span>Custom Jobs Guide, <a href="https://github.com/CrazyBebop" style="color:var(--gold-dim);text-decoration:none">CrazyBebop</a></span>
+  <span>Last updated <time datetime="2026-07-23">2026-07-23</time></span>
   <span>Powered by <a href="https://legacygamers.net" style="color:var(--gold-dim);text-decoration:none">LegacyGamers Network</a></span>
 </footer>
 

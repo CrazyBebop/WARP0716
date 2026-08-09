@@ -1,0 +1,61 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Created Date  : 2026-06-27                                             *
+*   Last Modified : 2026-06-27                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Raises the inventory window's user-resize maximum.
+///
+///        The inventory window's resize handler clamps the size the player can
+///        drag it to. Stock max is 320 x 240 (the two immediates MOV EDI,0x140
+///        and MOV EDX,0xF0 in the resize message handler). This patch rewrites
+///        those two immediates with user-chosen values, so the window can be
+///        dragged much larger and show many more item slots at once.
+///
+///        The inventory background is drawn as tiles (not a fixed bitmap), so it
+///        renders correctly at any size. The minimum size is untouched.
+///
+///        Note: this only changes the WINDOW size, not the item CAPACITY. Use
+///        "Custom inventory limit" to change how many items the bag can hold.
+///
+BiggerInventoryWindow = function(_)
+{
+	$$(_, 1, `Find the inventory resize clamp (MOV EDI,0x140 ... MOV EDX,0xF0)`)
+	// MOV EDI,140h | LEA EBX,[ESI+18h] | CMP [EBP+14h],EDI | MOV EDX,0F0h | MOV EAX,0E8h
+	// (the CMPs reuse EDI/EDX, so only the two MOV immediates set the max W/H)
+	const addr = Exe.FindHex("BF 40 01 00 00 8D 5E 18 39 7D 14 BA F0 00 00 00 B8 E8 00 00 00");
+	if (addr < 0)
+		throw Error("Inventory resize clamp pattern not found");
+
+	$$(_, 2.1, `Ask for the new maximum width`)
+	const wIn = Exe.GetUserInput('$InvWinMaxW', D_Uint32, "Inventory Window Max Width",
+		"Maximum width (in pixels) the inventory window can be resized to.\nStock = 320.",
+		1280, {min: 320, max: 2048});
+	const w = (typeof wIn === 'number') ? wIn : 1280; // keep default if left unchanged/cancelled
+
+	$$(_, 2.2, `Ask for the new maximum height`)
+	const hIn = Exe.GetUserInput('$InvWinMaxH', D_Uint32, "Inventory Window Max Height",
+		"Maximum height (in pixels) the inventory window can be resized to.\nStock = 240.",
+		1024, {min: 240, max: 2048});
+	const h = (typeof hIn === 'number') ? hIn : 1024;
+
+	$$(_, 3, `Patch the two clamp immediates`)
+	Exe.SetInt32(addr +  1, w); // MOV EDI,<maxWidth>
+	Exe.SetInt32(addr + 12, h); // MOV EDX,<maxHeight>
+
+	return true;
+};

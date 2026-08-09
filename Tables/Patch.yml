@@ -232,4 +232,6 @@
 356 : SendClientFlags
 357 : RestoreCpsDll
 358 : CustomMissingLauncherMsg
+359 : ReduceExpensiveUIRender
 360 : RestoreSongsEffect
+361 : CustomCodePage

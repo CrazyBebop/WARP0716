@@ -1,0 +1,417 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-07-12                                             *
+*   Last Modified : 2026-07-12                                             *
+*                                                                          *
+*   brief Shows each weapon's original item SPR/ACT while dual-wielding or *
+*   equipping only an off-hand weapon. This is a self-contained static     *
+*   EXE patch; it does not import or require a weapon-renderer DLL.        *
+*                                                                          *
+*   Target: 2025-07-16 Ragexe 175220998, image base 0x00400000.            *
+*                                                                          *
+*   Reverse-engineered contracts:                                          *
+*   - D403A0(this, mainItem, offItem) owns item fields +0x440/+0x444 and   *
+*     parallel weapon resource arrays +0x4AC (SPR) / +0x4B8 (ACT).         *
+*   - Stock dual setup collapses real items to generic types 25..30.       *
+*   - Stock single-item setup resolves the real item resource pair in      *
+*     slot 5.                                                              *
+*   - Item ACT actions 88..95 are blank because stock uses a combined ACT; *
+*     the direction-matched individual attack actions are 80..87.          *
+*                                                                          *
+*   The injected equipment hook retains each single-item resource pair with*
+*   the client's own AddRef/Release functions and installs it into slots   *
+*   5/6.                                                                   *
+*   The render-call bridge remaps 88..95 only when the live actor has an   *
+*   item-specific SPR+ACT pair in slot 6, leaving stock resources untouched*
+*                                                                          *
+\**************************************************************************/
+
+const DualWeaponStatic = {
+	BuildDate: 20250716,
+	EquipUpdate: 0x00D403A0,
+	EquipStolen: "55 8B EC 6A FF",
+	ActFrameCall: 0x00D36EE4,
+	ActFrameCallBytes: "E8 C7 85 9D FF",
+	ActGetFrame: 0x0070F4B0,
+	ResourceAddRef: 0x00A8E800,
+	ResourceRelease: 0x00A8F910
+};
+
+DualWeaponStatic.hexNorm = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+DualWeaponStatic.assertBytes = function(label, vir, expected)
+{
+	const phy = Exe.Vir2Phy(vir, CODE);
+	if (phy < 0)
+		throw Error(`DualWeaponStatic: ${label} is not mapped`);
+
+	const size = DualWeaponStatic.hexNorm(expected).split(" ").length;
+	const actual = DualWeaponStatic.hexNorm(Exe.GetHex(phy, size));
+	if (actual !== DualWeaponStatic.hexNorm(expected))
+		throw Error(`DualWeaponStatic: ${label} mismatch, got ${actual}`);
+	return phy;
+};
+
+// Minimal label-aware x86 emitter. Relative branches are resolved only after
+// Exe.Allocate returns the final virtual address of the code cave.
+DualWeaponStatic.asm = function()
+{
+	const bytes = [];
+	const labels = {};
+	const fixups = [];
+
+	const put32 = function(out, pos, value)
+	{
+		const v = value >>> 0;
+		out[pos] = v & 0xFF;
+		out[pos + 1] = (v >>> 8) & 0xFF;
+		out[pos + 2] = (v >>> 16) & 0xFF;
+		out[pos + 3] = (v >>> 24) & 0xFF;
+	};
+
+	return {
+		bytes,
+		emit: function(...values)
+		{
+			for (const value of values)
+				bytes.push(value & 0xFF);
+		},
+		dword: function(value)
+		{
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			put32(bytes, pos, value);
+		},
+		label: function(name)
+		{
+			if (Object.prototype.hasOwnProperty.call(labels, name))
+				throw Error(`DualWeaponStatic: duplicate label ${name}`);
+			labels[name] = bytes.length;
+		},
+		rel32: function(opcode, target)
+		{
+			bytes.push(opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		call: function(target) { this.rel32(0xE8, target); },
+		jmp: function(target) { this.rel32(0xE9, target); },
+		jcc: function(opcode, target)
+		{
+			bytes.push(0x0F, opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		finish: function(baseVir)
+		{
+			const out = bytes.slice();
+			for (const fixup of fixups)
+			{
+				if (typeof fixup.target === "string" &&
+					!Object.prototype.hasOwnProperty.call(labels, fixup.target))
+					throw Error(`DualWeaponStatic: unresolved label ${fixup.target}`);
+				const targetVir = typeof fixup.target === "string"
+					? baseVir + labels[fixup.target]
+					: fixup.target;
+				if (typeof targetVir !== "number")
+					throw Error(`DualWeaponStatic: unresolved label ${fixup.target}`);
+				const nextVir = baseVir + fixup.pos + 4;
+				put32(out, fixup.pos, targetVir - nextVir);
+			}
+			return out.map(value => value.toString(16).padStart(2, "0")).join(" ");
+		}
+	};
+};
+
+DualWeaponStatic.buildEquipHook = function(trampolineVir)
+{
+	const a = DualWeaponStatic.asm();
+	let unique = 0;
+
+	const original = function(kind)
+	{
+		// D403A0 is __thiscall and RET 8: push offItem, then mainItem.
+		if (kind === "current")
+			a.emit(0x57, 0x53);             // PUSH EDI / PUSH EBX
+		else if (kind === "offAsMain")
+			a.emit(0x6A, 0x00, 0x57);       // PUSH 0 / PUSH EDI
+		else if (kind === "mainOnly")
+			a.emit(0x6A, 0x00, 0x53);       // PUSH 0 / PUSH EBX
+		else if (kind === "offOnly")
+			a.emit(0x57, 0x6A, 0x00);       // PUSH EDI / PUSH 0
+		else
+			throw Error(`DualWeaponStatic: unknown stock call ${kind}`);
+		a.emit(0x8B, 0xCE);               // MOV ECX,ESI
+		a.call(trampolineVir);
+	};
+
+	const loadSlots = function(failLabel)
+	{
+		a.emit(0x8B, 0x86); a.dword(0x4AC); // MOV EAX,[ESI+4AC] SPR begin
+		a.emit(0x85, 0xC0);                 // TEST EAX,EAX
+		a.jcc(0x84, failLabel);             // JZ fail
+		a.emit(0x8B, 0x8E); a.dword(0x4B0); // MOV ECX,[ESI+4B0] SPR end
+		a.emit(0x3B, 0xC8);                 // CMP ECX,EAX
+		a.jcc(0x82, failLabel);             // JB fail
+		a.emit(0x2B, 0xC8);                 // SUB ECX,EAX
+		a.emit(0x83, 0xF9, 0x1C);           // CMP ECX,7*4
+		a.jcc(0x82, failLabel);             // JB fail
+		a.emit(0x8B, 0x96); a.dword(0x4B8); // MOV EDX,[ESI+4B8] ACT begin
+		a.emit(0x85, 0xD2);                 // TEST EDX,EDX
+		a.jcc(0x84, failLabel);
+		a.emit(0x8B, 0x8E); a.dword(0x4BC); // MOV ECX,[ESI+4BC] ACT end
+		a.emit(0x3B, 0xCA);                 // CMP ECX,EDX
+		a.jcc(0x82, failLabel);
+		a.emit(0x2B, 0xCA);                 // SUB ECX,EDX
+		a.emit(0x83, 0xF9, 0x1C);
+		a.jcc(0x82, failLabel);
+	};
+
+	const captureSlot5 = function(failLabel)
+	{
+		a.emit(0x8B, 0x48, 0x14);           // MOV ECX,[EAX+14] slot-5 SPR
+		a.emit(0x85, 0xC9);
+		a.jcc(0x84, failLabel);
+		a.emit(0x8B, 0x42, 0x14);           // MOV EAX,[EDX+14] slot-5 ACT
+		a.emit(0x85, 0xC0);
+		a.jcc(0x84, failLabel);
+		a.emit(0x89, 0x4D, 0xFC);           // MOV [EBP-4],ECX retained SPR
+		a.emit(0x89, 0x45, 0xF8);           // MOV [EBP-8],EAX retained ACT
+		a.call(DualWeaponStatic.ResourceAddRef);
+		a.emit(0x8B, 0x4D, 0xF8);
+		a.call(DualWeaponStatic.ResourceAddRef);
+	};
+
+	const releaseSlot = function(arrayOffset, slot)
+	{
+		const skip = `release_${unique++}`;
+		a.emit(0x8B, 0x86); a.dword(arrayOffset); // MOV EAX,[ESI+array]
+		a.emit(0x8B, 0x48, slot * 4);             // MOV ECX,[EAX+slot*4]
+		a.emit(0x85, 0xC9);
+		a.jcc(0x84, skip);
+		a.call(DualWeaponStatic.ResourceRelease);
+		a.label(skip);
+	};
+
+	// Hook frame and non-volatile state.
+	a.emit(0x55, 0x8B, 0xEC);             // PUSH EBP / MOV EBP,ESP
+	a.emit(0x83, 0xEC, 0x08);             // SUB ESP,8
+	a.emit(0x53, 0x56, 0x57);             // PUSH EBX/ESI/EDI
+	a.emit(0x8B, 0xF1);                   // MOV ESI,ECX actor
+	a.emit(0x8B, 0x5D, 0x08);             // MOV EBX,[EBP+8] main
+	a.emit(0x8B, 0x7D, 0x0C);             // MOV EDI,[EBP+C] off
+	a.emit(0xC7, 0x45, 0xFC); a.dword(0); // retained SPR = 0
+	a.emit(0xC7, 0x45, 0xF8); a.dword(0); // retained ACT = 0
+
+	// Always preserve every stock side effect before replacing resources.
+	original("current");
+	a.emit(0x85, 0xFF);                   // TEST EDI,EDI
+	a.jcc(0x84, "done");                 // no off-hand
+	a.emit(0x85, 0xDB);                   // TEST EBX,EBX
+	a.jcc(0x84, "offhand_only");
+
+	// Dual: retain the off item from the single-item slot-5 path.
+	original("offAsMain");
+	loadSlots("failed");
+	captureSlot5("failed");
+
+	// Leave the main item's original pair in slot 5 and transfer off to slot 6.
+	original("mainOnly");
+	loadSlots("failed");
+	releaseSlot(0x4AC, 6);
+	releaseSlot(0x4B8, 6);
+	a.emit(0x8B, 0x86); a.dword(0x4AC);
+	a.emit(0x8B, 0x4D, 0xFC, 0x89, 0x48, 0x18); // SPR[6]=retained
+	a.emit(0x8B, 0x96); a.dword(0x4B8);
+	a.emit(0x8B, 0x4D, 0xF8, 0x89, 0x4A, 0x18); // ACT[6]=retained
+	a.emit(0xC7, 0x45, 0xFC); a.dword(0);
+	a.emit(0xC7, 0x45, 0xF8); a.dword(0);
+	a.emit(0x89, 0x9E); a.dword(0x440);   // restore main item field
+	a.emit(0x89, 0xBE); a.dword(0x444);   // restore off item field
+	a.jmp("done");
+
+	// Off-hand only: obtain the real item pair, restore stock, then replace its
+	// generic slots with the retained pair in slot 6.
+	a.label("offhand_only");
+	original("offAsMain");
+	loadSlots("failed");
+	captureSlot5("failed");
+	original("offOnly");
+	loadSlots("failed");
+	releaseSlot(0x4AC, 5);
+	releaseSlot(0x4B8, 5);
+	releaseSlot(0x4AC, 6);
+	releaseSlot(0x4B8, 6);
+	a.emit(0x8B, 0x86); a.dword(0x4AC);
+	a.emit(0xC7, 0x40, 0x14); a.dword(0); // SPR[5]=0
+	a.emit(0x8B, 0x4D, 0xFC, 0x89, 0x48, 0x18); // SPR[6]=retained
+	a.emit(0x8B, 0x96); a.dword(0x4B8);
+	a.emit(0xC7, 0x42, 0x14); a.dword(0); // ACT[5]=0
+	a.emit(0x8B, 0x4D, 0xF8, 0x89, 0x4A, 0x18); // ACT[6]=retained
+	a.emit(0xC7, 0x45, 0xFC); a.dword(0);
+	a.emit(0xC7, 0x45, 0xF8); a.dword(0);
+	a.emit(0xC7, 0x86); a.dword(0x440); a.dword(0);
+	a.emit(0x89, 0xBE); a.dword(0x444);
+	a.jmp("done");
+
+	// A failed item-specific load releases retained references and restores the
+	// exact stock main/off state rather than leaving an intermediate single item.
+	a.label("failed");
+	a.emit(0x8B, 0x4D, 0xFC, 0x85, 0xC9);
+	a.jcc(0x84, "failed_act");
+	a.call(DualWeaponStatic.ResourceRelease);
+	a.label("failed_act");
+	a.emit(0x8B, 0x4D, 0xF8, 0x85, 0xC9);
+	a.jcc(0x84, "failed_restore");
+	a.call(DualWeaponStatic.ResourceRelease);
+	a.label("failed_restore");
+	original("current");
+
+	a.label("done");
+	a.emit(0x5F, 0x5E, 0x5B);             // POP EDI/ESI/EBX
+	a.emit(0x8B, 0xE5, 0x5D);             // MOV ESP,EBP / POP EBP
+	a.emit(0xC2, 0x08, 0x00);             // RET 8
+	return a;
+};
+
+DualWeaponStatic.buildActionBridge = function()
+{
+	const a = DualWeaponStatic.asm();
+
+	// Entry contract at D36EE4: EDI=actor, ECX=ACT resource,
+	// [ESP+4]=action and [ESP+8]=frame.
+	a.emit(0x83, 0x7C, 0x24, 0x04, 0x58); // CMP action,88
+	a.jcc(0x82, "original");               // JB
+	a.emit(0x83, 0x7C, 0x24, 0x04, 0x5F); // CMP action,95
+	a.jcc(0x87, "original");               // JA
+	a.emit(0x8B, 0x87); a.dword(0x4AC);     // EAX=SPR array
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "original");
+	a.emit(0x8B, 0x97); a.dword(0x4B8);     // EDX=ACT array
+	a.emit(0x85, 0xD2);
+	a.jcc(0x84, "original");
+
+	// Slot 6 is sufficient for both dual and off-hand-only patched states.
+	a.emit(0x3B, 0x4A, 0x18);              // CMP ECX,[EDX+18] ACT[6]
+	a.jcc(0x85, "slot5");
+	a.emit(0x83, 0x78, 0x18, 0x00);        // CMP SPR[6],0
+	a.jcc(0x84, "original");
+	a.emit(0x83, 0x6C, 0x24, 0x04, 0x08);  // SUB action,8
+	a.jmp("original");
+
+	// Slot 5 remaps only when slot 6 also has an SPR, distinguishing our
+	// two-pair dual state from stock single/combined weapon resources.
+	a.label("slot5");
+	a.emit(0x3B, 0x4A, 0x14);              // CMP ECX,[EDX+14] ACT[5]
+	a.jcc(0x85, "original");
+	a.emit(0x83, 0x78, 0x14, 0x00);        // CMP SPR[5],0
+	a.jcc(0x84, "original");
+	a.emit(0x83, 0x78, 0x18, 0x00);        // CMP SPR[6],0
+	a.jcc(0x84, "original");
+	a.emit(0x83, 0x6C, 0x24, 0x04, 0x08);  // SUB action,8
+
+	a.label("original");
+	a.jmp(DualWeaponStatic.ActGetFrame);
+	return a;
+};
+
+AllowDualWeaponSprites = function(_)
+{
+	if (Exe.BuildDate !== DualWeaponStatic.BuildDate)
+		throw Error("DualWeaponStatic supports only the 2025-07-16 client");
+
+	$$(_, 1, `Verify the target equipment entry and ACT-frame call site`);
+	const equipPhy = DualWeaponStatic.assertBytes(
+		"D403A0 equipment entry",
+		DualWeaponStatic.EquipUpdate,
+		DualWeaponStatic.EquipStolen
+	);
+	const actionCallPhy = DualWeaponStatic.assertBytes(
+		"D36EE4 ACT-frame call",
+		DualWeaponStatic.ActFrameCall,
+		DualWeaponStatic.ActFrameCallBytes
+	);
+
+	$$(_, 2, `Create the stock D403A0 trampoline`);
+	const [trampolinePhy, trampolineVir] = Exe.Allocate(10, 0x10);
+	const trampoline = DualWeaponStatic.asm();
+	trampoline.emit(0x55, 0x8B, 0xEC, 0x6A, 0xFF);
+	trampoline.jmp(DualWeaponStatic.EquipUpdate + 5);
+	Exe.SetHex(trampolinePhy, trampoline.finish(trampolineVir));
+
+	$$(_, 3, `Inject the generalized native slot equipment hook`);
+	const equipCode = DualWeaponStatic.buildEquipHook(trampolineVir);
+	const [equipHookPhy, equipHookVir] = Exe.Allocate(equipCode.bytes.length, 0x10);
+	Exe.SetHex(equipHookPhy, equipCode.finish(equipHookVir));
+
+	$$(_, 4, `Inject the live-slot dual attack action bridge`);
+	const actionCode = DualWeaponStatic.buildActionBridge();
+	const [actionHookPhy, actionHookVir] = Exe.Allocate(actionCode.bytes.length, 0x10);
+	Exe.SetHex(actionHookPhy, actionCode.finish(actionHookVir));
+
+	// Activate the call bridge first. It is a no-op for every stock slot layout,
+	// so a partial write cannot remap stock combined ACT resources.
+	$$(_, 5, `Activate the ACT-frame bridge and equipment entry hook`);
+	Exe.SetCALL(actionCallPhy, actionHookVir, 0);
+	Exe.SetJMP(equipPhy, equipHookVir, 0);
+
+	if (typeof PatchDiagnostics !== "undefined" &&
+		typeof PatchDiagnostics.add === "function")
+	{
+		PatchDiagnostics.add("AllowDualWeaponSprites.Static", {
+			trampolineVir,
+			equipHookVir,
+			actionHookVir,
+			equipHookSize: equipCode.bytes.length,
+			actionHookSize: actionCode.bytes.length
+		});
+	}
+
+	return true;
+};
+
+AllowDualWeaponSprites.validate = function()
+{
+	if (Exe.BuildDate !== DualWeaponStatic.BuildDate)
+		return false;
+	try
+	{
+		DualWeaponStatic.assertBytes(
+			"D403A0 equipment entry",
+			DualWeaponStatic.EquipUpdate,
+			DualWeaponStatic.EquipStolen
+		);
+		DualWeaponStatic.assertBytes(
+			"D36EE4 ACT-frame call",
+			DualWeaponStatic.ActFrameCall,
+			DualWeaponStatic.ActFrameCallBytes
+		);
+		return true;
+	}
+	catch (error)
+	{
+		return false;
+	}
+};
