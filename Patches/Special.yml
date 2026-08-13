@@ -86,11 +86,11 @@ CustomSpecials:
             author : Stingor
             desc : "Self-contained QJS/EXE patch. The client helper Status_IsBerserkActive (0x00D8E6C0) scans the local status-icon list for EFST_BERSERK (0x6B) and returns 1 while Berserk is up; every chat-channel handler in CModeMgr::SendMsg drops the outgoing CZ_REQUEST_CHAT (opcode 0xF3) on that 1, so the input clears but nothing is sent. Emotes use another command and stay usable. This forces the helper to always return 0, unblocking chat on every channel while Berserk without touching the item/skill Berserk restrictions. NOTE: removes ONLY the client gate; any server-side chat gate for SC_BERSERK must also be removed for chat to go through."
 
-        - RestoreSonicBlowMotion:
-            title : Restore Sonic Blow Attack Animation
+        - RestoreSkillAttackAnimation:
+            title : Restore Skill Attack Animation
             recommend : no
             author : Stingor
-            desc : "Gives Sonic Blow back the attacker's sprite animation. Gravity never removed the animation itself, only the check that selected it -- the client still plays it for Chain Crush Combo, and this routes Sonic Blow back through the same path. Sound and effects were never affected. Self-contained EXE patch, 12 bytes, no code cave."
+            desc : "Gives Sonic Blow and Arrow Vulcan back the attacker's sprite animation -- pick either one or both. Gravity never removed the animations themselves, only the routing that selected them: the client still plays it for Chain Crush Combo, and this sends the chosen skills back through the same path. Sound and effects were never affected."
 
 CustomSkills:
     title : SKILL CUSTOMIZATIONS

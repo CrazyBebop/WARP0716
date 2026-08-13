@@ -1,0 +1,228 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor                                                *
+*   Created Date  : 2026-08-13                                             *
+*   Last Modified : 2026-08-13                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Gives back the attacker's sprite animation on the multi-hit melee /
+///        ranged skills whose trigger Gravity unhooked: AS_SONICBLOW (136) and
+///        CG_ARROWVULCAN (394). Selectable: either one, or both.
+///
+///        NOTHING of the animation itself was removed. The client plays an
+///        actor's attack animation by posting MESSAGE 108 to it, and that
+///        handler (case 108 of the CActorSprite message switch @ 0x00C4AFD7,
+///        block 0x00C4CF4C) is still byte-for-byte what it was in 2018:
+///            [vtable+0x3C](2, 1)        // 2 = ACTOR_STATE.ST_ATTACK
+///            [vtable+0x94]() -> float   -> [actor+0x378]  (attack sound frame)
+///            timeGetTime                -> [actor+0x8C]
+///            [actor+0x3C] = 4
+///            Actor_UpdateMaxField58Scaled(actor, 1.0f)
+///            [vtable+0x10]([actor+0x4C]) -> add [actor+0x38]
+///
+///        What was lost is the routing. In the skill-hit handler
+///        (CActorSprite_OnMsg37_SkillHitVisual, 0x00C600F0), a 2018-06-20 client
+///        sends three ids to the block that posts message 108:
+///            cmp esi, 88h   (136 AS_SONICBLOW)   -> mov [ebp+var_7C], 6Ch
+///            cmp esi, 174h  (372 CH_CHAINCRUSH)  -> same block
+///            cmp esi, 18Ah  (394 CG_ARROWVULCAN) -> same block
+///        In 2025-07-16 only CH_CHAINCRUSH still gets there. The 136 test is
+///        gone outright, and the 394 test survives but now jumps to 0x00C61A53,
+///        the head of a switch keyed on (skillId - 0x1464) which cannot match
+///        394 -- so it falls into the generic default. Both skills therefore
+///        keep their plain attack pose while their sound and particles still
+///        play: the effect id (122 EF_SONICBLOWHIT and friends) survived the
+///        refactor through the session skill->effect table at +0x6E0.
+///
+///        The fix rewrites the skill id to CH_CHAINCRUSH's, right before the
+///        comparison chain, so the client itself routes the skill through the
+///        branch that still posts message 108 -- with its own deferred message
+///        and its own timestamp, which is what replaying the message from
+///        outside the client cannot reproduce. Safe at that point because every
+///        skill->effect lookup already happened upstream (0x00C608B6); only the
+///        deferred-message build reads the id afterwards, so the effects stay
+///        the ones of the real skill.
+///
+///        The 12 bytes of the hook site come from the GC_CROSSIMPACT branch
+///        (0x7E6), inert here: it jumps into that same (skillId - 0x1464) switch,
+///        which does not cover it either.
+///
+///        Verified in game on 2026-08-13.
+///
+///        Target: 2025-07-16 Ragexe, image base 0x00400000.
+///
+
+const SkillAttackMotion = {
+	BuildDate: 20250716,
+
+	// Unique in the whole image (exactly one occurrence).
+	//   81 FF E6 07 00 00    cmp edi, 7E6h        ; GC_CROSSIMPACT
+	//   0F 84 65 02 00 00    jz  0x00C61A50
+	// The trailing `8B 45 D8` (mov eax,[ebp-28h]) is the untouched fall-through;
+	// matching it too means we can never hook a lookalike.
+	Stolen: "81 FF E6 07 00 00 0F 84 65 02 00 00 8B 45 D8",
+	HookSize: 12,   // bytes we may overwrite (the cmp + the jz)
+
+	ChainCrush: 0x174,   // 372 -- the branch that still posts message 108
+
+	Skills: [
+		{ id: 0x88,  name: "Sonic Blow",   key: '$RestoreSonicBlowMotion'   },
+		{ id: 0x18A, name: "Arrow Vulcan", key: '$RestoreArrowVulcanMotion' }
+	]
+};
+
+/// \brief Little-endian hex of `value` over `size` bytes.
+SkillAttackMotion.le = function(value, size)
+{
+	let out = [];
+	for (let i = 0; i < size; ++i)
+		out.push(((value >> (8 * i)) & 0xFF).toString(16).padStart(2, "0").toUpperCase());
+	return out.join(" ");
+};
+
+///
+/// \brief Locates the comparison chain by signature, never by hardcoded address,
+///        so the patch survives a rebuild that shifts the function.
+///
+SkillAttackMotion.findSite = function()
+{
+	const addrs = Exe.FindHexN(SkillAttackMotion.Stolen);
+	if (!addrs || addrs.length === 0)
+		throw Error("RestoreSkillAttackAnimation: comparison chain not found");
+
+	// A second match would mean the signature no longer identifies the skill-hit
+	// handler on its own; hooking blind there could land in another function.
+	if (addrs.length > 1)
+		throw Error(`RestoreSkillAttackAnimation: comparison chain is not unique (${addrs.length} matches)`);
+
+	return addrs[0];
+};
+
+///
+/// \brief Builds the cave: test each selected skill id, and on a match rewrite
+///        the id to CH_CHAINCRUSH's before falling back into the stock chain.
+///
+///        Layout for two ids (offsets in the cave):
+///           0  66 81 FF <id1>   cmp di, id1
+///           5  74 09            je  rewrite
+///           7  66 81 FF <id2>   cmp di, id2
+///          12  74 02            je  rewrite
+///          14  EB 05            jmp back
+///          16  BF 74 01 00 00   rewrite: mov edi, 174h
+///          21  E9 <rel32>       back:    jmp <fall-through>
+///
+SkillAttackMotion.buildCave = function(ids, caveVir, backVir)
+{
+	const le = SkillAttackMotion.le;
+
+	// Size first, so the relative displacements can be computed up front.
+	const cmpSize = 7;                       // cmp di, imm16 + je/jne rel8
+	const tail    = (ids.length > 1 ? 2 : 0) // jmp back (only needed when the
+	                                         // last test uses `je` instead of `jne`)
+	              + 5                        // mov edi, 174h
+	              + 5;                       // jmp back
+	const total   = cmpSize * ids.length + tail;
+
+	const rewriteOff = cmpSize * ids.length + (ids.length > 1 ? 2 : 0);
+	const backOff    = rewriteOff + 5;
+
+	let code = [];
+	ids.forEach((id, index) => {
+		const nextOff = cmpSize * (index + 1);
+		code.push("66 81 FF " + le(id, 2));
+		if (ids.length === 1)
+			code.push("75 " + le(backOff - nextOff, 1));   // jne back
+		else
+			code.push("74 " + le(rewriteOff - nextOff, 1)); // je  rewrite
+	});
+	if (ids.length > 1)
+		code.push("EB " + le(backOff - (rewriteOff), 1));   // jmp back
+
+	code.push("BF " + le(SkillAttackMotion.ChainCrush, 4));  // mov edi, 174h
+	code.push("E9 " + le(backVir - (caveVir + total), 4));   // jmp fall-through
+
+	return { hex: code.join(" "), size: total };
+};
+
+RestoreSkillAttackAnimation = function(_)
+{
+	if (Exe.BuildDate !== SkillAttackMotion.BuildDate)
+		throw Error("RestoreSkillAttackAnimation supports only the 2025-07-16 client");
+
+	$$(_, 1, `Ask which skills to restore`)
+	// One checkbox per skill rather than a single choice list: it expresses
+	// "either, or both" directly, and it does not depend on the displayed label
+	// coming back verbatim from the dialog.
+	const ids = SkillAttackMotion.Skills
+		.filter(skill => Exe.GetUserInput(
+			skill.key,
+			D_Bool,
+			"Restore " + skill.name + " Animation",
+			"Give <b>" + skill.name + "</b> back its attacker sprite animation?",
+			true
+		))
+		.map(skill => skill.id);
+
+	if (ids.length === 0)
+	{
+		$$(_, 1.1, `No skill selected -- nothing to patch`)
+		return false;
+	}
+
+	$$(_, 2, `Locate the comparison chain of the skill-hit handler`)
+	const sitePhy = SkillAttackMotion.findSite();
+	const siteVir = Exe.Phy2Vir(sitePhy, CODE);
+
+	// Where the stock code resumes: right after the 12 bytes we take over.
+	const backVir = siteVir + SkillAttackMotion.HookSize;
+
+	$$(_, 3, `Allocate the cave and write the id rewrite into it`)
+	// Two passes: the code size decides the final JMP displacement, and the
+	// allocation needs that size. Build once against a dummy base to measure,
+	// then rebuild against the real one.
+	const probe = SkillAttackMotion.buildCave(ids, 0, 0);
+	const [cavePhy, caveVir] = Exe.Allocate(probe.size, 0x10);
+	const cave = SkillAttackMotion.buildCave(ids, caveVir, backVir);
+	Exe.SetHex(cavePhy, cave.hex);
+
+	$$(_, 4, `Redirect the hook site into the cave`)
+	// E9 <rel32> + NOP padding, so the 12 bytes stay exactly 12.
+	const jump = "E9 " + SkillAttackMotion.le(caveVir - (siteVir + 5), 4);
+	const pad  = new Array(SkillAttackMotion.HookSize - 5).fill("90").join(" ");
+	Exe.SetHex(sitePhy, jump + " " + pad);
+
+	return true;
+};
+
+RestoreSkillAttackAnimation.validate = function()
+{
+	if (Exe.BuildDate !== SkillAttackMotion.BuildDate)
+		return false;
+	try
+	{
+		SkillAttackMotion.findSite();
+		return true;
+	}
+	catch (error)
+	{
+		return false;
+	}
+};
