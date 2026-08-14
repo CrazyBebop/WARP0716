@@ -89,7 +89,7 @@ CustomUI:
         - PetTalkMarker:
             title : Mark pet chatter in chat
             recommend : no
-            author : Stingor empowered by Claude
+            author : Stingor
             desc : Tags every automated pet line with a marker, so players can tell it apart from something a person typed. Pet chatter carries no sender and the ordinary message type, so a pet named after a player currently reads exactly like that player talking. You choose the text (default <b>pet</b>), the brackets (round, square, angled or none) and whether it goes before or after the pet name -- e.g. <b>Poring (pet) -- I am hungry!</b>. The marker also appears in the speech bubble above the pet.
 
         - AlwaysOfficialBG:
