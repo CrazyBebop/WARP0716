@@ -1,0 +1,157 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Stingor                                             *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Reported by   : Monsii                                                 *
+*   Created Date  : 2026-08-15                                             *
+*   Last Modified : 2026-08-15                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Restore the weapon layers of accounts listed in <admin> of clientinfo.
+///
+///        CActorSprite::BuildWeaponLayers and CActorSprite::BuildShieldWeaponLayers
+///        test the actor's account id against the GM list before touching the
+///        weapon slots. When it matches they:
+///
+///          - slot 5 -> load the admin sword sprite instead of the real weapon
+///          - slot 6 -> store 0 instead of loading the weapon-trail sprite
+///                      (the '_검광' blade-gleam files, e.g.
+///                       초보자_남_도끼_검광.spr next to 초보자_남_도끼.spr)
+///
+///        Slot 6 keeps its .act (that one is set through SetSprNameList), so the
+///        pair ends up mismatched. CActorSprite::BuildPartMap only accepts a part
+///        when BOTH resources are present, so the trail is silently dropped from
+///        the render list and GMs never see any weapon gleam.
+///
+///        'Disable GM sprite' (NoGMSprite) only redirects the two Set*NameList
+///        functions, so these 13 call sites keep running the GM branch. This patch
+///        forces the "regular actor" path in both builders, which restores the
+///        trail effects. Nothing else about GM status is touched -- the yellow
+///        name color, the GM chat color and the admin right-click menu all keep
+///        working, since those use the very same lookup from other call sites that
+///        we deliberately leave alone.
+///
+///        Only meaningful on top of NoGMSprite, hence the 'needs : NoGMSprite' in
+///        Character.yml -- on its own, the two name-list functions would keep
+///        handing the admin sword back to slot 5 and the trail would clash with it.
+///
+RestoreGMWeaponTrail = function(_)
+{
+	$$(_, 1.1, `Find the GM account-id lookup (linear scan over the <admin> list)`)
+	const lookup = Exe.FindHex(
+		'55'                  //push ebp
+	+	' 8B EC'              //mov  ebp, esp
+	+	' A1 ?? ?? ?? ??'     //mov  eax, dword ptr [g_GMAidList_begin]
+	+	' 8B 0D ?? ?? ?? ??'  //mov  ecx, dword ptr [g_GMAidList_end]
+	+	' 3B C1'              //cmp  eax, ecx
+	+	' 74 10'              //je   short _NoMatch
+	+	' 8B 55 08'           //mov  edx, dword ptr [ebp+8]
+	+	' 39 10'              //cmp  dword ptr [eax], edx     ; _Loop
+	+	' 74 07'              //je   short _Match
+	+	' 83 C0 04'           //add  eax, 4
+	+	' 3B C1'              //cmp  eax, ecx
+	+	' 75 F5'              //jne  short _Loop
+	+	' 3B C1'              //cmp  eax, ecx                 ; _Match / _NoMatch
+	+	' 0F 95 C0'           //setne al
+	+	' 5D'                 //pop  ebp
+	+	' C3'                 //retn
+	);
+	if (lookup < 0)
+		throw Error("GM account-id lookup not found");
+
+	///
+	/// Both call sites share the exact same shape. Only the scratch register
+	/// differs (ESI inside BuildWeaponLayers, EBX inside BuildShieldWeaponLayers),
+	/// hence the wildcarded ModRM bytes.
+	///
+	///     E8 ?? ?? ?? ??       call IsGidInGMList
+	///     83 C4 04             add  esp, 4
+	///     84 C0                test al, al
+	///     74 xx                jz   short _RegularActor      <-- turned into JMP
+	///     FF ?? 10 01 00 00    push dword ptr [reg + 110h]   ; account id
+	///     E8 ?? ?? ?? ??       call IsHighRankGM
+	///
+	/// The conditional jump always sits 10 bytes past the start of the pattern
+	/// (5 + 3 + 2), which is what we hand over to SetJMP.
+	///
+	const JMP_POS = 10;
+
+	const head =
+		'E8 ?? ?? ?? ??'      //call IsGidInGMList
+	+	' 83 C4 04'           //add  esp, 4
+	+	' 84 C0'              //test al, al
+	;
+	const tail =
+		' FF ?? 10 01 00 00'  //push dword ptr [reg + 110h]
+	+	' E8 ?? ?? ?? ??'     //call IsHighRankGM
+	;
+
+	$$(_, 1.2, `Prepare the two site shapes`)
+	const shapes =
+	[
+		{
+			///  jz _Regular ; ... ; mov reg, [reg + 4ACh] ; add esp, 4 ; mov dword ptr [reg+18h], 0
+			///  -> slot 6 (index 6 == +18h) forced to NULL : the weapon trail
+			name : "weapon trail (slot 6)",
+			code : head + ' 74 1D' + tail + ' 8B ?? AC 04 00 00' + ' 83 C4 04',
+		},
+		{
+			///  jz _Regular ; ... ; mov ecx, [reg + 260h] ; add esp, 4 ; test al, al
+			///  -> slot 5 replaced by the 운영자 (admin) sword sprite
+			name : "weapon sprite (slot 5)",
+			code : head + ' 74 50' + tail + ' 8B ?? 60 02 00 00' + ' 83 C4 04 84 C0',
+		},
+	];
+
+	///
+	/// Each shape spans 32 bytes for only 10 wildcarded ones, and pins down the
+	/// account-id push ([reg + 110h]), the follow-up rank call and the very slot
+	/// vector being written ([reg + 4ACh] / [reg + 260h]). Nothing else in the
+	/// client matches that, so the shapes are their own guarantee -- the lookup
+	/// found above is kept purely as a client-version guard.
+	///
+	$$(_, 2.1, `Force the regular-actor path on every matching site`)
+	let total = 0;
+	shapes.forEach( (shape, idx) =>
+	{
+		const __ = `${_} [${idx}]`;
+
+		$$(__, 2.2, `Locate the ${shape.name} sites`)
+		const addrs = Exe.FindHexN(shape.code);
+		if (addrs.isEmpty())
+			throw Error(`No ${shape.name} site found`);
+
+		$$(__, 2.3, `Turn each conditional jump into an unconditional one`)
+		addrs.forEach( addr =>
+		{
+			Exe.SetJMP(addr + JMP_POS);
+			total++;
+		});
+	});
+
+	if (total === 0)
+		throw Error("No GM weapon branch could be patched");
+
+	return true;
+};
