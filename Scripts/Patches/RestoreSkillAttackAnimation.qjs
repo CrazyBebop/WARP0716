@@ -18,7 +18,7 @@
 *                                                                          *
 *   Author(s)     : Stingor empowered by Claude                           *
 *   Created Date  : 2026-08-13                                             *
-*   Last Modified : 2026-08-13                                             *
+*   Last Modified : 2026-08-18                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -183,8 +183,11 @@ RestoreSkillAttackAnimation = function(_)
 
 	if (ids.length === 0)
 	{
-		$$(_, 1.1, `No skill selected -- nothing to patch`)
-		return false;
+		// In a profile-driven build GetUserInput reads the `inputs:` block, and a
+		// missing key silently comes back false; Cancel() makes the skip visible
+		// instead of the patch vanishing with exit code 0.
+		const keys = SkillAttackMotion.Skills.map(skill => skill.key).join(" and/or ");
+		Cancel("No skill selected (in a profile, set " + keys + " to true)");
 	}
 
 	$$(_, 2, `Locate the comparison chain of the skill-hit handler`)
