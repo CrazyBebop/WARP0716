@@ -1,0 +1,124 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Created Date  : 2026-08-18                                             *
+*   Last Modified : 2026-08-18                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Shrinks the minimum clickable area the client forces on every entity.
+///
+///        When the client builds the screen rectangle used to decide what the
+///        mouse is pointing at, it WIDENS any rectangle smaller than a minimum,
+///        symmetrically, so that small sprites stay easy to grab. That minimum
+///        is computed once per session from the window width:
+///
+///            actors (players, monsters, pets)  ->  width / 640 x 40 pixels
+///            map NPCs and portals              ->  width / 640 x 34 pixels
+///            skill units                       ->  width / 640 x 34 pixels
+///
+///        which is 40 and 34 px on a 640-wide window, but 100 and 85 px at
+///        1600x900. It is the main reason targeting feels mushy in a crowd: a
+///        30 px poring defends a 100 px box, so neighbouring entities overlap
+///        and fight over the same click -- and the frontmost rectangle wins,
+///        whoever owns it.
+///
+///        This patch divides those minimums by 2, 4, 8 or 16, KEEPING the
+///        scaling with the window width, so the result stays sane at every
+///        resolution. All three entity families are treated, each through its
+///        own global.
+///
+///        Each of those globals is read from exactly one other place in the
+///        client -- the very rectangle construction being patched -- so
+///        nameplates, rendering and the world are untouched.
+///
+///        What this does NOT do: it cannot shrink a BIG sprite's rectangle,
+///        which comes from the artwork itself (transparent margins included).
+///        Nor does it change the depth margin the client adds per entity type
+///        (player +250, monster +100, map NPC and portal +50), which is what
+///        makes a player sprite win the click over a monster it overlaps.
+///
+TighterClickArea = function(_)
+{
+	$$(_, 1, `Find every site computing a minimum clickable area`)
+	// MOV ECX,[g_SceneRenderQueue] | CALL GetGlobalScale | FMUL [40.0f or 34.0f]
+	// FSTP [EBP-x] | CVTTSS2SI EAX,[EBP-x] | MOV [g_MinClickArea],EAX
+	//
+	// Only the opcodes are fixed; every address, displacement and CALL offset is
+	// wildcarded, so the signature travels across client dates. Three sites are
+	// expected -- one per entity family -- each with its own destination global.
+	const addrs = Exe.FindHexN("8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? D8 0D ?? ?? ?? ?? D9 5D ?? F3 0F 2C 45 ?? A3 ?? ?? ?? ??");
+	if (addrs.isEmpty())
+		throw Error("Minimum click area computation not found -- unsupported client");
+
+	// Upper bound as a sanity net: this shape is specific, and a dozen hits would
+	// mean the signature has degenerated on some other build rather than that the
+	// client grew that many entity families.
+	if (addrs.length > 8)
+		throw Error("Minimum click area signature matched " + addrs.length +
+			" times -- too broad to be trusted");
+
+	$$(_, 2, `Ask how much smaller the minimums should be`)
+	const shiftIn = Exe.GetUserInput('$ClickAreaShift', D_Uint8, "Tighter Click Area",
+		"How much smaller should the minimum clickable area be?\n\n" +
+		"1 = half\n2 = a quarter\n3 = an eighth\n4 = a sixteenth\n\n" +
+		"The client's own values scale with the window width (width / 640 x 40 " +
+		"pixels for actors, x 34 for map NPCs and skill units). This patch keeps " +
+		"that scaling, so the setting stays correct at every resolution.\n\n" +
+		"Going too low makes small monsters and NPCs genuinely hard to click.",
+		1, {min: 1, max: 4});
+	const shift = (typeof shiftIn === 'number') ? shiftIn : 1;
+
+	$$(_, 3, `Rewrite each store as a rounded store followed by a shift`)
+	// 13 bytes in, 13 bytes out per site -- no padding, no cave, nothing moved:
+	//
+	//   FSTP  [EBP-x]           (3)  ->  FISTP DWORD PTR [minArea]      (6)
+	//   CVTTSS2SI EAX,[EBP-x]   (5)      SAR   DWORD PTR [minArea],n    (7)
+	//   MOV   [minArea],EAX     (5)
+	//
+	// FISTP rounds where CVTTSS2SI truncated, so the result can differ by one
+	// pixel before the shift -- immaterial for a click target. The value is
+	// always positive, so SAR is a plain division. EAX is not read afterwards.
+	const nibbles = str => str.replace(/[^0-9A-Fa-f]/g, "").toUpperCase();
+
+	addrs.forEach( (addr, idx) =>
+	{
+		// FSTP and CVTTSS2SI must use the SAME stack slot: if they differ we did
+		// not land on the store/reload pair we think we did, and writing here
+		// would corrupt the function. Compare bare nibbles so GetHex formatting
+		// cannot manufacture a false mismatch.
+		const slotStore = nibbles(Exe.GetHex(addr + 19, 1));
+		const slotLoad  = nibbles(Exe.GetHex(addr + 24, 1));
+		if (slotStore !== slotLoad)
+			throw Error("Stack slot mismatch at " + (addr + 17).toHex() +
+				" -- FSTP uses " + slotStore + " but CVTTSS2SI uses " + slotLoad);
+
+		// Operand of MOV moffs32,EAX: the virtual address of the global holding
+		// this family's minimum. Read, never derived.
+		const minAreaVA = Exe.GetUint32(addr + 26);
+		if (minAreaVA === 0)
+			throw Error("Destination global reads as zero at " + (addr + 26).toHex());
+
+		Exe.SetHex(addr + 17, "DB 1D");           // FISTP DWORD PTR [...]
+		Exe.SetUint32(addr + 19, minAreaVA);
+		Exe.SetHex(addr + 23, "C1 3D");           // SAR DWORD PTR [...], imm8
+		Exe.SetUint32(addr + 25, minAreaVA);
+		Exe.SetHex(addr + 29, ("0" + shift.toString(16)).slice(-2));
+
+		$$(_, 3.1 + idx / 100, `Patched site ${idx + 1} of ${addrs.length}`)
+	});
+
+	return true;
+};
