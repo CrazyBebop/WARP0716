@@ -447,6 +447,17 @@ SharedHeadPal:
             author : Ai4rei/AN , Neo-Mind
             desc : Uses one shared set of hair palettes (head_%d.pal) for all hairstyles and both genders. The simplest option -- minimizes hair palette files to just one set.
 
+SharedDoramPal:
+    title : SHARED PALETTES - DORAM
+    mutex : false
+
+    patches:
+        - DoramHeadPalShared:
+            title : Enable shared head palettes for Doram
+            recommend : no
+            author : Stingor
+            desc : Applies the shared hair palette naming to the Doram races too, which the human patch ignores entirely -- without it a Doram needs one palette file per hairstyle AND per gender. Files stay in the Doram race folder (doram\hair\head_%d.pal) because Doram sprites do not share the human palette indexing -- pointing them at the human files leaves most of the character black. Follows whichever flavour (MF or Unisex) you enabled for the other races, which is required.
+
 MultiGRFs:
     title : MULTIPLE GRFS
     mutex : true
