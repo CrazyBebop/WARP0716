@@ -44,7 +44,14 @@ CustomChar:
             recommend : no
             author : Neo-Mind
             desc : Hides the special GM sprite (the yellow character) while keeping all GM functionality intact, including the yellow name color and admin right-click menu. GMs appear as their normal job class.
-        
+
+        - RestoreGMWeaponTrail:
+            title : Restore GM weapon trails
+            recommend : no
+            author : Stingor
+            desc : Gives back the weapon-trail sprites (the blade gleam drawn while attacking) to accounts listed under &lt;admin&gt; in clientinfo. The client stores 0 in that layer for GM accounts, leaving it without its sprite, so the renderer drops it entirely. <b>Disable GM sprite</b> only covers the two name-list functions and leaves these call sites untouched, so it is required here and gets selected automatically. Bug reported by Monsii.
+            needs : NoGMSprite
+
         - ShowBGEmblem:
             title : Enable Emblem hover for BG [Experimental]
             recommend : no
