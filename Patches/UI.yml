@@ -241,7 +241,13 @@ CustomUI:
             recommend : no
             author : Louis T Steinhil , Stingor , CrazyBebop
             desc : Skips the ALT+S Skill Tree repaint when nothing changed, instead of rebuilding the grid every frame. Prompts for a minimum idle repaint interval so the character preview keeps animating.
-        
+
+        - RestoreSkillInfoCheckbox:
+            title : Restore the "View Skill Info." checkbox in the Skill Tree
+            recommend : no
+            author : Stingor
+            desc : Brings back the checkbox old Ragexe builds had in the top right corner of the ALT+S Skill Tree, and the behaviour it controlled -- while it is ticked, simply hovering a skill pops the skill detail window next to the cursor instead of having to right-click it. The client still owns the option (Show_SkillDescript, saved in OptionInfo.lua), its command handler and the whole display code, which was merely rebound to the right-click gesture -- this patch re-creates the missing checkbox control and the missing hover branch. Unticked, the client behaves exactly as before, right-click included.
+
         - HideZeroDateInGuildWin:
             title : Hide Zero Date in Guild Window
             recommend : no

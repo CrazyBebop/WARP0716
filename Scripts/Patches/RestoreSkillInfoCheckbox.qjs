@@ -1,0 +1,535 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the           *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Reported by   : Monsii                                                 *
+*   Created Date  : 2026-08-16                                             *
+*   Last Modified : 2026-08-16                                             *
+*                                                                          *
+*   Description   : Brings back the "View Skill Info." checkbox that old   *
+*                   Ragexe builds had in the skill window, and the         *
+*                   hover behaviour it controlled -- the skill detail      *
+*                   window following the cursor while the box is ticked.   *
+*                                                                          *
+*   Why a code patch and not a byte flip:                                  *
+*                                                                          *
+*   The 2025-07-16 client still owns three of the four pieces.             *
+*     * The option itself lives on at 0x015FA458 (Show_SkillDescript) and  *
+*       is still listed in OptionInfoList, so it persists in              *
+*       SaveData\OptionInfo.lua.                                           *
+*     * UINewSkillListWnd::OnMsg still handles command 213 (0x00979566)    *
+*       and does nothing but flip that flag.                               *
+*     * UIToggleButton_ctor (0x00817810) hardcodes command 213 as its      *
+*       DEFAULT -- which is exactly why the old OnCreate never had to set  *
+*       one. Adding a plain UIToggleButton child is enough to wire it.     *
+*     * The whole display block -- MakeWindow(0x2E), OnMsg(0, 0x3D, id,    *
+*       upgradable, level, 1), cursor-anchored placement clamped to the    *
+*       screen, ToggleWindow(0x2E, 1) -- survives verbatim inside          *
+*       sub_009786F0. That is the RIGHT-CLICK handler -- vtable +0x84,     *
+*       which UIWindowMgr_DispatchMouseInput calls at 0x00A46F32 when      *
+*       g_Mouse_RButtonState == 3. The block was rebound to another        *
+*       gesture, not deleted.                                              *
+*                                                                          *
+*   So only two things are missing, and this patch injects them:           *
+*     1. the checkbox control at the end of OnCreate (0x00976D70);         *
+*     2. the hover branch, as a wrapper around OnMouseMove (0x00978600),   *
+*        installed through the vtable slot at 0x0103F6D0.                  *
+*                                                                          *
+*   The wrapper always runs the stock OnMouseMove first, and does nothing  *
+*   at all while the box is unticked -- right-click keeps opening the      *
+*   detail window exactly as it does in the unpatched client.              *
+*                                                                          *
+\**************************************************************************/
+
+const RestoreSkillInfoCheckboxStatic = {
+	BuildDate: 20250716,
+
+	//=== hook sites =====================================================
+	// OnCreate tail -- CALL sub_009765F0 (rebuild the job tabs), reached
+	// once per window creation with ECX = the skill window. Hooking the
+	// call SITE and not the function matters: OnMsg case 23 calls the same
+	// function on every job change, and we must not stack up checkboxes.
+	TabsCallVir: 0x00977DF7,
+	TabsCallBytes: "E8 F4 E7 FF FF",   // rel32 -0x180C -> 0x977DFC - 0x180C = 0x009765F0
+	TabsFnVir: 0x009765F0,
+
+	// UINewSkillListWnd vtable +0x70 = OnMouseMove. sub_00978600 has this
+	// single reference in the whole image, so replacing the slot catches
+	// every call path.
+	MouseMoveSlotVir: 0x0103F6D0,
+	MouseMoveSlotBytes: "00 86 97 00",
+	MouseMoveFnVir: 0x00978600,
+
+	//=== reused native code =============================================
+	OperatorNewVir: 0x00DBBC4F,          // __cdecl(size)
+	MsgStringGetByIdVir: 0x00A9ED30,     // __cdecl(id) -> char*
+	ToggleButtonCtorVir: 0x00817810,     // __fastcall(this) -- sets cmd 213
+	ToggleButtonSetStateVir: 0x0082DBF0, // __thiscall(this, state)
+	ToggleButtonSetSkinVir: 0x0082D770,  // __thiscall(this, onBmp, offBmp, label)
+	WindowSetSizeVir: 0x00A1CB70,        // __thiscall(this, w, h)
+	AddChildControlVir: 0x00A1B780,      // __thiscall(wnd, ctrl)
+	IsPointInListVir: 0x00976CC0,        // __thiscall(wnd, x, y) -> bool
+	GetNodeAtVir: 0x00976520,            // __thiscall(wnd, &out, index, flag)
+	CursorOffsetVir: 0x00A1EF70,         // __thiscall(wnd, &dx, &dy)
+	MakeWindowVir: 0x00A39340,           // __thiscall(mgr, id)
+	ToggleWindowVir: 0x00A4BF30,         // __thiscall(mgr, id, show)
+
+	//=== globals ========================================================
+	WndMgrVir: 0x0131F4E8,
+	ShowSkillDescriptVir: 0x015FA458,
+	SimplicityVir: 0x015FA454,
+	SceneRenderQueueVir: 0x012515F8,
+
+	//=== data ===========================================================
+	MsgViewSkillInfo: 0x560,             // MSI_VIEW_SKILL_DESCRIPT
+
+	// "유저인터페이스\" in CP949 -- the very prefix the skill window uses
+	// for its own bitmaps (the 15-byte literal at 0x00FE1B34).
+	UiRootHex: "C0 AF C0 FA C0 CE C5 CD C6 E4 C0 CC BD BA 5C",
+	CheckOffName: "checkbox_0.bmp",      // drawn when the state is 0
+	CheckOnName: "checkbox_1.bmp",       // drawn when the state is 1
+
+	DataCaveSize: 0x40,
+	DataSlotSize: 0x20,
+
+	// Both stubs are emitted into a cave whose address they need in order to
+	// compute their own branch offsets, so the size is reserved up front and
+	// checked afterwards rather than derived. Keep some headroom.
+	CreateCaveSize: 0xA0,
+	HoverCaveSize: 0x180
+};
+
+//==========================================================================
+// Small helpers
+//==========================================================================
+
+RestoreSkillInfoCheckboxStatic.normalizeHex = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+// Compare on the bare nibbles, so however GetHex chooses to space or case
+// its output cannot turn a correct read into a false mismatch.
+RestoreSkillInfoCheckboxStatic.compactHex = function(hex)
+{
+	return (hex || "").replace(/[^0-9A-Fa-f]/g, "").toUpperCase();
+};
+
+RestoreSkillInfoCheckboxStatic.assertBytes = function(label, virAddr, expected)
+{
+	const S = RestoreSkillInfoCheckboxStatic;
+
+	const phyAddr = Exe.Vir2Phy(virAddr);
+	if (phyAddr < 0)
+		throw Error(`RestoreSkillInfoCheckbox: ${label} (0x${virAddr.toString(16)}) is not mapped`);
+
+	const wanted = S.compactHex(expected);
+	const actual = S.compactHex(Exe.GetHex(phyAddr, wanted.length / 2));
+	if (actual !== wanted)
+		throw Error(
+			`RestoreSkillInfoCheckbox: ${label} mismatch at 0x${virAddr.toString(16)} -- expected ${wanted}, found ${actual}`
+		);
+	return phyAddr;
+};
+
+RestoreSkillInfoCheckboxStatic.asciiHex = function(text)
+{
+	let out = "";
+	for (let i = 0; i < text.length; i++)
+		out += " " + text.charCodeAt(i).toHex(1);
+	return out.trim();
+};
+
+//==========================================================================
+// A tiny assembler so every branch offset is measured, never counted by
+// hand. Labels are resolved after the whole block is emitted.
+//==========================================================================
+
+function RSICAsm(baseVir)
+{
+	this.base = baseVir;
+	this.bytes = [];
+	this.labels = {};
+	this.fixups = [];
+}
+
+RSICAsm.prototype.here = function()
+{
+	return this.base + this.bytes.length;
+};
+
+RSICAsm.prototype.size = function()
+{
+	return this.bytes.length;
+};
+
+RSICAsm.prototype.hex = function(text)
+{
+	const parts = RestoreSkillInfoCheckboxStatic
+		.normalizeHex(text)
+		.split(" ")
+		.filter(p => p.length > 0);
+
+	for (const part of parts)
+	{
+		const value = parseInt(part, 16);
+		if (isNaN(value) || value < 0 || value > 0xFF)
+			throw Error(`RestoreSkillInfoCheckbox: bad byte '${part}'`);
+		this.bytes.push(value);
+	}
+	return this;
+};
+
+RSICAsm.prototype.dword = function(value)
+{
+	const v = value >>> 0;
+	this.bytes.push(v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF);
+	return this;
+};
+
+// CALL / JMP to a fixed native address
+RSICAsm.prototype.callAbs = function(target)
+{
+	this.hex("E8");
+	this.dword(target - (this.here() + 4));
+	return this;
+};
+
+RSICAsm.prototype.jmpAbs = function(target)
+{
+	this.hex("E9");
+	this.dword(target - (this.here() + 4));
+	return this;
+};
+
+RSICAsm.prototype.mark = function(name)
+{
+	this.labels[name] = this.bytes.length;
+	return this;
+};
+
+// Near conditional jump, 0F <cc> rel32. cc = "84" (JZ), "8F" (JG), ...
+RSICAsm.prototype.jcc = function(cc, name)
+{
+	this.hex("0F " + cc);
+	this.fixups.push({name, at: this.bytes.length, size: 4});
+	this.hex("00 00 00 00");
+	return this;
+};
+
+RSICAsm.prototype.jmpLabel = function(name)
+{
+	this.hex("E9");
+	this.fixups.push({name, at: this.bytes.length, size: 4});
+	this.hex("00 00 00 00");
+	return this;
+};
+
+// Short conditional jump, <cc> rel8. cc = "74" (JZ), "7E" (JLE), ...
+RSICAsm.prototype.jccShort = function(cc, name)
+{
+	this.hex(cc);
+	this.fixups.push({name, at: this.bytes.length, size: 1});
+	this.hex("00");
+	return this;
+};
+
+RSICAsm.prototype.build = function()
+{
+	for (const fix of this.fixups)
+	{
+		if (!(fix.name in this.labels))
+			throw Error(`RestoreSkillInfoCheckbox: undefined label '${fix.name}'`);
+
+		const delta = this.labels[fix.name] - (fix.at + fix.size);
+		if (fix.size === 1)
+		{
+			if (delta < -128 || delta > 127)
+				throw Error(`RestoreSkillInfoCheckbox: rel8 overflow on '${fix.name}'`);
+			this.bytes[fix.at] = delta & 0xFF;
+		}
+		else
+		{
+			const v = delta >>> 0;
+			this.bytes[fix.at] = v & 0xFF;
+			this.bytes[fix.at + 1] = (v >>> 8) & 0xFF;
+			this.bytes[fix.at + 2] = (v >>> 16) & 0xFF;
+			this.bytes[fix.at + 3] = (v >>> 24) & 0xFF;
+		}
+	}
+
+	return this.bytes.map(b => b.toHex(1)).join(" ");
+};
+
+//==========================================================================
+// The patch
+//==========================================================================
+
+RestoreSkillInfoCheckbox = function(_)
+{
+	const S = RestoreSkillInfoCheckboxStatic;
+
+	if (Exe.BuildDate !== S.BuildDate)
+		throw Error("RestoreSkillInfoCheckbox supports only the 2025-07-16 client");
+
+	$$(_, 1, `Verify the skill window hook sites`);
+	const tabsCallPhy = S.assertBytes(
+		"OnCreate tab-rebuild call",
+		S.TabsCallVir,
+		S.TabsCallBytes
+	);
+	const mouseSlotPhy = S.assertBytes(
+		"OnMouseMove vtable slot",
+		S.MouseMoveSlotVir,
+		S.MouseMoveSlotBytes
+	);
+
+	$$(_, 2, `Embed the checkbox bitmap paths`);
+	const [dataPhy, dataVir] = Exe.Allocate(S.DataCaveSize, 0x10);
+	const bmpOffVir = dataVir;
+	const bmpOnVir = dataVir + S.DataSlotSize;
+
+	Exe.SetHex(dataPhy,
+		S.UiRootHex + " " + S.asciiHex(S.CheckOffName) + " 00");
+	Exe.SetHex(dataPhy + S.DataSlotSize,
+		S.UiRootHex + " " + S.asciiHex(S.CheckOnName) + " 00");
+
+	$$(_, 3, `Build the OnCreate checkbox stub`);
+	const [createPhy, createVir] = Exe.Allocate(S.CreateCaveSize, 0x10);
+	const create = new RSICAsm(createVir);
+
+	create.hex("53");                       // PUSH EBX
+	create.hex("56");                       // PUSH ESI
+	create.hex("8B D9");                    // MOV EBX, ECX          ; the window
+	create.hex("68 0C 01 00 00");           // PUSH 10Ch             ; sizeof(UIToggleButton)
+	create.callAbs(S.OperatorNewVir);
+	create.hex("83 C4 04");                 // ADD ESP, 4
+	create.hex("85 C0");                    // TEST EAX, EAX
+	create.jcc("84", "done");               // JZ done
+
+	create.hex("8B C8");                    // MOV ECX, EAX
+	create.callAbs(S.ToggleButtonCtorVir);  // -> EAX = the control, cmd 213
+	create.hex("8B F0");                    // MOV ESI, EAX
+
+	// Height must be set before the skin call -- that one keeps the height
+	// and recomputes the width from label + bitmap.
+	create.hex("6A 0C");                    // PUSH 12               ; height
+	create.hex("6A 01");                    // PUSH 1                ; width, overwritten below
+	create.hex("8B CE");                    // MOV ECX, ESI
+	create.callAbs(S.WindowSetSizeVir);
+
+	create.hex("68").dword(S.MsgViewSkillInfo);   // PUSH 560h
+	create.callAbs(S.MsgStringGetByIdVir);
+	create.hex("83 C4 04");                 // ADD ESP, 4
+
+	create.hex("50");                       // PUSH EAX              ; label
+	create.hex("68").dword(bmpOffVir);      // PUSH offset checkbox_0.bmp
+	create.hex("68").dword(bmpOnVir);       // PUSH offset checkbox_1.bmp
+	create.hex("8B CE");                    // MOV ECX, ESI
+	create.callAbs(S.ToggleButtonSetSkinVir);
+
+	// Right-aligned against the minimize button instead of the stock fixed
+	// "width - 130": the label is a translated string whose width depends on
+	// the language and the font, so it has to be measured, not assumed.
+	create.hex("8B 43 14");                 // MOV EAX, [EBX+14h]    ; window width
+	create.hex("2B 46 14");                 // SUB EAX, [ESI+14h]    ; - control width
+	create.hex("83 E8 22");                 // SUB EAX, 34           ; clear the 2 caption buttons
+	create.hex("6A 05");                    // PUSH 5                ; y
+	create.hex("50");                       // PUSH EAX              ; x
+	create.hex("8B CE");                    // MOV ECX, ESI
+	create.hex("8B 06");                    // MOV EAX, [ESI]
+	create.hex("FF 50 10");                 // CALL [EAX+10h]        ; SetPos
+
+	create.hex("33 C0");                    // XOR EAX, EAX
+	create.hex("83 3D").dword(S.ShowSkillDescriptVir).hex("00");  // CMP flag, 0
+	create.hex("0F 95 C0");                 // SETNZ AL
+	create.hex("50");                       // PUSH EAX
+	create.hex("8B CE");                    // MOV ECX, ESI
+	create.callAbs(S.ToggleButtonSetStateVir);
+
+	create.hex("56");                       // PUSH ESI
+	create.hex("8B CB");                    // MOV ECX, EBX
+	create.callAbs(S.AddChildControlVir);
+
+	create.mark("done");
+	create.hex("8B CB");                    // MOV ECX, EBX          ; restore the tail call's this
+	create.hex("5E");                       // POP ESI
+	create.hex("5B");                       // POP EBX
+	create.jmpAbs(S.TabsFnVir);             // fall through to what we displaced
+
+	const createCode = create.build();
+	if (create.size() > S.CreateCaveSize)
+		throw Error(`RestoreSkillInfoCheckbox: OnCreate stub is ${create.size()} bytes, cave holds ${S.CreateCaveSize}`);
+	Exe.SetHex(createPhy, createCode);
+
+	$$(_, 4, `Build the OnMouseMove wrapper`);
+	const [hoverPhy, hoverVir] = Exe.Allocate(S.HoverCaveSize, 0x10);
+	const hover = new RSICAsm(hoverVir);
+
+	// __thiscall(this, x, y), RETN 8.
+	// Locals: [EBP-04] dx, [EBP-08] dy, [EBP-10] node, [EBP-0C] node valid,
+	//         [EBP-14] the stock return value.
+	hover.hex("55");                        // PUSH EBP
+	hover.hex("8B EC");                     // MOV EBP, ESP
+	hover.hex("83 EC 14");                  // SUB ESP, 14h
+	hover.hex("53 56 57");                  // PUSH EBX / ESI / EDI
+	hover.hex("8B D9");                     // MOV EBX, ECX          ; the window
+
+	hover.hex("FF 75 0C");                  // PUSH [EBP+0Ch]        ; y
+	hover.hex("FF 75 08");                  // PUSH [EBP+08h]        ; x
+	hover.hex("8B CB");                     // MOV ECX, EBX
+	hover.callAbs(S.MouseMoveFnVir);        // the stock handler, untouched
+	hover.hex("89 45 EC");                  // MOV [EBP-14h], EAX
+
+	// Unticked box -- leave the client strictly alone, so right-click keeps
+	// opening the detail window the way it does without this patch.
+	hover.hex("83 3D").dword(S.ShowSkillDescriptVir).hex("00");
+	hover.jcc("84", "done");
+
+	// Outside the list area -- the old client dropped the window here.
+	hover.hex("FF 75 0C");                  // PUSH [EBP+0Ch]
+	hover.hex("FF 75 08");                  // PUSH [EBP+08h]
+	hover.hex("8B CB");                     // MOV ECX, EBX
+	hover.callAbs(S.IsPointInListVir);
+	hover.hex("84 C0");                     // TEST AL, AL
+	hover.jcc("84", "hide");
+
+	// Compact view -- only the left 96 px are skill slots.
+	hover.hex("83 3D").dword(S.SimplicityVir).hex("00");
+	hover.jccShort("74", "inlist");
+	hover.hex("83 7D 08 60");               // CMP [EBP+08h], 60h
+	hover.jcc("8F", "hide");
+	hover.mark("inlist");
+
+	hover.hex("8B BB 50 02 00 00");         // MOV EDI, [EBX+250h]   ; hovered index
+	hover.hex("83 FF FF");                  // CMP EDI, -1
+	hover.jcc("84", "hide");
+
+	hover.hex("6A 00");                     // PUSH 0
+	hover.hex("57");                        // PUSH EDI
+	hover.hex("8D 45 F0");                  // LEA EAX, [EBP-10h]
+	hover.hex("50");                        // PUSH EAX
+	hover.hex("8B CB");                     // MOV ECX, EBX
+	hover.callAbs(S.GetNodeAtVir);
+	hover.hex("80 7D F4 00");               // CMP BYTE [EBP-0Ch], 0 ; found?
+	hover.jcc("84", "hide");
+	hover.hex("8B 75 F0");                  // MOV ESI, [EBP-10h]    ; CSkillInfo
+	hover.hex("83 7E 04 00");               // CMP [ESI+04h], 0      ; valid?
+	hover.jcc("84", "hide");
+
+	hover.hex("6A 2E");                     // PUSH 2Eh
+	hover.hex("B9").dword(S.WndMgrVir);     // MOV ECX, offset g_WndMgr
+	hover.callAbs(S.MakeWindowVir);
+	hover.hex("8B F8");                     // MOV EDI, EAX
+	hover.hex("85 FF");                     // TEST EDI, EDI
+	hover.jcc("84", "done");
+
+	// OnMsg(0, 0x3D, id, upgradable, level, 1) -- the very call the
+	// right-click path still makes.
+	hover.hex("8B 17");                     // MOV EDX, [EDI]
+	hover.hex("8B CF");                     // MOV ECX, EDI
+	hover.hex("6A 01");                     // PUSH 1
+	hover.hex("FF 76 10");                  // PUSH [ESI+10h]        ; level
+	hover.hex("FF 76 18");                  // PUSH [ESI+18h]        ; upgradable
+	hover.hex("FF 76 08");                  // PUSH [ESI+08h]        ; skill id
+	hover.hex("6A 3D");                     // PUSH 3Dh
+	hover.hex("6A 00");                     // PUSH 0
+	hover.hex("FF 92 94 00 00 00");         // CALL [EDX+94h]
+
+	// Cursor-anchored placement, clamped to the screen -- transcribed from
+	// sub_009786F0 so both gestures drop the window in the same spot.
+	hover.hex("C7 45 FC 00 00 00 00");      // MOV [EBP-04], 0
+	hover.hex("C7 45 F8 00 00 00 00");      // MOV [EBP-08], 0
+	hover.hex("8D 45 F8");                  // LEA EAX, [EBP-08]
+	hover.hex("50");                        // PUSH EAX
+	hover.hex("8D 45 FC");                  // LEA EAX, [EBP-04]
+	hover.hex("50");                        // PUSH EAX
+	hover.hex("8B CB");                     // MOV ECX, EBX
+	hover.callAbs(S.CursorOffsetVir);
+
+	hover.hex("8B 45 FC");                  // MOV EAX, [EBP-04]     ; dx
+	hover.hex("8B 5D 08");                  // MOV EBX, [EBP+08h]    ; x
+	hover.hex("83 C0 18");                  // ADD EAX, 24
+	hover.hex("8B 4F 14");                  // MOV ECX, [EDI+14h]    ; detail width
+	hover.hex("03 D8");                     // ADD EBX, EAX
+	hover.hex("8B 35").dword(S.SceneRenderQueueVir);   // MOV ESI, [g_SceneRenderQueue]
+	hover.hex("8B 55 F8");                  // MOV EDX, [EBP-08]     ; dy
+	hover.hex("03 55 0C");                  // ADD EDX, [EBP+0Ch]    ; + y
+	hover.hex("8D 04 19");                  // LEA EAX, [ECX+EBX]
+	hover.hex("3B 46 28");                  // CMP EAX, [ESI+28h]    ; screen width
+	hover.jccShort("7E", "keepx");
+	hover.hex("B8 D0 FF FF FF");            // MOV EAX, -48
+	hover.hex("2B C1");                     // SUB EAX, ECX
+	hover.hex("03 D8");                     // ADD EBX, EAX
+	hover.mark("keepx");
+
+	hover.hex("8B 47 18");                  // MOV EAX, [EDI+18h]    ; detail height
+	hover.hex("8B F2");                     // MOV ESI, EDX
+	hover.hex("2B F0");                     // SUB ESI, EAX
+	hover.hex("8D 0C 10");                  // LEA ECX, [EAX+EDX]
+	hover.hex("A1").dword(S.SceneRenderQueueVir);      // MOV EAX, [g_SceneRenderQueue]
+	hover.hex("3B 48 2C");                  // CMP ECX, [EAX+2Ch]    ; screen height
+	hover.hex("8B CF");                     // MOV ECX, EDI
+	hover.hex("0F 4E F2");                  // CMOVLE ESI, EDX
+	hover.hex("8B 17");                     // MOV EDX, [EDI]
+	hover.hex("33 C0");                     // XOR EAX, EAX
+	hover.hex("85 F6");                     // TEST ESI, ESI
+	hover.hex("0F 49 C6");                  // CMOVNS EAX, ESI
+	hover.hex("50");                        // PUSH EAX              ; y
+	hover.hex("53");                        // PUSH EBX              ; x
+	hover.hex("FF 52 10");                  // CALL [EDX+10h]        ; SetPos
+
+	hover.hex("6A 01");                     // PUSH 1
+	hover.hex("6A 2E");                     // PUSH 2Eh
+	hover.hex("B9").dword(S.WndMgrVir);
+	hover.callAbs(S.ToggleWindowVir);
+	hover.jmpLabel("done");
+
+	hover.mark("hide");
+	hover.hex("6A 00");                     // PUSH 0
+	hover.hex("6A 2E");                     // PUSH 2Eh
+	hover.hex("B9").dword(S.WndMgrVir);
+	hover.callAbs(S.ToggleWindowVir);
+
+	hover.mark("done");
+	hover.hex("8B 45 EC");                  // MOV EAX, [EBP-14h]
+	hover.hex("5F 5E 5B");                  // POP EDI / ESI / EBX
+	hover.hex("8B E5");                     // MOV ESP, EBP
+	hover.hex("5D");                        // POP EBP
+	hover.hex("C2 08 00");                  // RETN 8
+
+	const hoverCode = hover.build();
+	if (hover.size() > S.HoverCaveSize)
+		throw Error(`RestoreSkillInfoCheckbox: OnMouseMove wrapper is ${hover.size()} bytes, cave holds ${S.HoverCaveSize}`);
+	Exe.SetHex(hoverPhy, hoverCode);
+
+	$$(_, 5, `Install both hooks`);
+	Exe.SetCALL(tabsCallPhy, createVir, 0);
+	Exe.SetUint32(mouseSlotPhy, hoverVir);
+
+	return true;
+};
+
+// Applicability gate ONLY. A validate that returns false makes the patch
+// vanish from the list without a word, so it must not carry the byte
+// checks -- those belong in the body above, where a failure surfaces as a
+// readable error instead of an unexplained absence.
+RestoreSkillInfoCheckbox.validate = function()
+{
+	return Exe.BuildDate === RestoreSkillInfoCheckboxStatic.BuildDate;
+};
