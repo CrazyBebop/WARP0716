@@ -313,6 +313,11 @@ CustomUI:
             recommend : no
             author : Victor Hugo
             desc : Formats zeny amounts in the Barter shop window with thousand separators (e.g., 1,000,000 z instead of 1000000 z). Makes large prices much easier to read at a glance.
+        - TighterClickArea:
+            title : Tighter Entity Click Area
+            recommend : no
+            author : Stingor
+            desc : The client widens every entity's clickable rectangle (hitbox) up to a minimum computed from the window width -- <b>width / 640 x 40</b> pixels for actors, <b>x 34</b> for map NPCs and skill units, so 100 and 85 px at 1600x900. A small sprite therefore defends a box far larger than itself, so neighbouring entities overlap and fight over the same click, and the frontmost rectangle wins whoever owns it. This patch divides all three minimums by 2, 4, 8 or 16 while keeping the scaling with the window width. It cannot shrink a big sprite's rectangle, which comes from its artwork.
 
 CaseInsensitiveSearch:
     title: CASE INSENSITIVE SEARCH
