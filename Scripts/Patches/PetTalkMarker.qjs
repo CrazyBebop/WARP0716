@@ -1,0 +1,126 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Created Date  : 2026-08-06                                             *
+*   Last Modified : 2026-08-06                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Tags every pet chatter line with a configurable marker, so players
+///        can tell an automated pet line from something a person typed.
+///
+///        A pet never speaks from the server. ZC_PET_ACT (0x01AA) carries only
+///        the pet's GID and a single integer; every sentence comes from the
+///        client's own data file, PetTalkTable.xml. The handler splits that
+///        integer into four decimal digits -- mob id, act, hunger state and a
+///        flag -- walks
+///
+///            <monster_talk_table> / <resname> / <hunger> / <act>
+///
+///        and picks one of the sibling nodes at random. The line is then
+///        composed as "<entity name> : <sentence>" and shown twice: as the
+///        speech bubble above the pet, and as a chat line.
+///
+///        In the chat window nothing distinguishes it from a player. It carries
+///        the ordinary message type, no sender field, and the same colour as
+///        several system lines, so a pet named after a player reads exactly like
+///        that player talking. This patch inserts a marker next to the name.
+///
+///        SCOPE: the format string is patched where the pet line is composed,
+///        which is reached only from the ZC_PET_ACT handler -- no other message
+///        goes through it. The instruction rewritten is the PUSH of the format
+///        pointer, not the string itself: "%s : " is shared with the trade
+///        window and one other caller, and both keep using the original.
+///
+///        NOTE: the composed line feeds both outputs, so the marker also shows
+///        in the speech bubble above the pet. Separating the two would require
+///        rebuilding the string a second time, since the source sentence buffer
+///        is overwritten in place while composing.
+///
+PetTalkMarker = function(_)
+{
+	$$(_, 1, `Find where the pet chat line is composed`)
+	// CMP ESI, [ownPetAid]     ; is this our own pet?
+	// JNE short                ; no -> the empty-name path below
+	// MOV EAX, OFFSET emptyStr
+	// MOV EBX, [EBP + outBuf]
+	// PUSH EAX                 ; the entity name, as sprintf argument
+	// PUSH OFFSET "%s : "      ; <- the format string we redirect
+	// PUSH EBX
+	// CALL sprintf
+	// Absolute addresses are wildcarded so the pattern survives a rebase.
+	const addr = Exe.FindHex(
+		"3B 35 ?? ?? ?? ?? 75 ?? B8 ?? ?? ?? ?? 8B 5D ?? 50 68 ?? ?? ?? ?? 53 E8"
+	);
+	if (addr < 0)
+		throw Error("Pet chat line composition not found");
+
+	$$(_, 2.1, `Get the marker text from the user`)
+	// The length cap is not cosmetic. The line is composed into a 256 byte
+	// buffer with an unbounded strcat, and the worst case is measurable:
+	//   23 (longest pet name, NAME_LENGTH)
+	// + 192 (longest line in the stock PetTalkTable.xml, over 6417 of them --
+	//        median 39, only two above 150)
+	// +   3 (" : ")  +  1 (NUL)     =  219 bytes
+	// That leaves 37 for the marker, so 12 keeps a 25 byte cushion -- enough to
+	// also absorb a manner.txt whose replacement words are longer than the ones
+	// they censor, since that substitution runs on the same buffer.
+	const label = Exe.GetUserInput(
+		'$petTagText', D_Text, "Pet Marker",
+		"Text shown next to a talking pet's name",
+		"pet", {minLen: 1, maxLen: 12}
+	);
+	const tag = (typeof label === 'string' && label !== "") ? label : "pet";
+
+	// The client hands this string to sprintf with exactly one argument. A stray
+	// '%' would make it read a second one off the stack -- garbage at best, a
+	// crash at worst -- so it is refused outright rather than silently escaped.
+	if (tag.includes('%'))
+		Cancel("The pet marker cannot contain '%'");
+
+	$$(_, 2.2, `Get the brackets to wrap it in`)
+	const Brackets = {
+		'Round'  : ["(", ")"],
+		'Square' : ["[", "]"],
+		'Angled' : ["<", ">"],
+		'None'   : ["" , "" ],
+	};
+	const shape = Exe.GetUserInput(
+		'$petTagShape', D_Choice, "Pet Marker",
+		"Brackets to wrap the marker in",
+		'Round', {choices: Object.getOwnPropertyNames(Brackets)}
+	);
+	const [open, close] = Brackets[shape] || Brackets['Round'];
+
+	$$(_, 2.3, `Get the side it goes on`)
+	const side = Exe.GetUserInput(
+		'$petTagSide', D_Choice, "Pet Marker",
+		"Where the marker goes relative to the pet name",
+		'After', {choices: ['After', 'Before']}
+	);
+
+	$$(_, 3.1, `Build the replacement format string`)
+	// "%s (pet) : "  or  "(pet) %s : "
+	const marker = open + tag + close;
+	const format = (side === 'Before')
+		? marker + " %s : "
+		: "%s " + marker + " : ";
+
+	$$(_, 3.2, `Add it to the exe and redirect the PUSH to it`)
+	const [, formatVir] = Exe.AddText(format);
+	Exe.SetInt32(addr + 18, formatVir);   // the PUSH operand
+
+	return true;
+};
