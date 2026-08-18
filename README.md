@@ -44,13 +44,15 @@ The latest is the **July 29, 2026 Ragexe update**: the exit button on server sel
 
 ## Advanced: Patch Your Own EXE with WARP
 
-WARP is the patcher that WARPGATE's client is built with. If you run your own server or want to hand-pick your patch set, you can WARP an exe yourself. This build of WARP is tuned for the **2025-07-16 kRO Ragexe** (build 175220998); point it at that unpacked exe.
+WARP is the patcher that WARPGATE's client is built with. If you run your own server or want to hand-pick your patch set, you can WARP an exe yourself. This build of WARP is tuned for the **2025-07-16 kRO Ragexe** (build 175220998).
+
+Start from the Ragexe WARPGATE installs, `2025-07-16_Ragexe_175220998_clientinfo.exe`, rather than one you unpacked yourself. It is the same client with `clientinfo.xml` support already injected, and some patches depend on that. Get it through [WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip) on the **RAGEXE** tab.
 
 You can get the WARP patcher two ways: from this repo (`win32/WARP.exe`), or by downloading it through [WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip).
 
 ### Setup
 1. Launch `win32/WARP.exe` (or the copy from WARPGATE)
-2. Load your unpacked exe
+2. Load `2025-07-16_Ragexe_175220998_clientinfo.exe`
 3. Select your patches and apply
 
 ### Recommended Patches

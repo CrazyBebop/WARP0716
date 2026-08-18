@@ -1,3 +1,43 @@
+# CrazyBebop - 2025-07-16 build (August 18, 2026)
+
+> **Patch update - re-WARP to apply.** Seven new patches and a Simplified Chinese translation. Re-apply WARP to use them.
+
+## August 18 Update
+
+### New patch: Tighter Entity Click Area ([#63](https://github.com/CrazyBebop/WARP0716/pull/63))
+
+The client does not let an entity's clickable box get small. It widens every one up to a minimum worked out from your window width, `width / 640 x 40` pixels for actors and `x 34` for map NPCs and skill units. At 1600x900 that is a 100 px box around a sprite that may be a fraction of it, so a poring standing near an NPC can swallow clicks meant for the NPC. This patch lets you shrink that floor, so small things claim only the space they occupy. Thanks to Stingor.
+
+### New patch: Restore the "View Skill Info." checkbox ([#61](https://github.com/CrazyBebop/WARP0716/pull/61))
+
+Older Ragexe builds had a checkbox in the top right of the ALT+S Skill Tree, and while it was ticked, hovering a skill popped its detail window next to the cursor instead of making you right-click. The client still owns the option internally and still saves it; only the checkbox went missing. This brings it back. Thanks to Stingor.
+
+### New patch: Restore GM weapon trails ([#60](https://github.com/CrazyBebop/WARP0716/pull/60))
+
+Accounts listed under `<admin>` in your clientinfo lose the weapon trail, the blade gleam drawn while attacking. The client writes 0 into that sprite layer for GM accounts, so the renderer drops it. **Disable GM sprite** does not cover this, because it only touches the two name-list functions. Thanks to Stingor.
+
+### New patch: Restore Sonic Blow and Arrow Vulcan animations ([#58](https://github.com/CrazyBebop/WARP0716/pull/58))
+
+Gives Sonic Blow and Arrow Vulcan back the attacker's sprite animation. Pick either or both when you apply it. Gravity never deleted the animations, only the routing that chose them: the client still plays it for Chain Crush Combo, and this sends the selected skills back down that same path. Sound and effects were never affected. Thanks to Stingor.
+
+### New patch: Mark pet chatter in chat ([#55](https://github.com/CrazyBebop/WARP0716/pull/55))
+
+Pet chatter arrives with no sender and the ordinary message type, so a pet named after a player reads exactly like that player talking. This tags every automated pet line with a marker of your choosing, default `pet`, with a choice of brackets. Thanks to Stingor.
+
+### New patch: No bogus "not your guildsman" whisper warning ([#54](https://github.com/CrazyBebop/WARP0716/pull/54))
+
+Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They exist to flag impostors who swap a capital I for a lowercase l, which is a real problem, but the comparison is far too loose and fires on ordinary names that merely resemble a friend's. Thanks to Stingor.
+
+### New patch: Shared head palettes for Doram ([#53](https://github.com/CrazyBebop/WARP0716/pull/53))
+
+The existing shared head palette patches skip the Doram races entirely, so a Doram still needs one palette file per hairstyle **and** per gender while everyone else needs one. This applies the same shared naming to Doram. The files stay in the Doram race folder on purpose: Doram sprites do not share the human palette indexing, and pointing them at the human files leaves the character mostly black. Thanks to Stingor.
+
+### Simplified Chinese translation ([#56](https://github.com/CrazyBebop/WARP0716/pull/56))
+
+WARP's own interface is now available in Simplified Chinese. Thanks to jj163494, building on xvn5002036's Traditional Chinese work.
+
+---
+
 # CrazyBebop - 2025-07-16 build (July 29, 2026)
 
 > **EXE update - grab the new Ragexe.** These fixes live in the injected EXE itself, not in a WARP patch, so re-WARPing the exe you already have will **not** pick them up.
