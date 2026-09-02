@@ -71,8 +71,6 @@ It is never required, but if you feel the need to contribute to the project fina
 
 <a href="https://www.buymeacoffee.com/crazybebop"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" height="60" width="217" alt="Buy Me A Coffee"></a>
 
-**PayPal:** <a href="https://www.paypal.com/donate/?hosted_button_id=WW9FD6SLEZ5BN"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" alt="Donate via PayPal"></a>
-
 Special thanks to everyone who has donated. Your support keeps this project going.
 
 ## Credits
