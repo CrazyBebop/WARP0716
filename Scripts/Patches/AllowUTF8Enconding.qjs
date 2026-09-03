@@ -1,0 +1,1569 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Hanashi                                             *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*****************************************************************************
+*                                                                          *
+*   Author(s)     : Hanashi                                                *
+*   Created Date  : 2026-08-10                                             *
+*   Last Modified : 2026-09-03                                             *
+*                                                                          *
+*   Target        : 2022-04-06 & 2025 Ragexe (verified), 2021+ clients     *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Make the client speak UTF-8 end to end - decoding, layout, input and
+///        colored emoji - in one patch.
+///
+///        This supersedes the four separate patches EnableUTF8Text,
+///        EnableUTF8Layout, EnableUTF8Input and UseEmojiSprite. They were
+///        always meant to be applied together: each one fixes a different
+///        stage of the same pipeline, and any one of them alone leaves a
+///        visible defect behind. Merging them also removes the ordering
+///        question, since all four now share a single tag and a single set of
+///        allocations.
+///
+///        THE FOUR STAGES
+///        ---------------
+///          1. DECODE  - text arriving from data files and the server is
+///                       interpreted as UTF-8 instead of the ANSI codepage.
+///          2. LAYOUT  - the "step one character" primitive walks whole
+///                       UTF-8 sequences instead of single bytes.
+///          3. INPUT   - text you type or paste is encoded as UTF-8 on its
+///                       way into the edit buffer instead of being flattened
+///                       to '?'.
+///          4. EMOJI   - emoji are blitted from color sprites instead of
+///                       coming out as flat GDI silhouettes.
+///
+///        Stage 1 is mandatory - it is what "UTF-8 encoding" actually means,
+///        and nothing else is worth doing without it. Stages 2 to 4 are
+///        applied when the client supports them and skipped with a log line
+///        when it does not, so older clients still get everything they can
+///        take instead of the patch refusing outright.
+///
+///
+///        STAGE 1 - DECODE FOR DISPLAY
+///        ============================
+///        Contrary to what you might expect, this client is already fully
+///        wide-internally: it imports TextOutW / GetTextExtentPoint32W and
+///        never calls the ANSI variants for in-game text. Every string is
+///        converted from bytes to UTF-16 with MultiByteToWideChar *just
+///        before* it is measured or drawn.
+///
+///        The codepage handed to that conversion is not hardcoded. It is
+///        produced by a single helper - a charset -> codepage jump table:
+///
+///            CharsetToCodepage(BYTE charset)
+///              SHIFTJIS_CHARSET   -> 932
+///              HANGUL_CHARSET     -> 949
+///              GB2312_CHARSET     -> 936
+///              CHINESEBIG5_CHARSET-> 950
+///              GREEK/TURKISH/...  -> 1253 / 1254 / ...
+///              default            -> 1252
+///
+///        That helper has EXACTLY TWO callers in the whole executable, and
+///        both of them feed its result straight into MultiByteToWideChar:
+///
+///            * the text MEASURE path  (string width / wrapping)
+///            * the text DRAW path     (actual glyph output)
+///
+///        So a single 6-byte edit - making the helper return 65001 (CP_UTF8)
+///        unconditionally - switches the entire visible text pipeline to
+///        UTF-8 at once, with no other subsystem affected. Measurement and
+///        drawing stay in perfect agreement because they share the helper,
+///        which is what prevents the mis-aligned/overlapping text you get
+///        when only one of the two is patched.
+///
+///        Why it is safe:
+///          1. Both callers pass dwFlags = 0. CP_UTF8 *requires* flags to be
+///             0 (or MB_ERR_INVALID_CHARS); a non-zero flag would make the
+///             call fail outright. They already comply.
+///          2. Both callers use MultiByteToWideChar - the DECODE direction
+///             only. The encode direction (WideCharToMultiByte), which has
+///             the lpDefaultChar/lpUsedDefaultChar restriction under CP_UTF8,
+///             is handled separately in stage 3.
+///          3. UTF-8 -> UTF-16 never produces more wide characters than the
+///             input byte count, so every destination buffer the client sized
+///             from the byte length remains large enough. No overflow risk.
+///          4. Pure ASCII is byte-identical in UTF-8, so all existing English
+///             text is completely unaffected.
+///
+///        The resolver is identified purely by shape, so if a future client
+///        ever produced a second function with the same prologue there would
+///        be no way to tell which one drives the text pipeline. Rather than
+///        guess and silently corrupt every string in the game, the patch
+///        refuses when the signature is not unique.
+///
+///
+///        STAGE 2 - CHARACTER STEPPING
+///        ============================
+///        Stage 1 fixes decoding. It does NOT fix layout. Everything that
+///        walks a string character by character - word wrap, line splitting,
+///        truncation, the vertical tab labels, caret movement in edit boxes -
+///        does it through
+///
+///            CharNextExA(codePage, ptr, 0)
+///            CharPrevExA(codePage, start, ptr, 0)
+///
+///        Those are ANSI/DBCS APIs. They ask IsDBCSLeadByteEx whether the
+///        current byte starts a two-byte sequence, and for a single-byte
+///        codepage the answer is always no - so they step exactly one byte.
+///        The codepage they are handed is a different global from the one
+///        stage 1 patches, and on an international client it is 0
+///        (CP_ACP -> 1252), which has no lead bytes at all.
+///
+///        So a multi-byte character is walked as separate bytes. The visible
+///        symptom is the vertical tab strip in the inventory: an emoji typed
+///        as a base codepoint plus U+FE0F is 7 UTF-8 bytes, so the splitter
+///        counts 7 "characters", stacks them on 7 lines, and each line is a
+///        lone continuation byte that has no glyph. Seven boxes.
+///
+///        Two replacement routines with the identical stdcall signatures are
+///        allocated, and every reference to the two imports is redirected at
+///        them. Each routine decodes the UTF-8 lead byte, validates the
+///        continuation bytes, and returns the correctly stepped pointer.
+///
+///        A "character" here is the whole grapheme cluster, not one codepoint.
+///        Stepping per codepoint fixes six of those seven boxes and leaves the
+///        seventh: U+FE0F carries no glyph of its own, so on its own line it
+///        is still a box. The routines therefore absorb the zero-width
+///        extenders - VARIATION SELECTOR (U+FE00..FE0F), the emoji skin-tone
+///        modifiers (U+1F3FB..1F3FF), COMBINING ENCLOSING KEYCAP (U+20E3), and
+///        a ZERO WIDTH JOINER (U+200D) together with whatever it joins to -
+///        into the base they modify, and CharPrev walks back to that base
+///        rather than stopping inside the cluster.
+///
+///        Absorbing costs one byte of lookahead past the character being
+///        stepped. On a NUL-terminated string that byte is the terminator,
+///        which is exactly what the caller's own next iteration reads, so the
+///        window never widens beyond the string. Every deeper read is gated on
+///        the byte before it being non-NUL.
+///
+///        A joiner with nothing valid after it is handed back on its own, the
+///        way the unpatched API handed it back, so a truncated or malformed
+///        sequence cannot make the stub run off the end.
+///
+///        Anything that is not well-formed UTF-8 - plain ASCII, a stray
+///        continuation byte, a truncated sequence, an invalid lead - is
+///        tail-jumped to the genuine import instead, so the original result
+///        is produced by the original code. The DBCS codepages (932 Shift-JIS,
+///        936 GBK, 949 Unified Hangul, 950 Big5, 1361 Johab) are excluded up
+///        front, since their trail bytes overlap the UTF-8 lead range and
+///        their text really is DBCS.
+///
+///        The tail jump is what keeps this safe: nothing is pushed before it,
+///        so the genuine API sees the caller's own frame and does its own
+///        'ret 0Ch' / 'ret 10h'. The stack stays balanced on every path.
+///        eax/ecx/edx are caller-saved and used freely; CharPrev also needs
+///        ebx as scratch and push/pops it around every path, and its internal
+///        helper is reached only by 'call', never before a tail jump.
+///
+///        One primitive feeds every text layout routine in the client, so a
+///        single fix covers all of them:
+///
+///          - the vertical tab labels (inventory Use/Eqp/Etc/Fav, and the
+///            other tab strips that share the renderer)
+///          - word wrap and line splitting in chat, NPC dialogue, item
+///            descriptions and tooltips
+///          - width measurement and "..." truncation
+///          - caret movement, backspace and delete in every edit box, which
+///            is the mirror-image bug - CharPrevExA walks back one byte and
+///            leaves a half-eaten character behind
+///
+///
+///        STAGE 3 - INPUT AND CLIPBOARD
+///        =============================
+///        There are TWO charset -> codepage resolvers in this client, not
+///        one, and they are entirely separate functions:
+///
+///          * DISPLAY resolver - "mov eax,[ebp+8] / add eax,-80h / cmp 6Eh"
+///            Two callers, both feeding MultiByteToWideChar right before
+///            GetTextExtentPoint32W and TextOutW. That is stage 1, and it
+///            governs DECODING for output.
+///
+///          * INPUT resolver - "push [ebp+8] / call LangIDToCharset /
+///            add eax,-80h / cmp 6Eh". Also two callers, both storing the
+///            result into the edit control at [this+90h]:
+///                - the edit control constructor
+///                - the WM_INPUTLANGCHANGE handler
+///
+///        That cached [this+90h] codepage is then handed to
+///        WideCharToMultiByte in the WM_IME_COMPOSITION / GCS_RESULTSTR
+///        handler, which is the single place where committed IME text turns
+///        into the bytes actually stored in the edit buffer:
+///
+///            ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, wbuf, ...)
+///            WideCharToMultiByte([this+90h], 0, wbuf, ..., abuf, 100h, 0, 0)
+///            EditControl::InsertString(abuf)
+///
+///        The composition string arrives as proper UTF-16 - the emoji is
+///        intact at that point. It is the WideCharToMultiByte step that
+///        destroys it: under codepage 1252 (or 0 / CP_ACP) every character
+///        outside the codepage collapses to '?'. So the emoji is already
+///        gone before the client's own buffer ever sees it, which is why
+///        stage 1 on its own changes nothing about typing.
+///
+///        There is also a fallback path. Both call sites check a global
+///        "IME available" flag first and, when it is clear, skip the
+///        resolver entirely and load a default codepage global instead:
+///
+///            cmp  byte ptr [imeEnabled], 0
+///            je   short useDefault
+///            ...  call InputResolver
+///            jmp  short store
+///          useDefault:
+///            mov  eax, [defaultCodepage]     ; 0 on English clients
+///          store:
+///            mov  [edi+90h], eax
+///
+///        On an English client that global is 0 (CP_ACP), so the resolver is
+///        never even reached. Both branches therefore have to be handled or
+///        the patch silently does nothing on exactly the clients that need
+///        it most.
+///
+///        So this stage does three things:
+///
+///          1. INPUT resolver -> "mov eax,0FDE9h / ret", the same 6-byte
+///             trick stage 1 uses on the display resolver. It is __cdecl
+///             (callers clean up with "add esp,4"), so a bare RET is
+///             balanced.
+///
+///          2. Both fallback loads -> "mov eax,0FDE9h". "mov eax,[imm32]" and
+///             "mov eax,imm32" are both 5 bytes, so this is a length-exact
+///             swap with no padding and no relocation.
+///
+///             Together these pin [this+90h] to 65001 on every edit control
+///             regardless of locale, IME state, or language switches at
+///             runtime, so the IME encode step emits UTF-8.
+///
+///          3. Clipboard paste is converted to Unicode. The paste routine asks
+///             for CF_TEXT (1), which makes the OS flatten the clipboard down
+///             to the ANSI codepage before the client sees a single byte - the
+///             same '?' loss, one layer earlier. The format request becomes
+///             CF_UNICODETEXT (13) and the GlobalLock call that follows is
+///             redirected to a small stub that locks the handle and runs the
+///             UTF-16 through WideCharToMultiByte with CP_UTF8, returning a
+///             UTF-8 buffer to the unchanged InsertString call below it.
+///
+///             Windows synthesises CF_UNICODETEXT from CF_TEXT automatically,
+///             so a plain-ASCII clipboard still pastes normally. The stub is
+///             stdcall/"ret 4" like GlobalLock itself, and GlobalUnlock later
+///             runs on the HANDLE rather than the pointer, so swapping the
+///             returned pointer is safe.
+///
+///        WideCharToMultiByte rejects CP_UTF8 outright if lpDefaultChar or
+///        lpUsedDefaultChar is non-NULL. The IME handler already passes 0
+///        for both, and the stub added here does the same, so both calls
+///        comply. Flags are 0 in both places as well, which CP_UTF8 also
+///        requires.
+///
+///        This covers the two routes that can carry a non-ASCII character
+///        into an ANSI window: the IME composition result (which is what
+///        the Windows emoji picker, Win+. , goes through on an IME-enabled
+///        field) and the clipboard. Plain WM_CHAR keystrokes cannot carry
+///        one - the OS has already converted them to a single ANSI byte
+///        before the message is dispatched, and no in-process patch can
+///        recover what was discarded outside the process.
+///
+///
+///        STAGE 4 - COLORED EMOJI SPRITES
+///        ===============================
+///        With stage 1 applied the client decodes emoji correctly and the
+///        right glyphs appear - but they come out as flat silhouettes in
+///        whatever SetTextColor last selected.
+///
+///        That is GDI, not the renderer. GDI rasterizes every glyph to an
+///        8-bit coverage mask and fills it with one solid color. The COLR /
+///        CPAL layer tables that carry an emoji font's colors are simply not
+///        read by TextOutW. The color is gone before Direct3D ever sees the
+///        text surface, which is why no renderer change - DX9 included - can
+///        bring it back.
+///
+///        Both text call sites are redirected to our own routines:
+///
+///          TextOutW              -> EmojiTextOut
+///          GetTextExtentPoint32W -> EmojiMeasure
+///
+///        Each walks the UTF-16 string and splits it into runs. Plain text
+///        runs go to the real GDI function unchanged. Emoji codepoints are
+///        drawn instead by AlphaBlend from a pre-rendered 32bpp sprite, so
+///        their own pixels - full color, per-pixel alpha - land in the text
+///        surface. Both routines walk identically, which is what keeps
+///        measurement in step with drawing so centering and word wrap stay
+///        correct.
+///
+///        Strings with no emoji in them take a fast path that calls straight
+///        through to the original function, so ordinary text is untouched.
+///
+///        THE OUTLINE PASS - AND WHY ONE SPRITE PER GROUP
+///        ----------------------------------------------
+///        The client draws outlined text by drawing the SAME string five
+///        times: four offset by one pixel each way in the outline color, then
+///        once on the spot in the fill color.
+///
+///            SetTextColor(outline); draw(x-1,y) (x+1,y) (x,y-1) (x,y+1)
+///            SetTextColor(fill);    draw(x,y)
+///
+///        For glyphs that works, because GDI paints each pass in one flat
+///        color and the fill pass covers the four outline copies. A sprite has
+///        its own colors and ignores SetTextColor entirely, so all five passes
+///        stay visible and the emoji comes out as five overlapping copies
+///        smeared one pixel apart. Unoutlined callers - NPC dialogue among
+///        them - only ever draw once, which is why they always looked right.
+///
+///        CLAIMGROUP collapses each such group back to one blit. It keys a
+///        small table on {hDC, cch, string hash, anchor +/-2px} and hands the
+///        sprite to the FIRST pass of a group only; the remaining passes find
+///        the live entry and skip the blit. Text drawing itself is never
+///        suppressed - only the duplicate sprite blits - so outlined text
+///        keeps its outline.
+///
+///        WHAT ENDS A GROUP IS TIME, NOT A PASS COUNT
+///        -------------------------------------------
+///        The first version of this counted matches and freed the slot on the
+///        fifth one. That is only correct for a caller that draws exactly five
+///        times. Unoutlined callers draw once and drop-shadow callers draw
+///        twice, so their entry was still live when the next frame began - the
+///        next frame's first pass then matched it and was suppressed, and the
+///        emoji vanished for that frame. That is what made the chatbox blink.
+///
+///        So the slot carries a timestamp instead of a counter. The passes of
+///        one group are consecutive calls microseconds apart; the next frame is
+///        milliseconds away. An entry only matches if it is key-equal AND was
+///        touched within one group lifetime - QueryPerformanceFrequency / 500,
+///        i.e. 2ms. Anything older belongs to an earlier frame and is treated
+///        as free. That holds for any number of passes, cannot drift out of
+///        step, and cannot leak a slot. A match also refreshes the stamp, so a
+///        long group cannot age out from under itself mid-draw.
+///
+///        If QueryPerformanceFrequency is unusable, QPCTHRESH is set to -1 and
+///        the table is bypassed entirely: every pass blits. That is visibly
+///        wrong - the five-copy smear returns - but it is never invisible,
+///        which is the better way to fail.
+///
+///        KNOWN TRADE-OFF: the pass that survives is the first one the client
+///        issues, and that pass is (x-1, y). Emoji therefore sit one pixel
+///        left of exact position in outlined text. Holding the blit back for
+///        the fill pass instead would need a deferred flush, and there is no
+///        point in the client where that flush could reliably be triggered -
+///        so one pixel is the accepted cost.
+///
+///        The table lives in the data block (8 slots x 0x18 bytes) and is
+///        zeroed at patch time. A miss takes the first empty-or-stale slot;
+///        since stale slots are always reclaimable the table cannot wedge and
+///        there is no victim to guess at. Should every slot somehow be fresh -
+///        more than 8 distinct emoji strings inside one 2ms window - the last
+///        slot is reused, which costs an extra blit, never a suppressed one.
+///        The anchor window is +/-2 because the anchor is the first pass,
+///        (x-1,y), and the group reaches (x+1,y) - two pixels away from it.
+///        Two genuinely separate emoji never sit that close, since each is a
+///        whole line-height wide.
+///
+///        SPRITES
+///        -------
+///        One file per codepoint:
+///
+///            data\emoji\<CODEPOINT-IN-HEX>.bmp     e.g. data\emoji\1F600.bmp
+///
+///        Loose in the client folder or packed inside a GRF - both work, and
+///        the path is the same either way. The lookup goes through the
+///        client's own CFileMgr::Get, which is what every other resource in
+///        the game uses, so it searches the data folder and every mounted GRF
+///        and honours the 'data folder first' setting. GRF entries are matched
+///        case-insensitively (the client lowercases the name before hashing).
+///
+///        CFileMgr::Get returns a VirtualAlloc'd buffer, so the loader
+///        allocates the same way on its own fallback path and one free covers
+///        both. That fallback is CreateFileA, i.e. loose files only, and is
+///        what runs when the file manager cannot be located.
+///
+///        32-bit BMP with an alpha channel, square, drawn to about the UI
+///        line height (32x32 or 64x64 both work - it is scaled to the line).
+///        The patch premultiplies alpha itself when loading, so save straight
+///        (non-premultiplied) alpha from your image editor.
+///
+///        Codepoints with no file fall back to normal GDI text, so a partial
+///        set is fine. A miss is remembered, so a missing file costs one
+///        lookup for the whole session.
+///
+///        AlphaBlend is resolved at runtime from msimg32.dll, falling back to
+///        gdi32's GdiAlphaBlend. If neither is available emoji are skipped
+///        and text still draws.
+///
+///
+///        WHY THE CALL SITES AND NOT THE IAT
+///        ==================================
+///        Stages 2 and 4 both retarget imported functions, and both do it by
+///        editing the referencing instructions rather than the import thunks.
+///        Repointing a thunk would be one write instead of many, but it is NOT
+///        safe on this client: it carries an IAT integrity check that does
+///
+///            LoadLibraryA("GDI32.dll")
+///            GetProcAddress(h, "TextOutW")
+///            cmp eax, dword ptr [<&GDI32.TextOutW>]
+///
+///        and reports the API as hooked when the slot no longer matches the
+///        genuine export. Patching the call instruction instead leaves the
+///        import table byte-for-byte intact, so the check still passes.
+///
+///        For stage 2 three reference forms exist and all are handled. Most
+///        sites are a plain 'call dword ptr [<&func>]', but the compiler
+///        hoisted the function pointer into a register for the loops that call
+///        it repeatedly - 'mov ebx, dword ptr [<&func>]' followed by
+///        'call ebx' - and in the largest functions it parks that pointer in a
+///        stack local instead and calls through 'call dword ptr [ebp-xx]'.
+///        Hoisted pointers get the address of our routine loaded as an
+///        immediate; the spilled ones need no further change, since the local
+///        now holds our address by the time it is called.
+///
+///        A load is only retargeted when it can be shown to feed a call inside
+///        its own function. Anything that merely reads the slot to compare or
+///        copy it must keep seeing the genuine address - which matters here,
+///        because the IAT integrity check above is exactly such a reader.
+///
+///        The 6-byte ModRM loads become 5-byte immediates and take one NOP.
+///        The EAX-specific 'A1 disp32' form is already 5 bytes, so it is a
+///        length-exact swap.
+///
+///
+///        SCOPE - PLEASE READ
+///        ===================
+///        This patch governs how the client ENCODES and DECODES text. It does
+///        not re-encode your data files for you: msgstringtable.txt, iteminfo,
+///        NPC dialogs from the server and so on must actually be saved as
+///        UTF-8 to benefit. Your server must also pass the bytes through
+///        untouched; nothing here changes the chat packet format or its length
+///        limits.
+///
+///        Whether a non-emoji character appears at all still depends on the
+///        selected GDI font containing that glyph - GDI has no automatic font
+///        fallback. Emoji bypass that entirely once their sprite exists.
+///
+AllowUTF8Enconding = function(_)
+{
+	//=====================================================================//
+	// Locate everything FIRST. Nothing is written until every stage that   //
+	// is going to run has confirmed its own sites, so a client that only   //
+	// half matches is never left half patched.                            //
+	//=====================================================================//
+
+	$$(_, 1.1, `Locate the DISPLAY charset -> codepage resolver`)
+	const dispMatches = Exe.FindHexN(this.TextResolverSig);
+	if (dispMatches.length === 0)
+		throw Error("AllowUTF8Enconding: display codepage resolver not found");
+
+	if (dispMatches.length > 1)
+		throw Error("AllowUTF8Enconding: display resolver is ambiguous (" + dispMatches.length + " matches)");
+
+	const dispAddr = dispMatches[0];
+
+	$$(_, 1.2, `Locate every reference to the two character stepping APIs`)
+	const layout = this.findLayout();
+
+	$$(_, 1.3, `Locate the input resolver, its fallback loads and the paste path`)
+	const input = this.findInput();
+
+	$$(_, 1.4, `Locate the text draw & measure calls and the sprite APIs`)
+	const emoji = this.findEmoji();
+
+	$$(_, 2, `Start the tag`)
+	Exe.BeginTag("UTF8_Encoding", true);
+
+	//=====================================================================//
+	// STAGE 1 - decode displayed text as UTF-8                            //
+	//=====================================================================//
+	//
+	// The function is __cdecl with a single argument (callers clean the
+	// stack with "add esp,4"), so a bare RET is correctly balanced. We do
+	// not need to build a stack frame just to return a constant, which is
+	// why the original "push ebp / mov ebp, esp" is simply dropped.
+	//
+	// These 6 bytes replace the first 6 of the prologue (push ebp / mov ebp,
+	// esp / mov eax,[ebp+8]). Everything after - the range check and the
+	// whole jump-table dispatch - simply becomes unreachable. Nothing is
+	// relocated, so the file layout and all surrounding code are untouched.
+	//
+	$$(_, 3, `Force the display resolver to return CP_UTF8`)
+	Exe.SetHex(dispAddr,
+		" B8 E9 FD 00 00" //mov eax, 65001
+	+	" C3"             //ret
+	);
+
+	//=====================================================================//
+	// STAGE 2 - UTF-8 aware character stepping                            //
+	//=====================================================================//
+	if (layout == null)
+	{
+		$$(_, 4, `SKIPPED - no CharNextExA/CharPrevExA references to fix`)
+	}
+	else
+	{
+		$$(_, 4.1, `Allocate the stepping routines and lay them down`)
+		const code = this.LayoutCode;
+		const [codePhy, codeVir] = Exe.Allocate(code.byteCount(), 0x10);
+		Exe.SetHex(codePhy, code);
+
+		$$(_, 4.2, `Patch the sentinel dwords to the real import slots`)
+		/// Each routine tail-jumps through the client's own import table for
+		/// everything it does not handle itself.
+		for (const [off, name] of this.LayoutFixups)
+			Exe.SetUint32(codePhy + off, layout.slots[name]);
+
+		$$(_, 4.3, `Redirect the direct call sites`)
+		/// 'call dword ptr [<&func>]' (6 bytes) -> 'call rel32' (5) + NOP.
+		for (const addr of layout.next.calls)
+			Exe.SetCALL(addr, codeVir + this.LayoutEntryNext, 1);
+
+		for (const addr of layout.prev.calls)
+			Exe.SetCALL(addr, codeVir + this.LayoutEntryPrev, 1);
+
+		$$(_, 4.4, `Redirect the hoisted function pointers`)
+		/// 'mov reg, dword ptr [<&func>]' -> 'mov reg, imm32'. The register then
+		/// holds our routine, so the call that consumes it - directly or through
+		/// the stack slot it was spilled into - reaches us with the caller's
+		/// frame untouched.
+		///
+		/// The 6-byte ModRM form leaves one byte spare, filled with a NOP. The
+		/// 5-byte 'A1 disp32' EAX form is length-exact, so nothing is padded.
+		for (const [addr, reg, entry, size] of layout.loads)
+		{
+			Exe.SetUint8(addr, 0xB8 + reg);
+			Exe.SetUint32(addr + 1, codeVir + entry);
+
+			if (size > 5)
+				Exe.SetUint8(addr + 5, 0x90);
+		}
+	}
+
+	//=====================================================================//
+	// STAGE 3 - UTF-8 for typed and pasted text                           //
+	//=====================================================================//
+	if (input == null)
+	{
+		$$(_, 5, `SKIPPED - client has no separate input resolver`)
+	}
+	else
+	{
+		$$(_, 5.1, `Force the input resolver to return CP_UTF8`)
+		/// __cdecl with one argument - the callers do 'add esp,4' themselves,
+		/// so returning straight away with a bare RET stays balanced. The range
+		/// check and jump table after this simply become unreachable; nothing is
+		/// moved, so the file layout is untouched.
+		Exe.SetHex(input.resolver,
+			" B8 E9 FD 00 00" //mov eax, 65001
+		+	" C3"             //ret
+		);
+
+		$$(_, 5.2, `Force both fallback loads to CP_UTF8`)
+		/// 'mov eax,[imm32]' (A1) -> 'mov eax,imm32' (B8). Same 5 bytes, so the
+		/// 'mov [reg+90h], eax' that follows is left exactly as it was and now
+		/// stores 65001 on the branch that never consults the resolver.
+		for (const addr of input.fallbacks)
+			Exe.SetHex(addr, " B8 E9 FD 00 00"); //mov eax, 65001
+
+		$$(_, 5.3, `Allocate the UTF-8 scratch buffer and zero it`)
+		const [bufPhy, bufVir] = Exe.Allocate(this.InputBufSize, 0x10);
+		Exe.SetHex(bufPhy, ' 00'.repeat(this.InputBufSize));
+
+		$$(_, 5.4, `Allocate the paste stub and lay it down`)
+		const code = this.InputCode;
+		const [codePhy, codeVir] = Exe.Allocate(code.byteCount(), 0x10);
+		Exe.SetHex(codePhy, code);
+
+		$$(_, 5.5, `Patch the sentinel dwords`)
+		for (const [off, kind, ref] of this.InputFixups)
+			Exe.SetUint32(codePhy + off, kind === 'imp' ? input.slots[ref] : bufVir);
+
+		$$(_, 5.6, `Ask for CF_UNICODETEXT instead of CF_TEXT`)
+		/// 'push 1' -> 'push 13'. Both are the 2-byte 'push imm8' form.
+		Exe.SetHex(input.pasteAddr, PUSH(13));
+
+		$$(_, 5.7, `Route the lock through the converting stub`)
+		/// 'call dword ptr [&GlobalLock]' (6 bytes) -> 'call rel32' (5) + NOP.
+		/// The stub is stdcall with one argument exactly like GlobalLock, so the
+		/// InsertString call below it needs no adjustment at all.
+		Exe.SetCALL(input.lockAddr, codeVir, 1);
+	}
+
+	//=====================================================================//
+	// STAGE 4 - colored emoji sprites                                     //
+	//=====================================================================//
+	if (emoji == null)
+	{
+		$$(_, 6, `SKIPPED - text call sites or sprite APIs unavailable`)
+	}
+	else
+	{
+		$$(_, 6.1, `Allocate the writable data block (function ptr, DIB header, paths, sprite cache, dedup table)`)
+		const [dataPhy, dataVir] = Exe.Allocate(this.EmojiDataSize, 0x10);
+
+		$$(_, 6.2, `Zero it - the sprite cache, the dedup table and the resolved AlphaBlend ptr must all start clear`)
+		/// The dedup table's timestamp is what marks a slot as live, so a
+		/// non-zero dword here would make CLAIMGROUP read a stale slot as live
+		/// and drop the first sprite of a group.
+		Exe.SetHex(dataPhy, ' 00'.repeat(this.EmojiDataSize));
+
+		$$(_, 6.3, `Allocate the code and lay it down`)
+		const code = this.EmojiCode;
+		const [codePhy, codeVir] = Exe.Allocate(code.byteCount(), 0x10);
+		Exe.SetHex(codePhy, code);
+
+		$$(_, 6.4, `Patch every sentinel dword to its real address`)
+		for (const [off, kind, ref] of this.EmojiFixups)
+		{
+			const value = (kind === 'imp')
+			?	emoji.slots[ref]
+			:	dataVir + ref
+			;
+			Exe.SetUint32(codePhy + off, value);
+		}
+
+		$$(_, 6.5, `Seed the BLENDFUNCTION - {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA}`)
+		Exe.SetUint32(dataPhy + this.EmojiOffsets.BLEND, 0x01FF0000);
+
+		$$(_, 6.6, `Seed the wide space used to measure a text run without drawing it`)
+		Exe.SetUint32(dataPhy + this.EmojiOffsets.WSPACE, 0x00000020);
+
+		$$(_, 6.7, `Seed the file manager pointers when they were located`)
+		/// Both stay zero otherwise, which makes the loader use CreateFileA and
+		/// therefore only find sprites that are loose in the data folder.
+		if (emoji.fileMgr != null)
+		{
+			Exe.SetUint32(dataPhy + this.EmojiOffsets.FMGROBJ, emoji.fileMgr.obj);
+			Exe.SetUint32(dataPhy + this.EmojiOffsets.FMGRGET, emoji.fileMgr.get);
+		}
+
+		$$(_, 6.8, `Seed the literal strings (path format, module & function names)`)
+		for (const [off, hex] of this.EmojiStrings)
+			Exe.SetHex(dataPhy + off, hex);
+
+		$$(_, 6.9, `Redirect both call sites to our routines`)
+		/// Both sites are 'call dword ptr [<&func>]' (6 bytes) and a direct
+		/// 'call rel32' is 5, so 1 NOP fills the instruction out. Only bytes of
+		/// the call itself are touched - the following instruction is untouched.
+		Exe.SetCALL(emoji.drawCall, codeVir + this.EmojiEntryTextOut, 1);
+		Exe.SetCALL(emoji.measureCall, codeVir + this.EmojiEntryMeasure, 1);
+	}
+
+	Exe.EndTag();
+
+	return true;
+};
+
+//=========================================================================//
+// STAGE 1 - display resolver                                              //
+//=========================================================================//
+
+///
+/// \brief Signature for the DISPLAY charset -> codepage resolver.
+///
+///          push  ebp
+///          mov   ebp, esp
+///          mov   eax, [ebp+8]        ; BYTE charset
+///          add   eax, -80h           ; rebase charset onto the jump table
+///          cmp   eax, 6Eh            ; range check
+///
+///        The "add eax,-80h / cmp eax,6Eh" pair is what makes this function
+///        unmistakable - it is the only charset-range test of its kind that
+///        reads its argument directly.
+///
+AllowUTF8Enconding.TextResolverSig =
+	  " 55"             //push ebp
+	+ " 8B EC"          //mov ebp, esp
+	+ " 8B 45 08"       //mov eax, [ebp+8]
+	+ " 83 C0 80"       //add eax, -80h
+	+ " 83 F8 6E"       //cmp eax, 6Eh
+	;
+
+//=========================================================================//
+// STAGE 2 - character stepping                                            //
+//=========================================================================//
+
+///
+/// \brief Address range of the function containing addr, delimited by the INT3
+///        padding the compiler lays down between functions.
+///
+///        A hoisted pointer and the call that consumes it can sit far apart -
+///        on the 2025 clients one is loaded 0x295 bytes above its call - so a
+///        fixed byte window either misses real sites or reaches into unrelated
+///        code. The padding is the only wall that actually means "different
+///        function".
+///
+///        Should no padding turn up within the cap - a function longer than
+///        0x1000 bytes in that direction - the cap itself is used. Erring wide
+///        is the better failure mode here: a site left unpatched means that
+///        code path keeps stepping single bytes, which is the very defect this
+///        stage exists to fix.
+///
+AllowUTF8Enconding.spanOf = function(addr)
+{
+	const pad = INT3.repeat(2);
+
+	/// Bounded to the code section either way, so a load sitting near an edge
+	/// cannot have its search run off into the headers or the data beyond.
+	const lo = Math.max(addr - 0x1000, Exe.GetSectBegin(CODE));
+	const hi = Math.min(addr + 0x1000, Exe.GetSectEnd(CODE));
+
+	const before = lo < addr ? Exe.FindLastHex(pad, addr, lo) : -1;
+	const after  = hi > addr ? Exe.FindHex(pad, addr, hi)     : -1;
+
+	return [
+		before > 0 ? before + pad.byteCount() : lo,
+		after  > 0 ? after                    : hi,
+	];
+};
+
+///
+/// \brief Collect every instruction that reaches the two stepping APIs.
+///        Returns null when neither import is present or nothing references
+///        them - there would be nothing to fix in that case.
+///
+AllowUTF8Enconding.findLayout = function()
+{
+	const slots = {};
+	const found = {};
+
+	for (const name of ['CharNextExA', 'CharPrevExA'])
+	{
+		const {funcAddr} = GetImpRefs(name, "USER32.dll");
+		if (funcAddr < 0)
+			return null;
+
+		slots[name] = funcAddr;
+		found[name] = {
+			calls : Exe.FindHexN( CALL([funcAddr]) ),
+
+			/// Two encodings load the pointer into a register. 'mov r32, [disp32]'
+			/// is 6 bytes with a ModRM; the EAX special case 'A1 disp32' is 5 and
+			/// has none, so each carries its own length for the patch pass.
+			loads : Exe.FindHexN( MOV(R32, [funcAddr]) ).map(addr => [addr, 6])
+			        .concat(
+			        Exe.FindHexN( MOV(EAX, [funcAddr]) ).map(addr => [addr, 5])
+			        ),
+		};
+	}
+
+	const total = found.CharNextExA.calls.length + found.CharPrevExA.calls.length
+	            + found.CharNextExA.loads.length + found.CharPrevExA.loads.length;
+	if (total === 0)
+		return null;
+
+	/// Keep only the loads that actually feed a call. A hoisted pointer is
+	/// ours to retarget only when it ends up being called. Anything else that
+	/// merely reads the slot - a comparison, a copy into a structure - must
+	/// keep seeing the genuine address, so it is left alone.
+	const loads = [];
+	for (const [name, entry] of [['CharNextExA', AllowUTF8Enconding.LayoutEntryNext],
+	                             ['CharPrevExA', AllowUTF8Enconding.LayoutEntryPrev]])
+	{
+		for (const [addr, size] of found[name].loads)
+		{
+			let reg = 0; //the A1 form is EAX by definition
+			if (size === 6)
+			{
+				/// Must be 'mov r32, dword ptr [disp32]' - mod 00, r/m 101.
+				const modRM = Exe.GetUint8(addr + 1);
+				if ((modRM & 0xC7) !== 0x05)
+					continue;
+
+				reg = (modRM >> 3) & 7;
+			}
+
+			if (this.feedsCall(addr, size, reg))
+				loads.push([addr, reg, entry, size]);
+		}
+	}
+
+	return {
+		slots,
+		next  : found.CharNextExA,
+		prev  : found.CharPrevExA,
+		loads,
+	};
+};
+
+///
+/// \brief Whether the pointer loaded at addr is ultimately called, i.e. whether
+///        retargeting the load is the same thing as retargeting a call.
+///
+///        Two shapes qualify, both bounded to the load's own function:
+///
+///          1. 'call reg' anywhere in the function. The compiler hoists the
+///             pointer out of the loop that calls it repeatedly, and a rotated
+///             loop can put the reload below the call, so both directions count.
+///
+///          2. The pointer is parked in a stack local first and the call goes
+///             through that local - 'mov [ebp+disp], reg' immediately after the
+///             load, then 'call dword ptr [ebp+disp]'. Newer builds spill this
+///             way in the big functions. The displacement is copied verbatim
+///             from the store, so the two instructions are provably about the
+///             same slot rather than merely a plausible one.
+///
+AllowUTF8Enconding.feedsCall = function(addr, size, reg)
+{
+	const [from, to] = this.spanOf(addr);
+
+	if (Exe.FindHex(" FF" + (0xD0 + reg).toHex(1), from, to) > 0)
+		return true;
+
+	/// 'mov [ebp+disp], reg' is 89 /r with r/m 101 and mod 01 (disp8) or 10 (disp32).
+	if (Exe.GetUint8(addr + size) !== 0x89)
+		return false;
+
+	const modRM = Exe.GetUint8(addr + size + 1);
+	if ((modRM & 0x3F) !== ((reg << 3) | 0x05))
+		return false;
+
+	const mod = modRM & 0xC0;
+	if (mod !== 0x40 && mod !== 0x80)
+		return false;
+
+	/// Same mod & r/m, but the reg field becomes 2 - that is 'call dword ptr'.
+	const callHex =
+		" FF"
+	+	(mod | 0x15).toHex(1)
+	+	Exe.GetHex(addr + size + 2, mod === 0x40 ? 1 : 4)
+	;
+
+	return Exe.FindHex(callHex, from, to) > 0;
+};
+
+///
+/// \brief The two stepping routines. Generated & verified by utf8_stub_gen.py -
+///        the sentinel dwords (E1..) are replaced with the real import slot
+///        addresses by the fixup pass above.
+///
+AllowUTF8Enconding.LayoutCode =
+	  "8B 44 24 04 3D A4 03 00 00 0F 84 57 01 00 00 3D "
+	+ "A8 03 00 00 0F 84 4C 01 00 00 3D B5 03 00 00 0F "
+	+ "84 41 01 00 00 3D B6 03 00 00 0F 84 36 01 00 00 "
+	+ "3D 51 05 00 00 0F 84 2B 01 00 00 8B 4C 24 08 0F "
+	+ "B6 01 3D C2 00 00 00 0F 82 19 01 00 00 3D F5 00 "
+	+ "00 00 0F 83 0E 01 00 00 BA 02 00 00 00 3D E0 00 "
+	+ "00 00 72 09 42 3D F0 00 00 00 72 01 42 B8 01 00 "
+	+ "00 00 39 D0 73 17 80 3C 01 80 0F 82 E6 00 00 00 "
+	+ "80 3C 01 BF 0F 87 DC 00 00 00 40 EB E5 01 D1 0F "
+	+ "B6 01 3D EF 00 00 00 74 13 3D F0 00 00 00 74 29 "
+	+ "3D E2 00 00 00 74 45 89 C8 C2 0C 00 80 79 01 B8 "
+	+ "75 F5 0F B6 41 02 3D 80 00 00 00 72 EA 3D 8F 00 "
+	+ "00 00 77 E3 83 C1 03 EB C6 80 79 01 9F 75 D8 80 "
+	+ "79 02 8F 75 D2 0F B6 41 03 3D BB 00 00 00 72 C7 "
+	+ "3D BF 00 00 00 77 C0 83 C1 04 EB A3 0F B6 41 01 "
+	+ "3D 83 00 00 00 74 5D 3D 80 00 00 00 75 A9 80 79 "
+	+ "02 8D 75 A3 83 C1 03 0F B6 01 3D C2 00 00 00 72 "
+	+ "3B 3D F5 00 00 00 73 34 BA 02 00 00 00 3D E0 00 "
+	+ "00 00 72 09 42 3D F0 00 00 00 72 01 42 B8 01 00 "
+	+ "00 00 39 D0 73 0F 80 3C 01 80 72 10 80 3C 01 BF "
+	+ "77 0A 40 EB ED 01 D1 E9 43 FF FF FF 83 E9 03 E9 "
+	+ "53 FF FF FF 80 79 02 A3 0F 85 49 FF FF FF 83 C1 "
+	+ "03 E9 29 FF FF FF FF 25 00 00 00 E1 8B 44 24 04 "
+	+ "3D A4 03 00 00 0F 84 EA 00 00 00 3D A8 03 00 00 "
+	+ "0F 84 DF 00 00 00 3D B5 03 00 00 0F 84 D4 00 00 "
+	+ "00 3D B6 03 00 00 0F 84 C9 00 00 00 3D 51 05 00 "
+	+ "00 0F 84 BE 00 00 00 8B 4C 24 08 8B 44 24 0C 39 "
+	+ "C8 0F 86 AE 00 00 00 E8 AF 00 00 00 0F 82 A3 00 "
+	+ "00 00 0F B6 10 81 FA EF 00 00 00 74 48 81 FA F0 "
+	+ "00 00 00 74 5C 81 FA E2 00 00 00 74 76 89 C2 29 "
+	+ "CA 83 FA 03 72 2C 89 C2 83 EA 03 80 3A E2 75 22 "
+	+ "80 7A 01 80 75 1C 80 7A 02 8D 75 16 89 D0 39 C8 "
+	+ "76 10 50 E8 63 00 00 00 73 03 58 EB 05 83 C4 04 "
+	+ "EB B0 C2 10 00 80 78 01 B8 75 C2 0F B6 50 02 81 "
+	+ "FA 80 00 00 00 72 B6 81 FA 8F 00 00 00 77 AE EB "
+	+ "CD 80 78 01 9F 75 A6 80 78 02 8F 75 A0 0F B6 50 "
+	+ "03 81 FA BB 00 00 00 72 94 81 FA BF 00 00 00 77 "
+	+ "8C EB AB 80 78 01 83 75 84 80 78 02 A3 0F 85 7A "
+	+ "FF FF FF EB 99 FF 25 04 00 00 E1 53 89 C3 89 C2 "
+	+ "83 EA 04 39 CA 73 02 89 CA 48 80 38 80 72 0C 80 "
+	+ "38 C0 73 12 39 D0 76 4B 48 EB EF 89 DA 29 C2 83 "
+	+ "FA 01 75 3F EB 3A 89 DA 29 C2 0F B6 18 81 FB C2 "
+	+ "00 00 00 72 2E 81 FB F5 00 00 00 73 26 81 FB E0 "
+	+ "00 00 00 72 16 81 FB F0 00 00 00 72 07 83 FA 04 "
+	+ "75 11 EB 0C 83 FA 03 75 0A EB 05 83 FA 02 75 03 "
+	+ "5B F8 C3 5B F9 C3 "
+	;
+
+///
+/// \brief Every sentinel dword in the stepping code, as [offset, import name].
+///
+AllowUTF8Enconding.LayoutFixups = [
+	[0x168, 'CharNextExA'],
+	[0x267, 'CharPrevExA'],
+];
+
+/// Entry point offsets within the stepping blob
+AllowUTF8Enconding.LayoutEntryNext = 0x000;
+AllowUTF8Enconding.LayoutEntryPrev = 0x16C;
+
+//=========================================================================//
+// STAGE 3 - input & clipboard                                             //
+//=========================================================================//
+
+///
+/// \brief Signature for the INPUT charset -> codepage resolver.
+///        Distinct from the display resolver - the input variant calls
+///        LangIDToCharset first, so the prologue differs.
+///
+AllowUTF8Enconding.InputResolverSig =
+	  " 55 8B EC"           //push ebp / mov ebp, esp
+	+ " FF 75 08"           //push [ebp+8]
+	+ " E8 ?? ?? ?? ??"     //call LangIDToCharset
+	+ " 83 C0 80"           //add eax, -80h
+	+ " 83 C4 04"           //add esp, 4
+	+ " 83 F8 6E"           //cmp eax, 6Eh
+	;
+
+///
+/// \brief Candidate shape for the default-codepage fallback loads:
+///        'mov eax,[global]' followed by the store into the edit control's
+///        cached codepage at [reg+90h]. The register is wildcarded because
+///        it varies by build, which means this shape alone is too loose -
+///        findInput() below narrows it down properly.
+///
+AllowUTF8Enconding.InputFallbackSig =
+	  " A1 ?? ?? ?? ??"    //mov eax, [defaultCodepage]
+	+ " 89 ?? 90 00 00 00" //mov [reg+90h], eax
+	;
+
+///
+/// \brief Convert a physical match address to the virtual address of the
+///        function starting there.
+///
+AllowUTF8Enconding.Fn2Vir = phy => Exe.Phy2Vir(phy, CODE);
+
+///
+/// \brief Locate everything stage 3 needs: the input resolver, its fallback
+///        loads, the imports the paste stub calls, the clipboard fetch and the
+///        GlobalLock call that follows it.
+///
+///        Returns null when the client has no separate input resolver at all -
+///        pre-2021 builds convert keyboard input with the display codepage, so
+///        stage 1 already covers them and there is nothing to add. Anything
+///        else missing means the shape is not what we understand, and that
+///        throws rather than half applying.
+///
+AllowUTF8Enconding.findInput = function()
+{
+	const matches = Exe.FindHexN(this.InputResolverSig);
+	if (matches.length === 0)
+		return null;
+
+	if (matches.length > 1)
+		throw Error("AllowUTF8Enconding: input resolver is ambiguous (" + matches.length + " matches)");
+
+	const resolver = matches[0];
+
+	/// The bare 'mov eax,[global] / mov [reg+90h],eax' shape is NOT unique -
+	/// unrelated classes cache other dwords at their own +90h. Each real one
+	/// is anchored instead by the resolver call sitting a few instructions
+	/// above it, which is the whole point of the if/else being patched here.
+	const fallbacks = this.findFallbacks(this.Fn2Vir(resolver));
+	if (fallbacks.length === 0)
+		throw Error("AllowUTF8Enconding: default codepage fallback loads not found");
+
+	const slots = {};
+	for (const [name, dll] of this.InputImports)
+	{
+		const {funcAddr} = GetImpRefs(name, dll);
+		if (funcAddr < 0)
+			throw Error(`AllowUTF8Enconding: ${name} is not imported`);
+
+		slots[name] = funcAddr;
+	}
+
+	/// 'push CF_TEXT' + 'call dword ptr [&GetClipboardData]'. Unique - it is
+	/// the only place the client asks the clipboard for text.
+	const pasteAddr = Exe.FindHex(
+		PUSH(1)                            //push 1 (CF_TEXT)
+	+	CALL([slots['GetClipboardData']])   //call dword ptr [&GetClipboardData]
+	);
+	if (pasteAddr < 0)
+		throw Error("AllowUTF8Enconding: clipboard paste site not found");
+
+	/// Sits a few instructions past the fetch, after the NULL check on the
+	/// returned handle. Bounded search so an unrelated GlobalLock elsewhere
+	/// can never be picked up by mistake.
+	const lockAddr = Exe.FindHex(
+		CALL([slots['GlobalLock']]),
+		pasteAddr, pasteAddr + 0x20
+	);
+	if (lockAddr < 0)
+		throw Error("AllowUTF8Enconding: GlobalLock call after paste not found");
+
+	return {resolver, fallbacks, slots, pasteAddr, lockAddr};
+};
+
+///
+/// \brief Keep only the fallback loads that belong to the input resolver's
+///        own if/else.
+///
+///        The InputFallbackSig shape matches unrelated code as well - other
+///        classes legitimately cache a dword at their own +90h. What makes a
+///        match genuine is a direct CALL to the resolver a few instructions
+///        above it: that is the "IME available" branch, and the load being
+///        patched is its else. Walking back for that call is both
+///        register-agnostic and immune to the global's address changing.
+///
+AllowUTF8Enconding.findFallbacks = function(resolverVir)
+{
+	const out = [];
+
+	for (const addr of Exe.FindHexN(this.InputFallbackSig))
+	{
+		/// Start at 5 - a CALL is 5 bytes, so it cannot overlap the load.
+		for (let back = 5; back <= 0x20; back++)
+		{
+			const site = addr - back;
+			if (Exe.GetUint8(site) !== 0xE8)
+				continue;
+
+			/// rel32 is measured from the end of the CALL instruction.
+			if (this.Fn2Vir(site + 5) + Exe.GetInt32(site + 1) === resolverVir)
+			{
+				out.push(addr);
+				break;
+			}
+		}
+	}
+
+	return out;
+};
+
+///
+/// \brief Import table slots the paste stub needs. All are already imported
+///        by the client, so nothing is added to the PE - only the slot
+///        addresses are looked up.
+///
+AllowUTF8Enconding.InputImports = [
+	['GetClipboardData', 'USER32.dll'],
+	['GlobalLock', 'KERNEL32.dll'],
+	['WideCharToMultiByte', 'KERNEL32.dll'],
+];
+
+///
+/// \brief Size of the UTF-8 scratch buffer for paste conversion. The wide
+///        length is capped to (BufSize-1)/3 UTF-16 units, which is the
+///        distance that always fits - UTF-8 needs at most 3 bytes per unit
+///        (a surrogate pair is 2 units -> 4 bytes, i.e. 2 bytes/unit).
+///
+AllowUTF8Enconding.InputBufSize = 0x1000;
+
+///
+/// \brief Fixup table for the paste stub - dword sentinels replaced with
+///        real addresses after allocation. Each entry is [offset, kind, ref],
+///        where kind is 'imp' (import slot ref) or 'buf' (scratch buffer ref).
+///
+AllowUTF8Enconding.InputFixups = [
+	[0x009, 'imp', 'GlobalLock'],
+	[0x035, 'buf', 'buf'],
+	[0x044, 'imp', 'WideCharToMultiByte'],
+	[0x04D, 'buf', 'buf'],
+	[0x05A, 'buf', 'buf'],
+];
+
+///
+/// \brief The paste conversion stub, 106 bytes. Drop-in replacement for
+///        GlobalLock on the paste path - locks the handle, converts the
+///        UTF-16 to UTF-8, returns a pointer to the UTF-8 buffer. Signature
+///        is stdcall/ret 4, identical to GlobalLock itself.
+///
+///        Generated by Python/utf8_input_stub_gen.py - edit the source
+///        there and regenerate rather than patching the hex by hand.
+///
+AllowUTF8Enconding.InputCode =
+	  "55 89 E5 56 FF 75 08 FF 15 00 00 00 E1 85 C0 74 "
+	+ "52 89 C6 31 C9 81 F9 55 05 00 00 73 0A 66 83 3C "
+	+ "4E 00 74 03 41 EB EE 85 C9 74 2E 6A 00 6A 00 68 "
+	+ "FF 0F 00 00 68 00 00 00 E0 51 56 6A 00 68 E9 FD "
+	+ "00 00 FF 15 04 00 00 E1 85 C0 74 0D B9 00 00 00 "
+	+ "E0 C6 04 01 00 89 C8 EB 0C B8 00 00 00 E0 C6 00 "
+	+ "00 EB 02 31 C0 5E 5D C2 04 00 "
+	;
+
+//=========================================================================//
+// STAGE 4 - emoji sprites                                                 //
+//=========================================================================//
+
+///
+/// \brief Locate the text draw & measure calls and resolve every API the
+///        sprite stub needs. Returns null when either call site is missing or
+///        ambiguous - both must be unique for the redirect to be safe, since
+///        the stub assumes the client's own stdcall frame - or when any of the
+///        APIs it calls is not imported.
+///
+AllowUTF8Enconding.findEmoji = function()
+{
+	const drawFn = GetImpRefs("TextOutW", "GDI32.dll");
+	if (drawFn.funcAddr < 0)
+		return null;
+
+	const measureFn = GetImpRefs("GetTextExtentPoint32W", "GDI32.dll");
+	if (measureFn.funcAddr < 0)
+		return null;
+
+	const drawCalls = Exe.FindHexN( CALL([drawFn.funcAddr]) );
+	const measureCalls = Exe.FindHexN( CALL([measureFn.funcAddr]) );
+
+	if (drawCalls.length !== 1 || measureCalls.length !== 1)
+		return null;
+
+	const slots = {};
+	for (const [name, dll] of this.EmojiImports)
+	{
+		const {funcAddr} = GetImpRefs(name, dll);
+		if (funcAddr < 0)
+			return null;
+
+		slots[name] = funcAddr;
+	}
+
+	return {
+		drawCall    : drawCalls[0],
+		measureCall : measureCalls[0],
+		slots,
+		fileMgr     : this.findFileMgr(),
+	};
+};
+
+///
+/// \brief Locate g_fileMgr and CFileMgr::Get so sprites can be pulled out of a
+///        GRF as well as the loose data folder. Returns null when either one
+///        cannot be pinned down - the loader then falls back to CreateFileA,
+///        which only ever sees loose files.
+///
+///        CFileMgr::Get is __thiscall and takes (char *path, int *sizeOut,
+///        bool diskOnly), returning a VirtualAlloc'd buffer or NULL. It is
+///        found by shape rather than by name:
+///
+///          1. DGRF already knows the 'mov ecx, <g_fileMgr>' that precedes the
+///             AddPak call for data.grf, so the object address comes from there.
+///          2. The disk-read helper is unmistakable - it is the only function
+///             whose CreateFileA call is preceded by exactly this argument
+///             block (GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, NORMAL).
+///          3. Get is then the method that both takes g_fileMgr as its this
+///             pointer AND reaches that helper directly, which is precisely
+///             the "try disk, else walk the paks" dispatcher we want. On the
+///             newest clients the two have been merged into one function, so a
+///             candidate that IS the helper is accepted as well.
+///
+AllowUTF8Enconding.findFileMgr = function()
+{
+	if (!DGRF.MovFMgr)
+	{
+		try
+		{
+			DGRF.load();
+		}
+		catch (err)
+		{
+			return null;
+		}
+	}
+
+	/// MovFMgr is 'mov ecx, imm32' - the imm32 is the object address.
+	if (DGRF.MovFMgr.byteCount() !== 5)
+		return null;
+
+	const obj = DGRF.MovFMgr.split(' ').filter(c => c).slice(1).join(' ').toInt(4, false);
+	if (obj <= 0)
+		return null;
+
+	const {funcAddr} = GetImpRefs('CreateFileA', 'KERNEL32.dll');
+	if (funcAddr < 0)
+		return null;
+
+	$$('AllowUTF8Enconding.findFileMgr', 1, `Find the disk-read helper by its CreateFileA argument block`)
+	const readSig =
+		PUSH_0                     //push 0                    ; hTemplateFile
+	+	PUSH(0x80)                 //push 80h                   ; FILE_ATTRIBUTE_NORMAL
+	+	PUSH(3)                    //push 3                     ; OPEN_EXISTING
+	+	PUSH_0                     //push 0                     ; lpSecurityAttributes
+	+	PUSH_1                     //push 1                     ; FILE_SHARE_READ
+	+	PUSH(0x80000000)           //push 80000000h             ; GENERIC_READ
+	+	PUSH([EBP, 8])             //push dword ptr [ebp+8]     ; lpFileName
+	+	CALL([funcAddr])           //call dword ptr [&CreateFileA]
+	;
+
+	const readers = [];
+	for (const addr of Exe.FindHexN(readSig))
+	{
+		/// Walk back to the 'push ebp / mov ebp, esp' the [ebp+8] above implies.
+		const start = Exe.FindLastHex(FP_START, addr, addr - 0x30);
+		if (start > 0)
+			readers.push(this.Fn2Vir(start));
+	}
+	if (readers.isEmpty())
+		return null;
+
+	$$('AllowUTF8Enconding.findFileMgr', 2, `Pick the method that dispatches to it with g_fileMgr as 'this'`)
+	for (const addr of Exe.FindHexN( MOV(ECX, obj) ))
+	{
+		/// The CALL always follows within a few instructions - the arguments are
+		/// pushed around the 'mov ecx' but nothing else intervenes.
+		const callAddr = Exe.FindHex(CALL(), addr + 5, addr + 0x20);
+		if (callAddr < 0)
+			continue;
+
+		const target = Exe.GetTgtAddr(callAddr + 1);
+		if (readers.includes(target))
+			return {obj, get : target};
+
+		const phy = Exe.Vir2Phy(target, CODE);
+		if (phy < 0)
+			continue;
+
+		for (const inner of Exe.FindHexN(CALL(), phy, phy + 0x120))
+		{
+			if (readers.includes(Exe.GetTgtAddr(inner + 1)))
+				return {obj, get : target};
+		}
+	}
+
+	return null;
+};
+
+///
+/// \brief Offsets of the hand-seeded fields inside the data block. Mirrors the
+///        D table in emoji_stub_gen.py - change it there, not here, and
+///        re-generate.
+///
+///          CACHE     64 slots x 0x10 : cp, hdcSrc, w, h
+///          QPCTHRESH ticks one draw group may span; 0 = not resolved yet,
+///                    -1 = no usable timer, bypass the dedup table
+///          QPCBUF    LARGE_INTEGER scratch for QueryPerformanceCounter
+///          DEDUP      8 slots x 0x18 : hdc, cch, hash, anchorX, anchorY, tLast
+///          FMGROBJ   g_fileMgr; 0 means GRF lookup is unavailable
+///          FMGRGET   CFileMgr::Get
+///          SIZEOUT   size out-param handed to CFileMgr::Get
+///
+AllowUTF8Enconding.EmojiOffsets = {
+	PFNBLEND  : 0x000,
+	WSPACE    : 0x008,
+	SIZEBUF   : 0x010,
+	BLEND     : 0x018,
+	BMI       : 0x01C,
+	PPV       : 0x044,
+	PATHBUF   : 0x050,
+	CACHE     : 0x1B0,
+	QPCTHRESH : 0x5B0,
+	QPCBUF    : 0x5B8,
+	DEDUP     : 0x5C0,
+	FMGROBJ   : 0x680,
+	FMGRGET   : 0x684,
+	SIZEOUT   : 0x688,
+};
+
+///
+/// \brief The sprite stub itself. Generated & verified by emoji_stub_gen.py -
+///        the sentinel dwords (E0.. data block, E1.. import slots) are replaced
+///        with real addresses by the fixup pass above.
+///
+AllowUTF8Enconding.EmojiCode =
+	  "55 89 E5 83 EC 30 53 56 57 C7 45 E4 01 00 00 00 "
+	+ "8B 75 14 85 F6 74 26 8B 4D 18 83 F9 00 7E 1E 31 "
+	+ "FF 8B 4D 18 E8 F0 03 00 00 52 89 C1 E8 39 04 00 "
+	+ "00 5A 85 C0 75 24 01 D7 3B 7D 18 7C E4 FF 75 18 "
+	+ "FF 75 14 FF 75 10 FF 75 0C FF 75 08 FF 15 00 00 "
+	+ "00 E1 89 45 E4 E9 E3 00 00 00 E8 EA 00 00 00 89 "
+	+ "45 D8 68 10 00 00 E0 6A 01 68 08 00 00 E0 FF 75 "
+	+ "08 FF 15 04 00 00 E1 A1 14 00 00 E0 83 F8 00 7F "
+	+ "05 B8 0C 00 00 00 89 45 F0 8B 45 0C 89 45 FC 31 "
+	+ "C0 89 45 F8 89 45 F4 8B 7D F4 3B 7D 18 0F 8D 95 "
+	+ "00 00 00 8B 75 14 8B 4D 18 E8 6B 03 00 00 89 45 "
+	+ "E8 89 55 EC 89 C1 E8 AF 03 00 00 85 C0 75 08 8B "
+	+ "45 EC 01 45 F4 EB D0 E8 D4 01 00 00 83 7D D8 00 "
+	+ "74 36 8B 4D E8 E8 1D 04 00 00 85 C0 74 2A 89 C3 "
+	+ "FF 35 18 00 00 E0 FF 73 0C FF 73 08 6A 00 6A 00 "
+	+ "FF 73 04 FF 75 F0 FF 75 F0 FF 75 10 FF 75 FC FF "
+	+ "75 08 FF 15 00 00 00 E0 8B 45 F0 01 45 FC 8B 45 "
+	+ "EC 01 45 F4 8B 7D F4 3B 7D 18 7D 11 8B 75 14 0F "
+	+ "B7 04 7E 3D 0F FE 00 00 75 03 FF 45 F4 8B 45 F4 "
+	+ "89 45 F8 E9 5F FF FF FF E8 63 01 00 00 8B 45 E4 "
+	+ "5F 5E 5B 89 EC 5D C2 14 00 53 56 57 51 52 A1 B0 "
+	+ "05 00 E0 85 C0 75 0A E8 E5 00 00 00 A1 B0 05 00 "
+	+ "E0 83 F8 FF 75 0A B8 01 00 00 00 E9 CB 00 00 00 "
+	+ "8B 75 14 8B 4D 18 31 C0 31 FF 39 CF 7D 10 89 C2 "
+	+ "C1 E2 05 01 D0 0F B7 14 7E 01 D0 47 EB EC 89 C3 "
+	+ "E8 F1 00 00 00 89 C2 BE C0 05 00 E0 31 FF 8B 46 "
+	+ "14 85 C0 74 44 89 D0 2B 46 14 3B 05 B0 05 00 E0 "
+	+ "73 37 8B 06 3B 45 08 75 30 8B 46 04 3B 45 18 75 "
+	+ "28 39 5E 08 75 23 8B 45 0C 2B 46 0C 83 C0 02 83 "
+	+ "F8 04 77 15 8B 45 10 2B 46 10 83 C0 02 83 F8 04 "
+	+ "77 07 89 56 14 31 C0 EB 52 83 C6 18 47 83 FF 08 "
+	+ "7C AC BE C0 05 00 E0 31 FF 8B 46 14 85 C0 74 19 "
+	+ "89 D0 2B 46 14 3B 05 B0 05 00 E0 73 0C 83 C6 18 "
+	+ "47 83 FF 08 7C E3 83 EE 18 8B 45 08 89 06 8B 45 "
+	+ "18 89 46 04 89 5E 08 8B 45 0C 89 46 0C 8B 45 10 "
+	+ "89 46 10 89 56 14 B8 01 00 00 00 5A 59 5F 5E 5B "
+	+ "C3 51 52 68 B8 05 00 E0 FF 15 40 00 00 E1 85 C0 "
+	+ "74 27 A1 BC 05 00 E0 85 C0 75 1E A1 B8 05 00 E0 "
+	+ "85 C0 74 15 31 D2 B9 F4 01 00 00 F7 F1 85 C0 74 "
+	+ "08 A3 B0 05 00 E0 5A 59 C3 C7 05 B0 05 00 E0 FF "
+	+ "FF FF FF 5A 59 C3 51 52 68 B8 05 00 E0 FF 15 3C "
+	+ "00 00 E1 A1 B8 05 00 E0 85 C0 75 01 40 5A 59 C3 "
+	+ "8B 45 F4 2B 45 F8 7E 4B 89 45 E0 8B 4D F8 8B 75 "
+	+ "14 8D 14 4E 89 55 DC 68 10 00 00 E0 FF 75 E0 FF "
+	+ "75 DC FF 75 08 FF 15 04 00 00 E1 FF 75 E0 FF 75 "
+	+ "DC FF 75 10 FF 75 FC FF 75 08 FF 15 00 00 00 E1 "
+	+ "85 C0 75 07 C7 45 E4 00 00 00 00 A1 10 00 00 E0 "
+	+ "01 45 FC C3 55 89 E5 83 EC 28 53 56 57 FF 75 14 "
+	+ "FF 75 10 FF 75 0C FF 75 08 FF 15 04 00 00 E1 89 "
+	+ "45 E4 85 C0 0F 84 C9 00 00 00 8B 75 0C 85 F6 0F "
+	+ "84 BE 00 00 00 8B 4D 10 83 F9 00 0F 8E B2 00 00 "
+	+ "00 31 FF 8B 4D 10 E8 DE 00 00 00 52 89 C1 E8 27 "
+	+ "01 00 00 5A 85 C0 75 0C 01 D7 3B 7D 10 7C E4 E9 "
+	+ "8F 00 00 00 8B 45 14 8B 40 04 83 F8 00 7F 05 B8 "
+	+ "0C 00 00 00 89 45 F0 31 C0 89 45 FC 89 45 F8 89 "
+	+ "45 F4 8B 7D F4 3B 7D 10 7D 56 8B 75 0C 8B 4D 10 "
+	+ "E8 94 00 00 00 89 45 E8 89 55 EC 89 C1 E8 D8 00 "
+	+ "00 00 85 C0 75 08 8B 45 EC 01 45 F4 EB D4 E8 4C "
+	+ "00 00 00 8B 45 F0 01 45 FC 8B 45 EC 01 45 F4 8B "
+	+ "7D F4 3B 7D 10 7D 11 8B 75 0C 0F B7 04 7E 3D 0F "
+	+ "FE 00 00 75 03 FF 45 F4 8B 45 F4 89 45 F8 EB A2 "
+	+ "E8 1A 00 00 00 8B 4D 14 8B 45 FC 89 01 8B 45 F0 "
+	+ "89 41 04 8B 45 E4 5F 5E 5B 89 EC 5D C2 10 00 8B "
+	+ "45 F4 2B 45 F8 7E 21 8B 4D F8 8B 75 0C 8D 14 4E "
+	+ "68 10 00 00 E0 50 52 FF 75 08 FF 15 04 00 00 E1 "
+	+ "A1 10 00 00 E0 01 45 FC C3 53 0F B7 04 7E BA 01 "
+	+ "00 00 00 89 C3 81 E3 00 FC 00 00 81 FB 00 D8 00 "
+	+ "00 75 35 8D 5F 01 39 CB 7D 2E 0F B7 5C 7E 02 53 "
+	+ "81 E3 00 FC 00 00 81 FB 00 DC 00 00 5B 75 19 2D "
+	+ "00 D8 00 00 C1 E0 0A 01 D8 2D 00 DC 00 00 05 00 "
+	+ "00 01 00 BA 02 00 00 00 5B C3 31 C0 81 F9 00 F0 "
+	+ "01 00 7C 0A 81 F9 FF FA 01 00 7F 25 40 C3 81 F9 "
+	+ "00 26 00 00 7C 1B 81 F9 BF 27 00 00 7F 02 40 C3 "
+	+ "81 F9 00 2B 00 00 7C 09 81 F9 FF 2B 00 00 7F 01 "
+	+ "40 C3 68 7C 01 00 E0 FF 15 34 00 00 E1 85 C0 74 "
+	+ "16 68 88 01 00 E0 50 FF 15 38 00 00 E1 85 C0 74 "
+	+ "06 A3 00 00 00 E0 C3 68 93 01 00 E0 FF 15 34 00 "
+	+ "00 E1 85 C0 74 16 68 9D 01 00 E0 50 FF 15 38 00 "
+	+ "00 E1 85 C0 74 06 A3 00 00 00 E0 C3 C7 05 00 00 "
+	+ "00 E0 FF FF FF FF C3 53 56 57 89 CB A1 00 00 00 "
+	+ "E0 85 C0 75 05 E8 98 FF FF FF A1 00 00 00 E0 83 "
+	+ "F8 FF 74 40 BE B0 01 00 E0 31 FF 8B 06 39 D8 74 "
+	+ "0F 85 C0 74 15 83 C6 10 47 83 FF 40 7C ED EB 24 "
+	+ "83 7E 04 00 74 1E 89 F0 EB 1C 89 1E C7 46 04 00 "
+	+ "00 00 00 89 D9 56 E8 0F 00 00 00 5E 85 C0 74 04 "
+	+ "89 F0 EB 02 31 C0 5F 5E 5B C3 55 89 E5 83 EC 48 "
+	+ "53 56 57 89 4D FC 89 75 F8 C7 45 F4 00 00 00 00 "
+	+ "C7 45 F0 00 00 00 00 C7 45 EC 00 00 00 00 C7 45 "
+	+ "E8 00 00 00 00 FF 75 FC 68 68 01 00 E0 68 50 00 "
+	+ "00 E0 FF 15 44 00 00 E1 83 C4 0C A1 80 06 00 E0 "
+	+ "85 C0 74 4A C7 05 88 06 00 E0 00 00 00 00 6A 00 "
+	+ "68 88 06 00 E0 68 50 00 00 E0 89 C1 FF 15 84 06 "
+	+ "00 E0 85 C0 0F 84 BB 02 00 00 89 45 F0 A1 88 06 "
+	+ "00 E0 83 F8 40 0F 82 AA 02 00 00 3D 00 00 00 01 "
+	+ "0F 87 9F 02 00 00 89 45 E4 E9 93 00 00 00 6A 00 "
+	+ "68 80 00 00 00 6A 03 6A 00 6A 01 68 00 00 00 80 "
+	+ "68 50 00 00 E0 FF 15 1C 00 00 E1 83 F8 FF 0F 84 "
+	+ "71 02 00 00 89 45 F4 6A 00 50 FF 15 20 00 00 E1 "
+	+ "83 F8 40 0F 82 5C 02 00 00 3D 00 00 00 01 0F 87 "
+	+ "51 02 00 00 89 45 E4 6A 04 68 00 10 00 00 FF 75 "
+	+ "E4 6A 00 FF 15 2C 00 00 E1 85 C0 0F 84 34 02 00 "
+	+ "00 89 45 F0 6A 00 8D 45 E0 50 FF 75 E4 FF 75 F0 "
+	+ "FF 75 F4 FF 15 24 00 00 E1 85 C0 0F 84 14 02 00 "
+	+ "00 FF 75 F4 FF 15 28 00 00 E1 C7 45 F4 00 00 00 "
+	+ "00 8B 5D F0 66 81 3B 42 4D 0F 85 F6 01 00 00 0F "
+	+ "B7 43 1C 83 F8 20 0F 85 E9 01 00 00 8B 43 12 83 "
+	+ "F8 01 0F 8C DD 01 00 00 3D 00 02 00 00 0F 8F D2 "
+	+ "01 00 00 89 45 DC 8B 43 16 BA 00 00 00 00 83 F8 "
+	+ "00 7F 07 F7 D8 BA 01 00 00 00 83 F8 01 0F 8C B2 "
+	+ "01 00 00 3D 00 02 00 00 0F 8F A7 01 00 00 89 45 "
+	+ "D8 89 55 D4 8B 43 0A 83 F8 36 0F 82 95 01 00 00 "
+	+ "89 45 D0 8B 45 DC C1 E0 02 89 45 CC 0F AF 45 D8 "
+	+ "03 45 D0 3B 45 E4 0F 87 79 01 00 00 6A 00 FF 15 "
+	+ "08 00 00 E1 85 C0 0F 84 69 01 00 00 89 45 EC C7 "
+	+ "05 1C 00 00 E0 28 00 00 00 8B 45 DC A3 20 00 00 "
+	+ "E0 8B 45 D8 F7 D8 A3 24 00 00 E0 C7 05 28 00 00 "
+	+ "E0 01 00 20 00 C7 05 2C 00 00 E0 00 00 00 00 C7 "
+	+ "05 30 00 00 E0 00 00 00 00 C7 05 34 00 00 E0 00 "
+	+ "00 00 00 C7 05 38 00 00 E0 00 00 00 00 C7 05 3C "
+	+ "00 00 E0 00 00 00 00 C7 05 40 00 00 E0 00 00 00 "
+	+ "00 6A 00 6A 00 68 44 00 00 E0 6A 00 68 1C 00 00 "
+	+ "E0 FF 75 EC FF 15 0C 00 00 E1 85 C0 0F 84 E3 00 "
+	+ "00 00 89 45 E8 50 FF 75 EC FF 15 10 00 00 E1 C7 "
+	+ "45 C8 00 00 00 00 8B 45 C8 3B 45 D8 0F 8D A0 00 "
+	+ "00 00 8B 45 D4 85 C0 75 09 8B 45 D8 48 2B 45 C8 "
+	+ "EB 03 8B 45 C8 0F AF 45 CC 03 45 D0 03 45 F0 89 "
+	+ "C6 8B 45 C8 0F AF 45 CC 03 05 44 00 00 E0 89 C3 "
+	+ "C7 45 C4 00 00 00 00 8B 45 C4 3B 45 DC 7D 5B 0F "
+	+ "B6 56 03 0F B6 06 0F AF C2 05 80 00 00 00 89 C1 "
+	+ "C1 E9 08 01 C8 C1 E8 08 88 03 0F B6 46 01 0F AF "
+	+ "C2 05 80 00 00 00 89 C1 C1 E9 08 01 C8 C1 E8 08 "
+	+ "88 43 01 0F B6 46 02 0F AF C2 05 80 00 00 00 89 "
+	+ "C1 C1 E9 08 01 C8 C1 E8 08 88 43 02 88 53 03 83 "
+	+ "C6 04 83 C3 04 FF 45 C4 EB 9D FF 45 C8 E9 54 FF "
+	+ "FF FF 8B 75 F8 8B 45 EC 89 46 04 8B 45 DC 89 46 "
+	+ "08 8B 45 D8 89 46 0C C7 45 EC 00 00 00 00 B8 01 "
+	+ "00 00 00 EB 02 31 C0 50 8B 45 F4 85 C0 74 07 50 "
+	+ "FF 15 28 00 00 E1 8B 45 F0 85 C0 74 0E 68 00 80 "
+	+ "00 00 6A 00 50 FF 15 30 00 00 E1 8B 45 EC 85 C0 "
+	+ "74 07 50 FF 15 14 00 00 E1 58 5F 5E 5B 89 EC 5D "
+	+ "C3 "
+	;
+
+///
+/// \brief Every sentinel dword in the sprite code, as [offset, kind, reference].
+///        'imp'  -> replace with the IAT slot address of that function.
+///        'data' -> replace with dataVir + offset into the data block.
+///
+AllowUTF8Enconding.EmojiFixups = [
+	[0x04E, 'imp', 'TextOutW'],
+	[0x063, 'data', 0x10],
+	[0x06A, 'data', 0x8],
+	[0x073, 'imp', 'GetTextExtentPoint32W'],
+	[0x078, 'data', 0x14],
+	[0x0E2, 'data', 0x18],
+	[0x104, 'data', 0x0],
+	[0x14F, 'data', 0x5B0],
+	[0x15D, 'data', 0x5B0],
+	[0x198, 'data', 0x5C0],
+	[0x1AC, 'data', 0x5B0],
+	[0x1F3, 'data', 0x5C0],
+	[0x207, 'data', 0x5B0],
+	[0x244, 'data', 0x5B8],
+	[0x24A, 'imp', 'QueryPerformanceFrequency'],
+	[0x253, 'data', 0x5BC],
+	[0x25C, 'data', 0x5B8],
+	[0x272, 'data', 0x5B0],
+	[0x27B, 'data', 0x5B0],
+	[0x289, 'data', 0x5B8],
+	[0x28F, 'imp', 'QueryPerformanceCounter'],
+	[0x294, 'data', 0x5B8],
+	[0x2B8, 'data', 0x10],
+	[0x2C7, 'imp', 'GetTextExtentPoint32W'],
+	[0x2DC, 'imp', 'TextOutW'],
+	[0x2EC, 'data', 0x10],
+	[0x30B, 'imp', 'GetTextExtentPoint32W'],
+	[0x401, 'data', 0x10],
+	[0x40C, 'imp', 'GetTextExtentPoint32W'],
+	[0x411, 'data', 0x10],
+	[0x4A3, 'data', 0x17C],
+	[0x4A9, 'imp', 'LoadLibraryA'],
+	[0x4B2, 'data', 0x188],
+	[0x4B9, 'imp', 'GetProcAddress'],
+	[0x4C2, 'data', 0x0],
+	[0x4C8, 'data', 0x193],
+	[0x4CE, 'imp', 'LoadLibraryA'],
+	[0x4D7, 'data', 0x19D],
+	[0x4DE, 'imp', 'GetProcAddress'],
+	[0x4E7, 'data', 0x0],
+	[0x4EE, 'data', 0x0],
+	[0x4FD, 'data', 0x0],
+	[0x50B, 'data', 0x0],
+	[0x515, 'data', 0x1B0],
+	[0x589, 'data', 0x168],
+	[0x58E, 'data', 0x50],
+	[0x594, 'imp', 'wsprintfA'],
+	[0x59C, 'data', 0x680],
+	[0x5A6, 'data', 0x688],
+	[0x5B1, 'data', 0x688],
+	[0x5B6, 'data', 0x50],
+	[0x5BE, 'data', 0x684],
+	[0x5CE, 'data', 0x688],
+	[0x601, 'data', 0x50],
+	[0x607, 'imp', 'CreateFileA'],
+	[0x61C, 'imp', 'GetFileSize'],
+	[0x645, 'imp', 'VirtualAlloc'],
+	[0x665, 'imp', 'ReadFile'],
+	[0x676, 'imp', 'CloseHandle'],
+	[0x710, 'imp', 'CreateCompatibleDC'],
+	[0x721, 'data', 0x1C],
+	[0x72D, 'data', 0x20],
+	[0x737, 'data', 0x24],
+	[0x73D, 'data', 0x28],
+	[0x747, 'data', 0x2C],
+	[0x751, 'data', 0x30],
+	[0x75B, 'data', 0x34],
+	[0x765, 'data', 0x38],
+	[0x76F, 'data', 0x3C],
+	[0x779, 'data', 0x40],
+	[0x786, 'data', 0x44],
+	[0x78D, 'data', 0x1C],
+	[0x796, 'imp', 'CreateDIBSection'],
+	[0x7AB, 'imp', 'SelectObject'],
+	[0x7EA, 'data', 0x44],
+	[0x892, 'imp', 'CloseHandle'],
+	[0x8A7, 'imp', 'VirtualFree'],
+	[0x8B5, 'imp', 'DeleteDC'],
+];
+
+///
+/// \brief APIs the sprite stub calls through the client's own import table. All
+///        of them are already imported by the target, so nothing needs adding
+///        to the PE - only the slot addresses are looked up.
+///
+///        Memory comes from VirtualAlloc rather than the process heap: the
+///        newer clients link the CRT through ucrtbase and stopped importing
+///        HeapAlloc/HeapFree altogether, while VirtualAlloc/VirtualFree are
+///        imported by every client this patch supports. It is also what
+///        CFileMgr::Get hands back, so both load paths free the same way.
+///
+AllowUTF8Enconding.EmojiImports = [
+	['TextOutW', 'GDI32.dll'],
+	['GetTextExtentPoint32W', 'GDI32.dll'],
+	['CreateCompatibleDC', 'GDI32.dll'],
+	['CreateDIBSection', 'GDI32.dll'],
+	['SelectObject', 'GDI32.dll'],
+	['DeleteDC', 'GDI32.dll'],
+	['DeleteObject', 'GDI32.dll'],
+	['CreateFileA', 'KERNEL32.dll'],
+	['GetFileSize', 'KERNEL32.dll'],
+	['ReadFile', 'KERNEL32.dll'],
+	['CloseHandle', 'KERNEL32.dll'],
+	['VirtualAlloc', 'KERNEL32.dll'],
+	['VirtualFree', 'KERNEL32.dll'],
+	['LoadLibraryA', 'KERNEL32.dll'],
+	['GetProcAddress', 'KERNEL32.dll'],
+	['QueryPerformanceCounter', 'KERNEL32.dll'],
+	['QueryPerformanceFrequency', 'KERNEL32.dll'],
+	['wsprintfA', 'USER32.dll'],
+];
+
+///
+/// \brief Literal strings placed into the data block, as [offset, hex].
+///
+AllowUTF8Enconding.EmojiStrings = [
+	[0x168, "64 61 74 61 5C 65 6D 6F 6A 69 5C 25 58 2E 62 6D 70 00"],  // data\emoji\%X.bmp
+	[0x17C, "6D 73 69 6D 67 33 32 2E 64 6C 6C 00"],  // msimg32.dll
+	[0x188, "41 6C 70 68 61 42 6C 65 6E 64 00"],  // AlphaBlend
+	[0x193, "67 64 69 33 32 2E 64 6C 6C 00"],  // gdi32.dll
+	[0x19D, "47 64 69 41 6C 70 68 61 42 6C 65 6E 64 00"],  // GdiAlphaBlend
+];
+
+/// Entry point offsets within the sprite blob
+AllowUTF8Enconding.EmojiEntryTextOut = 0x000;
+AllowUTF8Enconding.EmojiEntryMeasure = 0x2F4;
+
+/// Size of the writable data block (0x1B0 header + 64 cache slots * 0x10
+/// + the group-lifetime threshold and its QPC scratch + 8 dedup slots * 0x18
+/// + the file manager pointers and the size out-param)
+AllowUTF8Enconding.EmojiDataSize = 0x690;
+
+///
+/// \brief Only for clients that convert text through a charset -> codepage
+///        helper. Verified on 2022-04-06 and 2025; earlier clients (pre-2015)
+///        draw with the ANSI APIs directly and are not supported.
+///
+///        Only the display resolver is required here. The stepping, input and
+///        sprite stages check their own prerequisites at patch time and are
+///        skipped individually when the client cannot take them, so this stays
+///        applicable to every client that can benefit from any part of it.
+///
+AllowUTF8Enconding.validate = () =>
+	Exe.FindHex(AllowUTF8Enconding.TextResolverSig) > 0;
