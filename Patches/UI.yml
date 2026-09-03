@@ -499,3 +499,14 @@ MessageBox:
             recommend : no
             author : Andrei Karas (4144)
             desc : Completely disables all message box popups in the client. No error, warning, or info dialogs will appear. Use with caution -- errors will be silently ignored and may cause unexpected behavior.
+
+TextRendering:
+    title : TEXT RENDERING
+    mutex : false
+
+    patches:
+        - AllowUTF8Enconding:
+            title : Allow UTF-8 encoding
+            recommend : no
+            author : Hanashi
+            desc : Makes the client support UTF-8 for text rendering, layout, input, clipboard, and colored emoji. Handles multi-byte and complex emoji correctly without breaking text layout. Emoji can be displayed using 32-bit BMP sprites from data\emoji\<CODEPOINT-HEX>.bmp. Unsupported clients automatically skip incompatible stages. Data files must be UTF-8, and the server must preserve UTF-8 bytes.
