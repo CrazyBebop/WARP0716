@@ -70,7 +70,7 @@ CustomNW:
         
         - SendClientFlags :
             title : Send client flags
-            recommend : yes
+            recommend : no
             author : Andrei Karas (4144)
             desc : Sends the client's feature flags to the server during login, keeping client and server in sync about which features are supported. Prevents mismatches that can cause missing UI elements or broken functionality.
             

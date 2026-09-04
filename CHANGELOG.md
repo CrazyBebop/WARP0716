@@ -1,3 +1,65 @@
+# CrazyBebop - 2025-07-16 build (September 4, 2026)
+
+> **Patch update - re-WARP to apply.** Two new patches, six fixes and a new `WARP.exe`. Re-apply WARP to use them.
+>
+> Easiest route: open **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**, use the **WARP** tab to update the patcher and this patch set, then re-apply your profile. Guides for the patches that need files from you are at **[warp.legacygamers.net/warp0716](https://warp.legacygamers.net/warp0716/)**.
+
+## September 4 Update
+
+### New patch: Party HP/SP Bars (Reforged) ([#34](https://github.com/CrazyBebop/WARP0716/issues/34))
+
+Splits every party member's bar into an HP half and an SP half, in the party window and on the detached mini widgets, and draws the SP number beside it. You can set the HP and SP colours, with your own row separate from everyone else's so you are easy to find in a full party.
+
+This one needs a change on your server as well: the client half alone gives you a split bar whose SP side never moves. The `SHOW_PARTY_SP` build flag makes rAthena send the 22-byte `0x0BAB` party packet carrying `sp` and `maxsp`, and adds the `@spbar` command so a player can hide their own SP from the party. The patch is in the repository at `examples/ShowPartySP/`, and the guide walks through applying it: **[Party HP/SP Bars guide](https://warp.legacygamers.net/warp0716/ShowPartySP/)**.
+
+Party SP travels only to members who can see each other, which is the client's own behaviour for HP.
+
+### New patch: Add your own buttons
+
+Adds extra buttons to the row below the HP/SP bars in the Basic Info window, past the 25 the client ships with. Each one is written as `iconName = behaves like`: the icon name is also the file name, so the client loads `bt_<iconName>.bmp` and `bt_<iconName>_press.bmp` from `data\texture\<UI folder>\menu_icon\`, and `behaves like` names one of the stock buttons whose action the new one performs. Guide: **[Custom Buttons](https://warp.legacygamers.net/warp0716/CustomButtons/)**.
+
+### Custom Jobs (Reforged): weapons and palettes ([#62](https://github.com/CrazyBebop/WARP0716/issues/62))
+
+Reported by mimishi. A custom job's weapon hung in the air beside the character instead of sitting in its hand. Fixed, and the job's weapon sprite folders are now read from `PCHands.lua` at the moment you patch, so a new job needs a row there and nothing else.
+
+The palette half was not a bug in the patch. `PCPals` is a filename **prefix**, while `PCPaths` and `PCHands` are **folder** names, so a folder named after your job means the client never finds the files. The **[Custom Jobs guide](https://warp.legacygamers.net/warp0716/CustomJobs/)** now names the exact folder, lists the files the client opens for your own value, and warns that a palette copied from another job keeps that job's prefix until you rename it.
+
+### Hide Buttons / Show Buttons (New UI): every button, listed ([#24](https://github.com/CrazyBebop/WARP0716/issues/24))
+
+Reported by gidzdlcrz. Both patches now list **every** button this client has, rather than only the ones the client leaves visible. On 2025-07-16 the three the client hides by itself are **Battleground, Booking and Twitter**, and they are selectable in both lists now; the prompt says which are already hidden, and picking one that is already in that state simply does nothing. Choosing the same button in both patches is rejected with an error naming it, rather than silently resolving one way.
+
+### Fixed: EXP bar customization ([#49](https://github.com/CrazyBebop/WARP0716/issues/49))
+
+The patched client would not start at all: a strange icon, then "This app can't run on your PC". It was writing over the executable's DOS header at offset 0, so Windows refused to load the image. Four stacked defects sat behind that one symptom and all four are fixed.
+
+### Fixed: Resize Player HP/SP bar ([#52](https://github.com/CrazyBebop/WARP0716/issues/52))
+
+It never appeared in WARP's patch list, because a build-date check hid it from a 2025-07-16 client. With that lifted it still only moved the bar, because the size it searched for is written differently on this client. Both fixed: the bar measures 120x20 in game, up from 60x9.
+
+### Zoom: a 25% step, and a level you set yourself ([#50](https://github.com/CrazyBebop/WARP0716/issues/50))
+
+**Increase Zoom Out (to 25%)** is the gentler step that was asked for, for when Max is too far out. **Increase Zoom Out (custom %)** takes the percentage you want over the client default and works out the distance, so `60` gives the camera 60% more range. **Max** was corrected as well: it used to pull back further than this client can draw, which showed black at the edges of the screen, and it now stops at the real limit.
+
+All of them had been overwriting a constant the renderer also uses as its reference resolution, so they rescaled sprites and effects as well as moving the camera. They move the camera and nothing else now.
+
+★ Remember to turn zoom out on in game with `/zoom`, or none of this shows: with the client's own setting off, the camera is capped tighter than stock.
+
+### Walk Delay (Reforged) ([#39](https://github.com/CrazyBebop/WARP0716/issues/39))
+
+Sets the delay between walk-click inputs in milliseconds. The old **Remove Walk Delay** patch was this one with the value pinned to zero, so it is retired. Do not go below 10: below that the character stops playing its walk animation.
+
+### A new `win32/WARP.exe`
+
+**Select Recommended** now loads `profiles/community_recommended.yml`, which is 37 patches that give you a working English client in one click, without answering a single question. The dead **Convert Profile to Session** row is gone from the menu.
+
+### Housekeeping
+
+- **Retired**, declarations commented out with the reason, implementations left intact so re-enabling is uncommenting one block: `NoWalkDelay` (merged into Walk Delay), `CancelToLogin` (unsatisfiable on this client and redundant), `MsgStrings` and `QuestDisplay` (the client reads those files anyway). `SendClientFlags` is no longer recommended.
+- **`docs/` has left the repository.** The guides live on **[warp.legacygamers.net](https://warp.legacygamers.net/warp0716/)**, where they are rebuilt with the patch set. What used to sit under `docs/` and is not a guide has moved to **`examples/`**: the Custom Jobs example job and its annotated Lua reference, and the Party HP/SP Bars server patch.
+- `profiles/community_recommended.yml` rebuilt against the current patch set.
+
+---
+
 # CrazyBebop - 2025-07-16 build (August 18, 2026)
 
 > **Patch update - re-WARP to apply.** Seven new patches and a Simplified Chinese translation. Re-apply WARP to use them.
@@ -344,7 +406,7 @@ The Custom Jobs patch has been significantly expanded — all built from scratch
 - Job names, sprite paths, palettes, head sprites, and display names all driven by Lua files
 - Supports up to 10,000 custom job classes
 - Custom job sprites render correctly in character select, creation, and in-game
-- Example sprite, IMF, and icon files included in `docs/CustomJobs/example/`
+- Example sprite, IMF, and icon files included in `examples/CustomJobs/data/`
 
 ### New Dark Theme — WARP0716
 - New icons, recommend stamps, and editor font

@@ -112,17 +112,17 @@ export function load()
 	+	MOV(ECX, POS4WC)  //mov ecx, <g_session>
 	+	CALL(ALLWC)       //call CSession::IsThirdJob
 	;
-	const basebegin = Exe.FindLastHex(code, refAddr, refAddr - 0x120);
-	if (basebegin < 0)
+	const baseBegin = Exe.FindLastHex(code, refAddr, refAddr - 0x120);
+	if (baseBegin < 0)
 		throw Log.rise(ErrMsg = new Error(`${self} - JobID CALL not found`));
 
-	const afterBB = basebegin + code.byteCount();
+	const afterBB = baseBegin + code.byteCount();
 
 	$$(_, 2.4, `Save the values`)
-	const GetJobID = Exe.GetTgtAddr(basebegin + 6);
+	const GetJobID = Exe.GetTgtAddr(baseBegin + 6);
 	const IsThirdJob = Exe.GetTgtAddr(afterBB - 4);
 
-	Value = Exe.GetInt32(basebegin + 1);
+	Value = Exe.GetInt32(baseBegin + 1);
 	Hex = Value.toHex(4);
 
 	Funcs = {
@@ -132,7 +132,7 @@ export function load()
 
 	EBvals = {
 		refAddr,
-		basebegin,
+		baseBegin,
 		afterBB
 	};
 

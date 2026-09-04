@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind                                               *
 *   Created Date  : 2020-11-11                                             *
-*   Last Modified : 2024-08-26                                             *
+*   Last Modified : 2026-08-20                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -35,6 +35,11 @@ CustomBarLimits = function(_)
 	$$(_, 1, `Load the SSN & extract the EBvals`)
 	SSN.load();
 	const {refAddr, baseBegin, afterBB} = SSN.EBvals;
+
+	/// Guard against a missing/renamed key. Without this a stray undefined lands in
+	/// Exe.SetHex below and overwrites file offset 0, i.e. the MZ header (GitHub #49).
+	if (refAddr == null || baseBegin == null || afterBB == null)
+		throw Error("Exp bar reference addresses missing from SSN.EBvals");
 
 	$$(_, 2.1, `Find the base level assignment/comparison after the CALLs`)
 	let code =
@@ -61,20 +66,36 @@ CustomBarLimits = function(_)
 	$$(_, 2.2, `Extract the address`)
 	const BaseLevel = Instr.FromAddr(addr).Disp; //this is easier and will remain accurate even if some changes happen in later versions
 
-	$$(_, 2.3, `Find the ESI + const assignment between afterBB & refAddr`)
+	$$(_, 2.3, `Find the window pointer + const assignment between afterBB & refAddr`)
+
+	/// ★★ GitHub #49. WHICH register holds the UI window pointer is client-specific, and the code we
+	/// emit in section 5 has to use the one we actually find here. This used to detect it and then
+	/// hardcode ESI regardless. On VC14.20+ - and 2025-07-16 is VC14.29 - the client uses EDI:
+	///     client:  mov eax, dword ptr [edi + 0xf8]
+	///     patch:   mov eax, dword ptr [esi + 0xf8]     <- garbage pointer
+	/// followed by `mov eax,[ecx]` / `call [eax+FuncOff]`, i.e. a call through garbage. It crashed
+	/// the client about a second after the UI first drew, faulting deep inside an MSVC string/heap
+	/// routine that no patch touches - a downstream symptom, which is why it took three passes to
+	/// trace back to here.
+	let WinReg = ESI;
 	addr = Exe.FindHex( MOV(ECX, [ESI, POS1WC]), afterBB, refAddr); //mov ecx, dword ptr [esi + dispA]
-	
+
 	//VC14
 	if (addr < 0 && Exe.Version > 11)
 	{
-		code = Exe.MinorVer < 20
-		?	MOV(EDX, [ESI, POS1WC])  //mov edx, dword ptr [esi + dispA]
-		:	MOV(ECX, [EDI, POS1WC])  //mov ecx, dword ptr [edi + dispA]
-		;
-		addr = Exe.FindHex(code, afterBB, refAddr); 
+		if (Exe.MinorVer < 20)
+		{
+			code = MOV(EDX, [ESI, POS1WC]); //mov edx, dword ptr [esi + dispA]
+		}
+		else
+		{
+			code = MOV(ECX, [EDI, POS1WC]); //mov ecx, dword ptr [edi + dispA]
+			WinReg = EDI;
+		}
+		addr = Exe.FindHex(code, afterBB, refAddr);
 	}
 	if (addr < 0)
-		throw Error("First ESI ptr missing");
+		throw Error("Window pointer assignment missing");
 
 	$$(_, 2.4, `Extract the const (which is HideBase)`)
 	const HideBase = Instr.FromAddr(addr).Disp;
@@ -164,7 +185,7 @@ CustomBarLimits = function(_)
 	const jobEnd = addr2 + code.byteCount();
 
 	$$(_, 4.1, `Get the input file from user`)
-	const inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER});
+	const inFile = Exe.GetUserInput('$expBarSpec', D_InFile, "Exp Bar Spec", "Enter the Exp Bar Mapping file", "Inputs/ExpSpec.yml", {filters: YMLFILTER, saveDefault: true});
 	if (inFile === false)
 		Cancel("No mapping file specified");
 
@@ -213,24 +234,31 @@ CustomBarLimits = function(_)
 		ADD(EBX, 8)                //add ebx, 8 ; _fetchNextIDTbl
 	+	JMP(Filler(16,1))          //jmp short _mapTblLoop
 
+	/// ★ GitHub #49. The matched-entry pointer lives in EBX, not EDI, and the two saved registers are
+	/// popped at the very END instead of in part 6. Both changes exist for the same reason: on this
+	/// client the window pointer IS EDI (see 2.3), and the old code used EDI as its own scratch, so
+	/// it destroyed the very pointer the tail then dereferences.
+	/// EBX is free to reuse - it was saved on entry and is finished with as a map-table walker by
+	/// the time we reach _foundIDMatch. Deferring the POPs keeps the original EBX safe on the stack
+	/// until the tail is done; ESP stays balanced across the two calls because they are stdcall
+	/// (the client's own code at jobEnd does no stack cleanup after `call edx` either).
+	/// Sizes are unchanged, so the JMP(5) below still skips exactly the 5-byte MOV in part 6.
 	,//5
-		LEA(EDI, [EBX, 4])         //lea edi, [ebx+4] ; _foundIDMatch
-	+	JMP(5)                     //jmp short _skipEDI
+		LEA(EBX, [EBX, 4])         //lea ebx, [ebx+4] ; _foundIDMatch
+	+	JMP(5)                     //jmp short _skipEntry
 
 	,//6
-		MOV(EDI, Filler(3))        //mov edi, <defAddr> ; _noMatches
-	+	POP(EBX)                   //pop ebx ; _skipEDI
-	+	POP(EDX)                   //pop edx
-	+	MOVZX(EAX, [EDI])          //movzx eax, word ptr [edi]
+		MOV(EBX, Filler(3))        //mov ebx, <defAddr> ; _noMatches
+	+	MOVZX(EAX, [EBX])          //movzx eax, word ptr [ebx] ; _skipEntry
 	+	CMP([BaseLevel], EAX)      //cmp dword ptr [g_baseLevel], eax
-	+	MOV(ECX, [ESI, HideBase])  //mov ecx, dword ptr [esi + HideBase]
+	+	MOV(ECX, [WinReg, HideBase]) //mov ecx, dword ptr [<win> + HideBase]
 	+	JL(Filler(17,1))           //jl short _lowBase
 	+	PUSH(0x4E)                 //push 4Eh
 	+	PUSH(-0xC8)                //push -0C8h
 	+	JMP(Filler(18,1))          //jmp short _common1
 
 	,//7
-		MOV(EAX, [ESI, ShowBars])  //mov eax, dword ptr [esi + ShowBars] ; _lowBase
+		MOV(EAX, [WinReg, ShowBars]) //mov eax, dword ptr [<win> + ShowBars] ; _lowBase
 	+	ADD(EAX, 0x4C)             //add eax, 4Ch
 	+	PUSH_EAX                   //push eax
 	+	PUSH(0x55)                 //push 55h
@@ -238,16 +266,16 @@ CustomBarLimits = function(_)
 	,//8
 		MOV(EAX, [ECX])            //mov eax, dword ptr [ecx] ; _common1
 	+	CALL([EAX, FuncOff])       //call dword ptr [eax + funcOff]
-	+	MOVZX(EAX, [EDI, 2])       //movzx eax, word ptr [edi+2]
+	+	MOVZX(EAX, [EBX, 2])       //movzx eax, word ptr [ebx+2]
 	+	CMP([JobLevel], EAX)       //cmp dword ptr [g_jobLevel], eax
-	+	MOV(ECX, [ESI, HideJob])   //mov ecx, dword ptr [esi + HideJob]
+	+	MOV(ECX, [WinReg, HideJob]) //mov ecx, dword ptr [<win> + HideJob]
 	+	JL(Filler(19,1))           //jl short _lowJob
 	+	PUSH(0x58)                 //push 58h
 	+	PUSH(-0xC8)                //push -0C8h
 	+	JMP(Filler(20,1))          //jmp short _common2
 
 	,//9
-		MOV(EAX, [ESI, ShowBars])  //mov eax, dword ptr [esi + ShowBars] ; _lowJob
+		MOV(EAX, [WinReg, ShowBars]) //mov eax, dword ptr [<win> + ShowBars] ; _lowJob
 	+	ADD(EAX, 0x58)             //add eax, 58h
 	+	PUSH_EAX                   //push eax
 	+	PUSH(0x55)                 //push 55h
@@ -255,13 +283,79 @@ CustomBarLimits = function(_)
 	,//10
 		MOV(EAX, [ECX])            //mov eax, dword ptr [ecx] ; _common2
 	+	CALL([EAX, FuncOff])       //call dword ptr [eax + FuncOff]
+	+	POP(EBX)                   //pop ebx ; deferred from part 6
+	+	POP(EDX)                   //pop edx
 	+	JMP(Filler(4))             //jmp <jobEnd>
 	+	" FF 00 FF 00"             //part of the id to level mapping ; defAddr
 	];
 
-	const baseVir = Exe.Phy2Vir(baseBegin, CODE);
+	$$(_, 5.2, `Allocate space to add the id values`)
+	const [free, freeVir] = Exe.Allocate(identSize);
 
-	$$(_, 5.2, `Calculate the target addresses & the mapTblAddr value (we will be placing it right after the JMP since we have space for it)`)
+	$$(_, 5.3, `Concatenate all the ID values and prepare the mapping`)
+	let mapData   = ""; //will contain address pointing to set of IDs and base (16bit) & job (16bit) max levels after the address
+	let identData = ""; //will contain the set of IDs
+
+	addr = 0;
+	for (const hash of ExpSpec)
+	{
+		if (!IsArr(hash.IDs))
+			continue;
+
+		mapData += (freeVir + addr).toHex();
+
+		for (const elem of hash.IDs)
+		{
+			/// Every element is a PAIR of 16-bit ids and therefore 4 bytes, both in the
+			/// `IsArr` branch (lo + hi) and in the single-value branch (the value twice).
+			/// `identSize` above agrees - it reserves `4 * IDs.length + 2`.
+			if (IsArr(elem))
+				identData += elem[0].toHex(2) + elem[1].toHex(2);
+			else
+				identData += elem.toHex(2).repeat(2);
+
+			/// ★ GitHub #49. This used to advance `addr` by 2 while writing 4, so every map
+			/// entry after the first pointed 2 bytes-per-element too early - into the MIDDLE of
+			/// the previous entry's id list. Measured on the stock ExpSpec.yml: entry 0 has 6
+			/// ids (26 bytes), so entry 1's pointer came out 12 bytes short (0x…ED2F instead of
+			/// 0x…ED3B) and the error compounds down the table. The bars then read whatever
+			/// happened to sit at that offset.
+			addr += 4;
+		}
+
+		identData += " FF FF";
+		addr += 2;
+
+		mapData += hash.BaseLvl.toHex(2) + hash.JobLvl.toHex(2);
+	}
+
+	mapData += ALL00;
+
+	$$(_, 5.4, `Put the routine and its mapping table in a cave instead of over the client's code`)
+
+	/// ★★ GitHub #49, the second half. This block used to be written straight over the client at
+	/// baseBegin, with the map table laid down "right after the JMP since we have space for it".
+	/// There is no such space on 2025-07-16: the routine plus the table is 200 bytes while
+	/// baseBegin..jobEnd is only 126, so it overran by 74 and clobbered jobEnd itself. The
+	/// `JMP <jobEnd>` at the end of part 10 then landed in the middle of the patch's OWN map data,
+	/// which decodes as garbage and faults - 0xC0000005 at 0x0095E177 inside UIBasicInfoWnd, as soon
+	/// as the exp bars were drawn. It was invisible before because the `basebegin`/`baseBegin` key
+	/// bug (below, section 1) threw earlier, so the patch never got this far.
+	///
+	/// ★ mapData grows 8 bytes per ExpSpec entry, so the overrun scales with the user's ExpSpec.yml -
+	/// there is no "small enough" config that makes writing in place safe.
+	///
+	/// A cave removes the size limit completely, so the table can be as long as the user needs.
+	/// baseBegin now only has to hold a 5-byte JMP and it has 126, and the bytes between that JMP
+	/// and jobEnd become unreachable. Verified safe rather than assumed: every branch into
+	/// baseBegin+5..jobEnd anywhere in the image originates INSIDE the block being replaced, and the
+	/// three .text dwords matching addresses in that range are all coincidental bytes sitting inside
+	/// `call rel32` displacements.
+	const blockSize = parts.join('').byteCount() + mapData.byteCount();
+	const [blockPhy, blockVir] = Exe.Allocate(blockSize, 0x10);
+	const baseVir = blockVir;
+
+	$$(_, 5.5, `Calculate the target addresses & the mapTblAddr value (it sits right after the JMP, inside our own allocation)`)
 	const [, _mapTblLoop, _idTblLoop, _fetchNextIDPair, _fetchNextIDTbl, _foundIDMatch, _noMatches, _lowBase, _common1, _lowJob, _common2, mapTblAddr] = MapAddrs(baseVir, parts);
 
 	const defAddr = mapTblAddr - 4; //Address for the default value.
@@ -293,44 +387,17 @@ CustomBarLimits = function(_)
 		3 : defAddr
 	});
 
-	$$(_, 5.4, `Allocate space to add the id values`)
-	const [free, freeVir] = Exe.Allocate(identSize);
-
-	$$(_, 5.5, `Concatenate all the ID values and prepare the mapping`)
-	let mapData   = ""; //will contain address pointing to set of IDs and base (16bit) & job (16bit) max levels after the address
-	let identData = ""; //will contain the set of IDs
-
-	addr = 0;
-	for (const hash of ExpSpec)
-	{
-		if (!IsArr(hash.IDs))
-			continue;
-
-		mapData += (freeVir + addr).toHex();
-
-		for (const elem of hash.IDs)
-		{
-			if (IsArr(elem))
-				identData += elem[0].toHex(2) + elem[1].toHex(2);
-			else
-				identData += elem.toHex(2).repeat(2);
-
-			addr += 2;
-		}
-
-		identData += " FF FF";
-		addr += 2;
-
-		mapData += hash.BaseLvl.toHex(2) + hash.JobLvl.toHex(2);
-	}
-
-	mapData += ALL00;
-
 	$$(_, 5.6, `Add the IDs at the allocated space`)
 	Exe.SetHex(free, identData);
 
-	$$(_, 5.7, `Put the function & the map at baseBegin`)
-	Exe.SetHex(baseBegin, code + mapData);
+	$$(_, 5.7, `Write the routine + map into the cave`)
+	Exe.SetHex(blockPhy, code + mapData);
+
+	$$(_, 5.8, `Jump to it from baseBegin`)
+	Exe.SetHex(baseBegin, SetFillTargets(JMP(Filler(6)), {
+		start : Exe.Phy2Vir(baseBegin, CODE),
+		6     : blockVir
+	}));
 
 	return true;
 };

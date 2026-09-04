@@ -223,7 +223,7 @@ actions:
         title: Mostrar versión cargada
         tooltip: Marca esta opción para mostrar la versión de build del exe cargado junto con la fecha
 
-    enableEpi:
+    enableEPI:
         title: Habilitar EPI
         tooltip: Habilita la generación y carga de archivos EPI junto con los exes correspondientes. Usar con precaución.
 

@@ -230,23 +230,39 @@ SkipLub:
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Skips loading of Towninfo.lub file. Use this if you handle town information through other means or want to avoid errors from a missing file.
 
-ReadTxtFile:
-    title : READ .txt FILE
-    mutex : false
-    
-    patches:
-        - MsgStrings:
-            title : Always read msgstringtable.txt
-            recommend : yes
-            author : Shinryo
-            desc : Forces the client to load all UI messages from msgstringtable.txt on every langtype instead of using hardcoded Korean strings. Essential for English and other non-Korean servers.
-        
-        - QuestDisplay:
-            title : Always read questid2display.txt
-            recommend : yes
-            author : Shinryo
-            desc : Forces loading of questid2display.txt on all langtypes instead of only langtype 0. Required for quest UI to display correct quest names and descriptions on non-Korean service types.
-
+#  RETIRED 2026-08-08 - dead on the 2025-07-16 client, proven, not assumed. Retired the way
+#  upstream retired NoHardCodedAddr (Network.yml:53): declaration commented, implementation and
+#  Nemo id table left intact, so re-enabling is uncommenting this block.
+#
+#  MsgStrings   - the langtype gate it patches does not exist here. WARP threw "Langtype
+#                 comparison not found"; tested at <langtype>0</langtype>, the one case the
+#                 patch exists for, and the login screen stayed FULLY ENGLISH - "Integrated
+#                 Account" is msgstringtable.txt entry 3250, "Save ID" 3411, "Sign Up" 3414.
+#                 The table is read regardless of langtype on this build.
+#  QuestDisplay - the string `questID2display.txt` has ZERO occurrences, case-insensitive, in
+#                 the pristine exe and all four injected variants. Pre-lua mechanism; this
+#                 client carries quest text in SystemEN lua via the Custom*Lub patches.
+#
+#  The whole GROUP is commented because these two were its only members - an empty `patches:`
+#  list would be a worse thing to leave behind.
+#
+#ReadTxtFile:
+#    title : READ .txt FILE
+#    mutex : false
+#
+#    patches:
+#        - MsgStrings:
+#            title : Always read msgstringtable.txt
+#            recommend : yes
+#            author : Shinryo
+#            desc : Forces the client to load all UI messages from msgstringtable.txt on every langtype instead of using hardcoded Korean strings. Essential for English and other non-Korean servers.
+#
+#        - QuestDisplay:
+#            title : Always read questid2display.txt
+#            recommend : yes
+#            author : Shinryo
+#            desc : Forces loading of questid2display.txt on all langtypes instead of only langtype 0. Required for quest UI to display correct quest names and descriptions on non-Korean service types.
+#
 CustomPath:
     title : PATH CUSTOMIZATION
     mutex : false

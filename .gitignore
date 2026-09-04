@@ -1,10 +1,29 @@
-# Ignore Outputs contents but keep the folder
+# Mirrors upstream WARP's conventions, so a future diff against upstream stays meaningful.
+# Upstream TRACKS win32/ (25 files) - the Qt runtime and WARP.exe are part of the tool, not build
+# output - and ignores everything below. Verified against the upstream repo, not assumed.
+
+# Build output: patched clients, their .epi patch logs and hash sidecars. Keep the folder.
 /Outputs/*
 !/Outputs/.gitkeep
 
-# Ignore root-level config files
-# Settings.yml is tracked so WARP0716 dark theme is default
+# Per-install session state - diverges on every machine and every run
 /LastSession.yml
-
-# Ignore Skipped Patches logs
 SkippedPatches.log
+FailedTranslations_*.txt
+
+# Settings.yml is deliberately NOT ignored. Upstream tracks it because it carries the dark-theme
+# default, and every install's copy then drifts, since SrcExe and TgtExe are absolute paths. Left
+# tracked so that drift shows up in git status instead of being silently swallowed.
+
+# Windows shell junk
+Thumbs.db
+desktop.ini
+
+# NEVER commit an unpacked client. Inputs/*_Ragexe_*.exe is a ~16 MB input the tool needs but the
+# repo must not carry. Sources live in client_dev/tools/exe/backup-exes/ instead.
+/Inputs/*Ragexe*.exe
+/Inputs/*.exe
+
+# Guides are NOT in the repo (owner, 2026-09-02). They live on the website, warp.legacygamers.net,
+# whose source tree is projects/lgn_warp/website/. README images sit in .github/images/.
+/docs/

@@ -1,0 +1,305 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 CrazyBebop                                          *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CrazyBebop                                             *
+*   Created Date  : 2026-08-10                                             *
+*   Last Modified : 2026-08-20                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Add extra buttons, with their own icons, to the Basic Info window's button grid.
+///
+/// The grid is not lua driven. CMenuWnd's constructor builds it from two parallel STACK arrays and
+/// walks them with a hardcoded count:
+///
+///     lea edi, [ebp-0x2CC]     the window ids, dwords
+///     mov [ebp-0x360], edi     kept for the loop body to re-read
+///     lea ebx, [ebp-0x268]     the icon names, std::string, stride 0x18
+///     ...
+///     cmp eax, 0x19            the count
+///
+/// So the 25 button limit is three instructions rather than a design.
+///
+/// Rather than parse the constructor's stack initialisers (a mix of MOVAPS blobs and immediates,
+/// where getting the ORDER wrong would silently pair the wrong icon with the wrong button), the
+/// stock entries are copied at RUNTIME out of the frame the client just filled in, and ours are
+/// appended after them. That way the stock buttons keep whatever the rest of the profile did to
+/// them, and a client with a different set still works.
+///
+/// The name string IS the icon file name - the client formats it into
+/// <UI>\menu_icon\bt_%s.bmp and <UI>\menu_icon\bt_%s_press.bmp - so a custom name gives a custom
+/// icon with no extra mechanism. Both are 32x34 24-bit BMPs with magenta (FF00FF) transparent.
+///
+CustomButtons = function(_)
+{
+	const LE = (v, n) => {                       //little endian hex for a value of n bytes
+		let out = '';
+		for (let i = 0; i < n; i++)
+			out += ((v >> (8 * i)) & 0xFF).toString(16).padStart(2, '0') + ' ';
+		return out;
+	};
+
+	$$(_, 1.1, `Find 'status_doram' - the loop swaps it into the first entry for Dorams`)
+	const txtAddr = Exe.FindText("status_doram");
+	if (txtAddr < 0)
+		throw Error("Reference string missing");
+
+	$$(_, 1.2, `Find where it is PUSHed with its length, which is inside the button loop`)
+	const refAddr = Exe.FindHex(PUSH(0xC) + PUSH(txtAddr));
+	if (refAddr < 0)
+		throw Error("Reference string not PUSHed");
+
+	$$(_, 1.3, `Find the two array bases, which sit together just before the loop head`)
+	let code =
+		LEA(EDI, [EBP, NEG2WC])      //lea edi, [ebp - idsOffset]
+	+	MOV([EBP, NEG2WC], EDI)      //mov dword ptr [ebp - keepOffset], edi
+	+	LEA(EBX, [EBP, NEG2WC])      //lea ebx, [ebp - namesOffset]
+	;
+
+	const baseAddr = Exe.FindLastHex(code, refAddr, refAddr - 0x60);
+	if (baseAddr < 0)
+		throw Error("Array bases missing");
+
+	const idsDisp   = Exe.GetInt32(baseAddr + 2);
+	const keepDisp  = Exe.GetInt32(baseAddr + 8);
+	const namesDisp = Exe.GetInt32(baseAddr + 14);
+	const STOLEN    = 18;                        //the two LEAs and the MOV between them
+
+	$$(_, 1.4, `Find the loop's count comparison`)
+
+	/// Matched on the JL's opcode only. Its rel32 runs BACKWARDS to the loop head, so a
+	/// positive-value wildcard can never match it.
+	code =
+		CMP(EAX, 0x19)               //cmp eax, 19h
+	+	" 0F 8C"                     //jl <loop head>
+	;
+
+	const countSite = Exe.FindHex(code, refAddr, refAddr + 0x600);
+	if (countSite < 0)
+		throw Error("Loop count missing");
+
+	const stockCount = Exe.GetUint8(countSite + 2);
+	if (stockCount < 8 || stockCount > 0x40)
+		throw Error(`Loop count reads ${stockCount}, which is not a believable button count`);
+
+	$$(_, 1.5, `Find where the parent window dispatches a clicked button's id`)
+
+	/// A button does not act on its own click - it notifies its PARENT, and CMenuWnd's event handler
+	/// switches on the id. Ids outside that switch fall through and silently do nothing, which is
+	/// exactly what a brand new id does, so this is where an action has to be injected. Hooking the
+	/// global window dispatcher instead achieves nothing: the click never reaches it.
+	code =
+		CMP(EBX, 0x1CD)              //cmp ebx, 1CDh
+	+	" 0F 8F"                     //jg <high ids>
+	+	" ?? ?? 00 00"
+	+	" 0F 84"                     //je <case 1CDh>
+	+	" ?? ?? 00 00"
+	+	LEA(EAX, [EBX, -0xC0])       //lea eax, [ebx - 0C0h]
+	+	CMP(EAX, 0xEE)               //cmp eax, 0EEh
+	;
+
+	const dispAddr = Exe.FindHex(code);
+	if (dispAddr < 0)
+		throw Error("Button dispatch missing");
+
+	$$(_, 2.1, `Retrieve the user's button list`)
+	const varName = '$customButtons';
+	const valid = Object.keys(CustomButtons.Targets).join(", ");
+	const result = Exe.GetUserInput(varName, D_Text, "Custom Buttons",
+		"One button per line, written as <b>iconName = behaves like</b>.<br><br>" +
+		"<b>iconName</b> is also the file name. The client loads " +
+		"<b>bt_&lt;iconName&gt;.bmp</b> and <b>bt_&lt;iconName&gt;_press.bmp</b> from " +
+		"data\\texture\\&lt;UI folder&gt;\\menu_icon\\ as 32x34 24-bit BMPs with magenta " +
+		"(FF00FF) as the transparent colour. Without those files the button draws blank.<br><br>" +
+		"<b>behaves like</b> names an existing button, and the new one does whatever that one does. " +
+		"One of: " + valid + "<br><br>" +
+		"Example:<br>&nbsp;&nbsp;&nbsp;&nbsp;donate = Options<br>&nbsp;&nbsp;&nbsp;&nbsp;guide = WorldMap",
+		"", {multiline: true});
+
+	if (result === false || `${result}`.trim().isEmpty())
+		Cancel("No custom buttons were specified");
+
+	$$(_, 2.2, `Parse and validate the whole list before touching a single byte`)
+	const entries = [];
+	const seen = new Set();
+	for (const raw of `${result}`.split(/[\r\n;]+/))
+	{
+		const line = raw.trim();
+		if (line.isEmpty() || line.startsWith('#'))
+			continue;
+
+		const bits = line.split('=');
+		if (bits.length !== 2)
+			throw Error(`Cannot read '${line}'. Expected  iconName = behaves like`);
+
+		const name = bits[0].trim();
+		const want = bits[1].trim();
+
+		if (!(/^[A-Za-z0-9_]{1,15}$/).test(name))
+			throw Error(`'${name}' is not a usable icon name. Letters, digits and _ only, up to 15 characters`);
+
+		if (seen.has(name.toLowerCase()))
+			throw Error(`'${name}' is listed twice`);
+		seen.add(name.toLowerCase());
+
+		const key = Object.keys(CustomButtons.Targets).find(k => k.toLowerCase() === want.toLowerCase());
+		if (key === undefined)
+			throw Error(`'${want}' is not a known button. Use one of: ${valid}`);
+
+		entries.push({name, targetName: key, target: CustomButtons.Targets[key]});
+	}
+
+	if (entries.isEmpty())
+		Cancel("No custom buttons were specified");
+
+	const total = stockCount + entries.length;
+	if (total > 0x7F)
+		throw Error(`${total} buttons exceeds this patch's limit of 127`);
+
+	$$(_, 3.1, `Allocate the two arrays, with the stock slots left blank for the copy to fill`)
+
+	/// Each custom button needs an id the client has never seen. Two buttons sharing an id and the
+	/// client keeps only one of them, leaving the loser's slot blank in the grid. Ids from 0x300 up
+	/// sit past every switch in the client, so a custom button draws, accepts a click, and reaches
+	/// the dispatch hook below - and if that hook were ever missing it would simply do nothing.
+	const CUSTOM_BASE = 0x300;
+
+	let idHex = '00 '.repeat(stockCount * 4);
+	entries.forEach((e, i) => { idHex += LE(CUSTOM_BASE + i, 4); });
+
+	/// MSVC keeps a string of 15 characters or fewer inside the object: a 16 byte buffer, then the
+	/// size at +0x10 and the capacity at +0x14, and the client chooses the inline form by testing
+	/// `capacity < 0x10`. Custom names are capped at 15 above so they always bake inline.
+	let strHex = '00 '.repeat(stockCount * 0x18);
+	for (const e of entries)
+	{
+		let buf = '';
+		for (let i = 0; i < 16; i++)
+			buf += (i < e.name.length ? LE(e.name.charCodeAt(i), 1) : '00 ');
+		strHex += buf + LE(e.name.length, 4) + LE(15, 4);
+	}
+
+	const [, idsVir]   = Exe.AddHex(idHex, 0x10);
+	const [, namesVir] = Exe.AddHex(strHex, 0x10);
+
+	$$(_, 3.2, `Copy the stock entries out of the frame at runtime, then point the loop at our arrays`)
+
+	/// Copying beats parsing here. The constructor fills the frame with a mix of MOVAPS blobs and
+	/// immediates, and pairing ids to names by instruction order rather than by frame offset is
+	/// exactly the kind of mistake that shows up as one wrong icon much later.
+	///
+	/// std::string is copied as raw bytes. Any stock name too long to be inline holds a pointer into
+	/// memory the stack object owns, which stays alive for the whole constructor, and the loop runs
+	/// well before it returns. Nothing here is ever freed or reallocated.
+	const setup =
+		'56 51 57'                                    //push esi ; push ecx ; push edi
+	+	'8D B5 ' + LE(idsDisp, 4)                     //lea esi, [ebp - idsOffset]
+	+	'BF ' + LE(idsVir, 4)                         //mov edi, <our ids>
+	+	'B9 ' + LE(stockCount, 4)                     //mov ecx, <stock count>
+	+	'F3 A5'                                       //rep movsd
+	+	'8D B5 ' + LE(namesDisp, 4)                   //lea esi, [ebp - namesOffset]
+	+	'BF ' + LE(namesVir, 4)                       //mov edi, <our names>
+	+	'B9 ' + LE(stockCount * 6, 4)                 //mov ecx, <count * 0x18 / 4>
+	+	'F3 A5'                                       //rep movsd
+	+	'5F 59 5E'                                    //pop edi ; pop ecx ; pop esi
+	+	'BF ' + LE(idsVir, 4)                         //mov edi, <our ids>
+	+	'89 BD ' + LE(keepDisp, 4)                    //mov [ebp - keepOffset], edi   (the displaced MOV)
+	+	'BB ' + LE(namesVir, 4)                       //mov ebx, <our names>
+	;
+
+	/// The tail JMP is written with SetJMP rather than a hand computed rel32, so the physical and
+	/// virtual address spaces cannot be mixed up: AddHex hands back both, and the destination is
+	/// converted explicitly.
+	const setupLen = setup.replace(/\s/g, '').length / 2;
+	const [setupPhy, setupVir] = Exe.AddHex(setup + '90 90 90 90 90', 0x10);
+	Exe.SetJMP(setupPhy + setupLen, Exe.Phy2Vir(baseAddr + STOLEN, CODE));
+
+	Exe.SetJMP(baseAddr, setupVir);
+	Exe.SetNOPs(baseAddr + 5, STOLEN - 5);
+
+	$$(_, 3.3, `Raise the loop's count`)
+	Exe.SetUint8(countSite + 2, total);
+
+	$$(_, 4.1, `Give the custom ids an action`)
+
+	/// At the hook site EBX already holds the clicked button's id, so an action is one MOV: rewrite
+	/// the id and let the client's own switch run. The displaced comparison is replayed at the end.
+	let stub = '';
+	entries.forEach((e, i) =>
+	{
+		stub +=
+			'81 FB ' + LE(CUSTOM_BASE + i, 4)         //cmp ebx, <our id>
+		+	'75 05'                                   //jne short over the MOV
+		+	'BB ' + LE(e.target, 4)                   //mov ebx, <the id it behaves as>
+		;
+	});
+	stub += '81 FB ' + LE(0x1CD, 4);                  //cmp ebx, 1CDh   (the displaced comparison)
+
+	const stubLen = stub.replace(/\s/g, '').length / 2;
+	const [stubPhy, stubVir] = Exe.AddHex(stub + '90 90 90 90 90', 0x10);
+	Exe.SetJMP(stubPhy + stubLen, Exe.Phy2Vir(dispAddr + 6, CODE));
+
+	Exe.SetJMP(dispAddr, stubVir);
+	Exe.SetNOPs(dispAddr + 5, 1);
+
+	$$(_, 4.2, `Report what was added`)
+	entries.forEach((e, i) =>
+		console.log(`CustomButtons: bt_${e.name}.bmp  id ${(CUSTOM_BASE + i).toHex()}  acts as ${e.targetName}`)
+	);
+
+	return true;
+};
+
+///
+/// \brief Disable for clients without the new style Basic Info button grid.
+///
+CustomButtons.validate = () =>
+	Exe.BuildDate > 20170000 && Exe.FindText("status_doram") > 0;
+
+///
+/// \brief The stock buttons a custom one can borrow its behaviour from.
+///
+CustomButtons.Targets = {
+	Stats           : 0x0C0,
+	Equipment       : 0x0C3,
+	Inventory       : 0x0C2,
+	Skill           : 0x0C4,
+	Party           : 0x0C7,
+	Guild           : 0x175,
+	Quest           : 0x169,
+	WorldMap        : 0x0DB,
+	Navigation      : 0x1AE,
+	Options         : 0x0C1,
+	Bank            : 0x1CD,
+	Record          : 0x18F,
+	Mail            : 0x1DC,
+	Achievement     : 0x1D9,
+	Tip             : 0x1FF,
+	Shop            : 0x200,
+	Shortcut        : 0x172,
+	Attendance      : 0x21C,
+	AdventureAgency : 0x220,
+	Reputation      : 0x237,
+	AdventureGuide  : 0x245,
+	Probability     : 0x24B,
+};

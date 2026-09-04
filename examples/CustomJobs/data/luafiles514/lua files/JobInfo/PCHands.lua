@@ -21,5 +21,11 @@
 -- ============================================================
 
 PCHands = PCHands or {}
+-- Read when you APPLY the WARP patch (2026-09-02), not by the client: WARP bakes every
+-- quoted row into the patched exe, after the five official 2025 jobs. Re-apply WARP after
+-- editing this file. An inheritance form like the two below means stock (Novice) hands
+-- and adds no row; that is right for this example, which ships no weapon sprites.
+-- A quoted folder name is a row:  PCHands[PCIds.EXAMPLE_JOB] = "example_job"
+-- and expects data\sprite\<race>\example_job\example_job_<gender>_<weapon>.spr to exist.
 PCHands[PCIds.EXAMPLE_JOB] = (PCHands[PCIds.NOVICE] or "")
 PCHands[PCIds.EXAMPLE_JOB_B] = (PCHands[PCIds.NOVICE] or "")

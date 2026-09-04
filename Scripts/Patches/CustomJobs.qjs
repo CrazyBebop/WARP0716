@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CrazyBebop                                             *
 *   Created Date  : 2026-03-10                                             *
-*   Last Modified : 2026-03-28                                             *
+*   Last Modified : 2026-09-02                                             *
 *                                                                          *
 *   07-16 build: Full rewrite (apply0716). Original patch by Neo-Mind.     *
 *   Generic codepath for older clients stripped (07-16 WARP only).         *
@@ -62,9 +62,78 @@ CustomJobs.validate = function()
 ///        costume fallback, init-time population, error display.
 ///        Stock hardcoded sprite entries preserved (CLua broken at init).
 ///
+///
+/// \brief The rows baked into the Phase 11c hands table.
+///
+///        Gravity's five official 2025 jobs come first: ids 4351..4355 and the folder names
+///        are theirs, so they are right on any server that has Druid, Karnos and Alitea.
+///        Then every LITERAL row in Inputs' PCHands.lua, resolved through PCIds.lua, so an
+///        operator's own jobs get their hands without editing this file. Inheritance forms
+///        such as (PCHands[PCIds.NOVICE] or "") mean "stock hands" and add no row; they are
+///        logged as skipped. Read at APPLY time, not at runtime: the runtime Lua lookup
+///        crashes this client (2026-08-27), which is why the table is baked at all.
+///        A literal row for one of the five official ids overrides the default.
+///
+CustomJobs.handsRows = function(_)
+{
+	const rows = [
+		{id: 4351, name: "druid"},  {id: 4352, name: "druid"},
+		{id: 4353, name: "karnos"}, {id: 4354, name: "karnos"},
+		{id: 4355, name: "alitea"}
+	];
+	const dir = Warp.Path + "Inputs/Luafiles514/Lua Files/JobInfo/";
+	const readAll = function(name)
+	{
+		const fp = new TextFile(dir + name, ASCII, "r");
+		if (!fp.Valid)
+			return null;
+		const text = fp.Read(fp.Size);
+		fp.Close();
+		return text;
+	};
+	const ids = readAll("PCIds.lua"), hands = readAll("PCHands.lua");
+	let added = 0;
+	const skipped = [];
+	if (ids !== null && hands !== null)
+	{
+		// RegExp.exec loops: WARP's QuickJS build has no String.prototype.matchAll.
+		const idOf = {};
+		const reId  = /^\s*PCIds\.([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(0[xX][0-9A-Fa-f]+|\d+)\b/gm;
+		const reRow = /^\s*PCHands\[\s*(?:PCIds\.([A-Za-z_][A-Za-z0-9_]*)|(\d+))\s*\]\s*=\s*(.*?)\s*$/gm;
+		let m;
+		while ((m = reId.exec(ids)) !== null)
+			idOf[m[1]] = parseInt(m[2]);
+		while ((m = reRow.exec(hands)) !== null)
+		{
+			const key = (m[1] !== undefined) ? m[1] : m[2];
+			const id  = (m[1] !== undefined) ? idOf[m[1]] : parseInt(m[2]);
+			const lit = m[3].match(/^"([^"\\]+)"$/) || m[3].match(/^'([^'\\]+)'$/);
+			if (id === undefined || isNaN(id))
+			{
+				skipped.push(key + " (no PCIds value)");
+				continue;
+			}
+			if (!lit)
+			{
+				skipped.push(key + " (not a literal: stock hands)");
+				continue;
+			}
+			const at = rows.findIndex(r => r.id === id);
+			if (at >= 0)
+				rows[at] = {id: id, name: lit[1]};
+			else
+				rows.push({id: id, name: lit[1]});
+			added++;
+		}
+	}
+	$$(_, '0716.P11c.2b', `PCHands rows baked: ${rows.length} (${added} from Inputs' PCHands.lua`
+	                     + (skipped.length ? `; skipped ${skipped.join(", ")}` : "") + `)`);
+	return rows;
+};
+
 CustomJobs.apply0716 = function(_)
 {
-	// Phase 1+2 (template code) removed — CLua::CallScriptFunction broken at init.
+	// Phase 1+2 (template code) removed - CLua::CallScriptFunction broken at init.
 	// Stock hardcoded entries run normally. Custom jobs handled by Phase 9/11.
 
 	$$(_, '0716.8', `Set MaxJob`)
@@ -74,7 +143,7 @@ CustomJobs.apply0716 = function(_)
 	// for values >= 0x2067/8295, so custom jobs 4352-8294 ARE subtracted).
 	// Phase 11 writes at index (jobID - 3950), so the highest written index
 	// is MaxJob - 3950, which must be < 28053. Thus max safe MaxJob = 32003.
-	// 10000 is plenty — supports job IDs up to 9999 with index 6050 (well
+	// 10000 is plenty - supports job IDs up to 9999 with index 6050 (well
 	// within the 28053 sprite table capacity).
 	const MaxJob = 10000;
 
@@ -150,33 +219,53 @@ CustomJobs.apply0716 = function(_)
 	// ==========================================================
 
 	$$(_, '0716.P4.1', `Find bounds check pattern in GetJobNameByClassAndGender`)
-	const boundsPattern = "83 F9 2B 7C 0B C7 02 0D 00 00 00 B9 0D 00 00 00";
-	const boundsAddr = Exe.FindHex(boundsPattern);
-	if (boundsAddr < 0)
+
+	/// The pattern starts two bytes early, at the JS that guards a negative index, because that JS
+	/// is where our JMP now goes - see the long note at 0716.P4.4. Matching it here means the patch
+	/// verifies the byte shape it is about to consume instead of assuming it.
+	///
+	///   78 05              js   _clamp        <- we replace these 2 bytes ...
+	///   83 F9 2B           cmp  ecx, 2Bh      <- ... and these 3 = exactly one JMP rel32
+	///   7C 0B              jl   _ok           <- LEFT ALONE. Allow65kHairs owns this byte.
+	///   C7 02 0D 00 00 00  mov  [edx], 0Dh    _clamp
+	///   B9 0D 00 00 00     mov  ecx, 0Dh
+	const boundsPattern = "78 05 83 F9 2B 7C 0B C7 02 0D 00 00 00 B9 0D 00 00 00";
+	const hookAddr = Exe.FindHex(boundsPattern);
+	if (hookAddr < 0)
 		throw Error("GetJobNameByClassAndGender bounds check pattern not found");
+
+	const boundsAddr = hookAddr + 2; //the CMP. Every offset below is still relative to it.
 
 	$$(_, '0716.P4.2', `Build bounds check trampoline`)
 	const boundsOkVir = Exe.Phy2Vir(boundsAddr + 16, CODE); // instruction after 16-byte bounds block
 
-	// Trampoline: [0,43) → ok_check, [43,0xFA1) → clamp, [0xFA1,MaxJob) → ok_check, else → clamp
-	// Allow65kHairs patches byte 12 offset (0x14→0x1F) to redirect [43,0xFA1) to ok_exit.
+	// Trampoline: neg → clamp, [0,43) → ok_check, [43,0xFA1) → clamp, [0xFA1,MaxJob) → ok_check,
+	//             else → clamp
+	// Allow65kHairs patches byte 14 (0x14→0x1F) to redirect [43,0xFA1) to ok_exit.
+	//
+	/// ★ The leading JS carries the negative-index guard we displaced from 0x00B43581. It reads the
+	/// sign flag that the client's own TEST ECX,ECX (still in place, two bytes earlier) set, which
+	/// is safe because a JMP does not touch flags - so SF is exactly as the original JS saw it.
+	/// Every displacement after it is unchanged from the pre-move version: each branch AND its
+	/// target both shifted by the same 2 bytes.
 	const trampCode =
-		CMP(ECX, 0x2B) +                    // 83 F9 2B           (3 bytes)  byte 0
-		JL(0x10) +                           // 7C 10 → ok_check   (2 bytes)  byte 3, target=21
-		CMP(ECX, 0xFA1) +                    // 81 F9 A1 0F 00 00  (6 bytes)  byte 5
-		JL(0x14) +                           // 7C 14 → clamp      (2 bytes)  byte 11, target=33
-		CMP(ECX, MaxJob) +                   // 81 F9 XX XX 00 00  (6 bytes)  byte 13
-		JGE(0x0C) +                          // 7D 0C → clamp      (2 bytes)  byte 19, target=33
+		JS(0x21) +                           // 78 21 → clamp      (2 bytes)  byte 0, target=35
+		CMP(ECX, 0x2B) +                    // 83 F9 2B           (3 bytes)  byte 2
+		JL(0x10) +                           // 7C 10 → ok_check   (2 bytes)  byte 5, target=23
+		CMP(ECX, 0xFA1) +                    // 81 F9 A1 0F 00 00  (6 bytes)  byte 7
+		JL(0x14) +                           // 7C 14 → clamp      (2 bytes)  byte 13, target=35
+		CMP(ECX, MaxJob) +                   // 81 F9 XX XX 00 00  (6 bytes)  byte 15
+		JGE(0x0C) +                          // 7D 0C → clamp      (2 bytes)  byte 21, target=35
 		// ok_check: verify table entry is non-NULL before allowing through
-		" A1 0C B3 5F 01" +                  // MOV EAX,[0x15fb30c] (5 bytes) byte 21 — male palette table ptr
-		MOV(EAX, [4, ECX, EAX]) +            // MOV EAX,[ECX*4+EAX] (3 bytes) byte 26 — load entry
-		TEST(EAX, EAX) +                     // TEST EAX,EAX        (2 bytes) byte 29
-		JNZ(0x0B) +                          // JNZ → ok_exit       (2 bytes) byte 31, target=44
+		" A1 0C B3 5F 01" +                  // MOV EAX,[0x15fb30c] (5 bytes) byte 23 - male palette table ptr
+		MOV(EAX, [4, ECX, EAX]) +            // MOV EAX,[ECX*4+EAX] (3 bytes) byte 28 - load entry
+		TEST(EAX, EAX) +                     // TEST EAX,EAX        (2 bytes) byte 31
+		JNZ(0x0B) +                          // JNZ → ok_exit       (2 bytes) byte 33, target=46
 		// clamp: set default index 0x0D
-		" C7 02 0D 00 00 00" +               // MOV [EDX], 0x0D     (6 bytes) byte 33
-		" B9 0D 00 00 00" +                  // MOV ECX, 0x0D       (5 bytes) byte 39
+		" C7 02 0D 00 00 00" +               // MOV [EDX], 0x0D     (6 bytes) byte 35
+		" B9 0D 00 00 00" +                  // MOV ECX, 0x0D       (5 bytes) byte 41
 		// ok_exit:
-		JMP(Filler(5));                      // E9 rel32 → boundsOk (5 bytes) byte 44
+		JMP(Filler(5));                      // E9 rel32 → boundsOk (5 bytes) byte 46
 
 	$$(_, '0716.P4.3', `Allocate and write trampoline`)
 	const [trampPhys, trampVir] = Exe.Allocate(trampCode.byteCount(), 0x10);
@@ -188,16 +277,62 @@ CustomJobs.apply0716 = function(_)
 
 	// If Allow65kHairs is active, redirect [43,0xFA1) to ok_exit instead of clamp.
 	// fixTblCond handles these styles via itoa. Without Allow65kHairs, clamp is safe.
-	if (Warp.GetPatchState("Allow65kHairs") || Warp.GetPatchState("IncrHairStyles"))
-		Exe.SetHex(trampPhys + 12, " 1F"); // JL(0x14)→JL(0x1F): clamp→ok_exit
+	//
+	/// ★ Querying it from HERE works, and only from here: CustomJobs always runs AFTER
+	/// Allow65kHairs, so GetPatchState sees it as applied. The reverse never works - from the hair
+	/// patch, GetPatchState("CustomJobs") is false even when the user ticked both - so do not try
+	/// to interlock these two from the hair side.
+	if (Warp.GetPatchState("Allow65kHairs"))
+	{
+		Exe.SetHex(trampPhys + 14, " 1F"); // JL(0x14)→JL(0x1F): clamp→ok_exit
+		Exe.SetHex(trampPhys + 37, " 02"); // and match its fallback index: MOV [EDX],0Dh → 2
+	}
 
 	$$(_, '0716.P4.4', `Redirect bounds check to trampoline`)
-	const boundsVir = Exe.Phy2Vir(boundsAddr, CODE);
+	const hookVir = Exe.Phy2Vir(boundsAddr, CODE) - 2;
 	const jmpToTramp = SetFillTargets(JMP(Filler(6)), {
-		start: boundsVir,
+		start: hookVir,
 		6: trampVir
 	});
-	Exe.SetHex(boundsAddr, jmpToTramp + NOPs(11));
+
+	/// ★★★ GitHub #21 / #38 - the real root cause is ONE SHARED BYTE, and this JMP's placement two
+	/// bytes earlier than the obvious spot is the entire fix. Do not "simplify" it back.
+	///
+	/// The site, stock:
+	///   0x00B4357F  85 C9      test ecx, ecx
+	///   0x00B43581  78 05      js   0x00B43588      <- we take these 2 ...
+	///   0x00B43583  83 F9 2B   cmp  ecx, 2Bh        <- ... and these 3 = exactly one JMP rel32
+	///   0x00B43586  7C 0B      jl   0x00B43593      <- and this is the contested byte
+	///
+	/// Allow65kHairs' fixCmp calls Exe.SetJMP on the Jcc OPCODE at 0x00B43586, turning it into an
+	/// unconditional JMP - that is how its "no clamp at all" mode works. A 5-byte JMP written at
+	/// the CMP covers 0x00B43583..0x00B43587, so 0x00B43586 is simultaneously the third byte of OUR
+	/// rel32 and the byte the hair patch stamps with EB. Whichever write lands last wins, and BOTH
+	/// outcomes are wrong:
+	///
+	///   * ours wins   -> the hair patch's clamp removal is silently lost at this site.
+	///   * theirs wins -> our rel32 goes from 58 A7 BD 00 to 58 A7 EB 00, moving the target
+	///     +0x2E0000 to 0x019FDCE0, which is past the end of the image. Wild jump, 0xC0000005.
+	///
+	/// Measured on two builds from BYTE-IDENTICAL profiles: one got BD and reached the map, the
+	/// other got EB and died. So there is no lucky ordering - one of the two patches is always
+	/// broken. (In that crash dump 0x00D5A233 is only the return address of the call at
+	/// 0x00D5A22E, not the faulting instruction. The fault address is the unmapped one.)
+	///
+	/// ★ An earlier attempt here deleted 11 bytes of NOP padding and recorded that this "removes
+	/// the shared bytes entirely". It did not: it removed the shared bytes in the TAIL and left
+	/// this one in the HEAD, which is why the crash outlived the fix. A 5-byte JMP at the CMP can
+	/// never avoid the Jcc byte. Moving off it is the only fix.
+	///
+	/// Taking JS + CMP instead gives exactly 5 bytes and leaves the Jcc wholly to the hair patch,
+	/// so the two share no byte at all and merge order stops mattering. Verified safe: the only
+	/// inbound branches into 0x00B4357E..0x00B43595 anywhere in the image are 0x00B43511 ->
+	/// 0x00B4357F (the TEST, which we do not touch), the JS we displace, and the Jcc itself, and no
+	/// dword in .rdata or .data holds any of those addresses.
+	///
+	/// The in-image clamp at 0x00B43588 becomes unreachable from here, which is behaviourally
+	/// identical - it fell through to boundsOk, and the trampoline's own copy jumps there.
+	Exe.SetHex(hookAddr, jmpToTramp);
 
 	// ==========================================================
 	// Phase 5: Fix convert_job_to_trans_or_baby subtraction
@@ -206,7 +341,7 @@ CustomJobs.apply0716 = function(_)
 	// baby/trans extended IDs to base form for sprite table lookup.
 	// Custom job IDs get incorrectly subtracted, causing them to
 	// index the wrong sprite (e.g. 4400-3950=450 → wrong job).
-	// Fix: add upper bound check — skip subtraction for IDs >= 0x10F9 (4345),
+	// Fix: add upper bound check - skip subtraction for IDs >= 0x10F9 (4345),
 	// which is above the highest standard job in any switch case (0x10F8).
 
 	$$(_, '0716.P5.1', `Find baby subtraction pattern in convert_job_to_trans_or_baby`)
@@ -221,11 +356,11 @@ CustomJobs.apply0716 = function(_)
 
 	// Trampoline: add upper bound check for custom jobs
 	const babyTrampCode =
-		CMP(ECX, 0x2067) +                  // 81 F9 67 20 00 00  (6 bytes) — above max standard job+3950
+		CMP(ECX, 0x2067) +                  // 81 F9 67 20 00 00  (6 bytes) - above max standard job+3950
 		JGE(Filler(1)) +                    // 0F 8D rel32         (6 bytes) → skip (use long JGE for Filler)
-		CMP(ECX, 0xF6E) +                   // 81 F9 6E 0F 00 00  (6 bytes) — original check
+		CMP(ECX, 0xF6E) +                   // 81 F9 6E 0F 00 00  (6 bytes) - original check
 		JLE(Filler(2)) +                    // 0F 8E rel32         (6 bytes) → skip
-		SUB(ECX, 0xF6E) +                   // 81 E9 6E 0F 00 00  (6 bytes) — original subtraction
+		SUB(ECX, 0xF6E) +                   // 81 E9 6E 0F 00 00  (6 bytes) - original subtraction
 		JMP(Filler(3));                     // E9 rel32            (5 bytes) → back to MOV EAX, ECX
 
 	$$(_, '0716.P5.3', `Allocate and write subtraction fix trampoline`)
@@ -572,7 +707,7 @@ CustomJobs.apply0716 = function(_)
 		// Save name in ESI
 		code += " 89 C6";                    // MOV ESI, EAX
 
-		// lua_settop(L, -3) — pop table + value
+		// lua_settop(L, -3) - pop table + value
 		code += " 6A FD";                    // PUSH -3
 		code += " 53";                        // PUSH EBX (L)
 		code += CALL(Filler(94));              // CALL lua_settop
@@ -668,7 +803,7 @@ CustomJobs.apply0716 = function(_)
 	// character select, and other UI for the English job name display.
 	// Jobs in range [0xFA1, 0xFA1+0x7CE] (4001-5999) go through
 	// C3dActorPC__GetJobClassType which transforms them to standard
-	// job indices — custom jobs get wrong names (e.g. "Poring").
+	// job indices - custom jobs get wrong names (e.g. "Poring").
 	// Fix: change 0x7CE to 0x157 (= 0x10F8-0xFA1) so custom jobs
 	// (>= 0x10F9/4345) take the direct table lookup path instead,
 	// where Phase 1 stored the Lua-defined name.
@@ -684,9 +819,9 @@ CustomJobs.apply0716 = function(_)
 	// CMP ECX, 0x7CE is at sprIdxAddr+6, immediate at sprIdxAddr+8
 	Exe.SetInt16(sprIdxAddr + 8, 0x0157);
 
-	// Phase 8.3-8.4 removed — CLua broken, loop extension was a no-op.
+	// Phase 8.3-8.4 removed - CLua broken, loop extension was a no-op.
 
-	// Phase 9 (table lookup hook) removed — Phase 9c handles all paths.
+	// Phase 9 (table lookup hook) removed - Phase 9c handles all paths.
 	// Phase 9 previously hooked MOV EAX,[ESI+EDX*4] at the direct table
 	// lookup. Now redundant because Phase 9c intercepts at function entry
 	// and returns directly (never falls through to original code).
@@ -706,7 +841,7 @@ CustomJobs.apply0716 = function(_)
 
 	$$(_, '0716.P9c.1', `Find GetJobSpriteIndex entry`)
 	// Pattern: PUSH EBP; MOV EBP,ESP; MOV EDX,[EBP+8]; SUB ESP,0xC
-	// Search near GetJobSpriteIndex (0xd5bb40) — pattern is generic, must constrain range
+	// Search near GetJobSpriteIndex (0xd5bb40) - pattern is generic, must constrain range
 	const p9cPattern = " 55 8B EC 8B 55 08 83 EC 0C";
 	const p9cPhys = Exe.FindHex(p9cPattern, Exe.Vir2Phy(0xd5bb30, CODE), Exe.Vir2Phy(0xd5bb50, CODE));
 	if (p9cPhys < 0)
@@ -727,7 +862,7 @@ CustomJobs.apply0716 = function(_)
 	p9c += " 85 C0";                           // TEST EAX, EAX
 	p9c += JZ(Filler(310));                    // JZ .fallthrough
 
-	// Save EDX (jobID) and ECX (this) — Lua calls clobber them
+	// Save EDX (jobID) and ECX (this) - Lua calls clobber them
 	p9c += " 52";                              // PUSH EDX
 	p9c += " 51";                              // PUSH ECX
 
@@ -803,7 +938,7 @@ CustomJobs.apply0716 = function(_)
 	p9c += " 39 D0";                          // CMP EAX, EDX
 	p9c += JBE(Filler(319));                  // JBE .poring (out of bounds)
 
-	// In bounds — direct table[jobID] lookup
+	// In bounds - direct table[jobID] lookup
 	p9c += " 8B 81 88 0F 00 00";             // MOV EAX, [ECX+0xF88]
 	p9c += " 8B 04 90";                       // MOV EAX, [EAX+EDX*4]
 
@@ -815,7 +950,7 @@ CustomJobs.apply0716 = function(_)
 	p9c += " 3D 00 00 00 F0";                // CMP EAX, 0xF0000000
 	p9c += JAE(Filler(319));                  // JAE .poring
 
-	// Valid — return directly
+	// Valid - return directly
 	p9c += " 5D";                             // POP EBP
 	p9c += " C2 08 00";                       // RET 8
 
@@ -859,7 +994,7 @@ CustomJobs.apply0716 = function(_)
 		start: p9cHookVir, 1: p9cVirA
 	}) + " 90"); // 5-byte JMP + 1 NOP = 6 bytes
 
-	// Phase 9b (Poring return hook) removed — Phase 9c handles all paths.
+	// Phase 9b (Poring return hook) removed - Phase 9c handles all paths.
 	// Phase 9b previously hooked the "Poring" early return in GetJobSpriteIndex.
 	// Now redundant because Phase 9c intercepts at function entry and returns
 	// directly with a validated table lookup (out-of-bounds → "Poring").
@@ -1009,7 +1144,7 @@ CustomJobs.apply0716 = function(_)
 
 	// .skip:
 	const p11SkipOff = p11Helper.byteCount();
-	// lua_settop(L, -2) — pop value
+	// lua_settop(L, -2) - pop value
 	p11Helper += " 6A FE";                      // PUSH -2
 	p11Helper += " FF 75 08";                   // PUSH [EBP+8] (L)
 	p11Helper += CALL(Filler(55));              // CALL lua_settop
@@ -1036,7 +1171,7 @@ CustomJobs.apply0716 = function(_)
 	// then executes via luaL_loadbuffer + lua_pcall. Replaces dofile() in
 	// Phase 11's Lua code so custom .lua/.lub files work from loose data
 	// folder OR from GRF archives.
-	// Signature: int cj_loadfile(lua_State* L) — arg 1: filename (string)
+	// Signature: int cj_loadfile(lua_State* L) - arg 1: filename (string)
 	// On success: returns 0. On failure: calls lua_error (caught by pcall).
 
 	$$(_, '0716.P11.cjlf', `Build cj_loadfile for GRF-aware Lua loading`)
@@ -1046,7 +1181,7 @@ CustomJobs.apply0716 = function(_)
 	cjCode += " 83 EC 30";                         // SUB ESP, 0x30 (CFile=44 + buffer_ptr=4)
 	cjCode += " 53 56 57";                         // PUSH EBX, ESI, EDI
 	cjCode += " 8B 75 08";                         // MOV ESI, [EBP+8] (lua_State* L)
-	// lua_tolstring(L, 1, NULL) — get filename arg
+	// lua_tolstring(L, 1, NULL) - get filename arg
 	cjCode += " 6A 00 6A 01 56";                   // PUSH 0; PUSH 1; PUSH ESI
 	cjCode += CALL(Filler(1));                     // CALL lua_tolstring
 	cjCode += " 83 C4 0C";                         // ADD ESP, 12
@@ -1062,7 +1197,7 @@ CustomJobs.apply0716 = function(_)
 	cjCode += " 89 45 F4";                         // MOV [EBP-0x0C], 0 (string length)
 	cjCode += " C7 45 F8 0F 00 00 00";             // MOV [EBP-0x08], 0xF (string capacity=SSO)
 	cjCode += " C6 45 E4 00";                      // MOV BYTE [EBP-0x1C], 0 (string null term)
-	// CFile::Open(filename, 0, 1, 0) — thiscall, ECX = CFile*
+	// CFile::Open(filename, 0, 1, 0) - thiscall, ECX = CFile*
 	cjCode += " 6A 00 6A 01 6A 00 57";             // PUSH 0, 1, 0, EDI (filename)
 	cjCode += " 8D 4D D0";                         // LEA ECX, [EBP-0x30]
 	cjCode += CALL(Filler(2));                     // CALL CFile::Open (0x573750)
@@ -1077,11 +1212,11 @@ CustomJobs.apply0716 = function(_)
 	cjCode += " 83 C4 04";                         // ADD ESP, 4
 	cjCode += " 89 45 FC";                         // MOV [EBP-0x04], EAX (save buffer)
 	cjCode += " C6 04 18 00";                      // MOV BYTE [EAX+EBX], 0 (null-terminate)
-	// CFile::Read(buffer, size) — thiscall
+	// CFile::Read(buffer, size) - thiscall
 	cjCode += " 53 50";                            // PUSH EBX (size); PUSH EAX (buffer)
 	cjCode += " 8D 4D D0";                         // LEA ECX, [EBP-0x30]
 	cjCode += CALL(Filler(4));                     // CALL CFile::Read (0x573980)
-	// CFile::Close — thiscall
+	// CFile::Close - thiscall
 	cjCode += " 8D 4D D0";                         // LEA ECX, [EBP-0x30]
 	cjCode += CALL(Filler(5));                     // CALL CFile::Close (0x573060)
 	// luaL_loadbuffer(L, buffer, size, filename)
@@ -1098,7 +1233,7 @@ CustomJobs.apply0716 = function(_)
 	cjCode += " 83 C4 10";                         // ADD ESP, 16
 	cjCode += " 85 C0";                            // TEST EAX, EAX
 	cjCode += " 0F 85 12 00 00 00";                // JNZ .free_error (→ 0xC8)
-	// Success — free buffer, return 0
+	// Success - free buffer, return 0
 	cjCode += " FF 75 FC";                         // PUSH [EBP-0x04]
 	cjCode += CALL(Filler(8));                     // CALL free (0xDBC89E)
 	cjCode += " 83 C4 04";                         // ADD ESP, 4
@@ -1111,7 +1246,7 @@ CustomJobs.apply0716 = function(_)
 	cjCode += " 56";                               // PUSH ESI
 	cjCode += CALL(Filler(10));                    // CALL lua_error (never returns)
 	cjCode += " CC";                               // INT3
-	// .close_error: CFile::Open failed — close CFile, fall through
+	// .close_error: CFile::Open failed - close CFile, fall through
 	cjCode += " 8D 4D D0";                         // LEA ECX, [EBP-0x30]
 	cjCode += CALL(Filler(11));                    // CALL CFile::Close
 	// .error_no_file: push error string, throw
@@ -1210,7 +1345,7 @@ CustomJobs.apply0716 = function(_)
 	p11Main += " 50";                           // PUSH EAX (L)
 	p11Main += CALL(Filler(69));                // CALL lua_getfield (error check)
 	p11Main += " 83 C4 0C";                    // ADD ESP, 12
-	// lua_tolstring — returns NULL if nil, char* if string
+	// lua_tolstring - returns NULL if nil, char* if string
 	p11Main += PUSH_0;
 	p11Main += " 6A FF";
 	p11Main += " A1" + g_luaState.toHex(4);
@@ -1260,7 +1395,7 @@ CustomJobs.apply0716 = function(_)
 	p11Main += " 50";                           // PUSH EAX
 	p11Main += CALL(Filler(62));                // CALL populate_table
 
-	// NOTE: PCNames (0xF88) NOT populated here — that table is allocated later
+	// NOTE: PCNames (0xF88) NOT populated here - that table is allocated later
 	// in InitLuaResourceTables, not InitJobSpriteNameTables. Phase 9 handles
 	// PCNames at query time via direct Lua C API.
 
@@ -1386,7 +1521,7 @@ CustomJobs.apply0716 = function(_)
 	// ============================================================
 	// Phase 11c.0: Fix GetEquipViewIndexByJob for custom jobs
 	// ============================================================
-	// Stock switch only handles standard jobs — custom jobs hit default
+	// Stock switch only handles standard jobs - custom jobs hit default
 	// (weapon type 1 only). Return Novice index for all weapon types.
 	$$(_, '0716.P11c.0', `Fix GetEquipViewIndexByJob for custom jobs`)
 	const eviPattern = " 55 8B EC 8B 45 08 3D A1 0F";
@@ -1432,6 +1567,41 @@ CustomJobs.apply0716 = function(_)
 
 	$$(_, '0716.P11c.2', `Build PCHands query-time trampoline`)
 	let p11c = "";
+	// [EBP+0x10] is a COMPACT INDEX, not a job id: the client uses
+	//     idx < 0x20 ? idx : idx + 0xF6E        (0xF6E = 3950)
+	// Recover the job id first, or nothing here can ever match a custom job.
+	p11c += " 50";                                 // PUSH EAX
+	p11c += " 8B 45 10";                           // MOV EAX,[EBP+0x10]
+	p11c += " 83 F8 20";                           // CMP EAX,0x20
+	p11c += JL(Filler(244));                       // JL .raw
+	p11c += " 05 6E 0F 00 00";                     // ADD EAX,0xF6E
+	const p11cRawOff = p11c.byteCount();           // .raw
+	p11c += " 3D F9 10 00 00";                     // CMP EAX,0x10F9
+	p11c += JL(Filler(241));                       // JL .restore
+	// EAX = job id. Scan the baked {jobid, name*} table.
+	p11c += " 56";                                 // PUSH ESI
+	const p11cTabRef = p11c.byteCount();
+	p11c += " BE 00 00 00 00";                     // MOV ESI,TABLE
+	const p11cScanOff = p11c.byteCount();          // .scan
+	p11c += " 8B 16";                              // MOV EDX,[ESI]
+	p11c += " 85 D2";                              // TEST EDX,EDX
+	p11c += JZ(Filler(242));                       // JZ .miss
+	p11c += " 39 C2";                              // CMP EDX,EAX
+	p11c += JZ(Filler(243));                       // JZ .hit
+	p11c += " 83 C6 08";                           // ADD ESI,8
+	p11c += JMP(Filler(245));                      // JMP .scan
+	const p11cHitOff = p11c.byteCount();           // .hit
+	p11c += " 8B 56 04";                           // MOV EDX,[ESI+4]
+	p11c += " 5E";                                 // POP ESI
+	p11c += " 58";                                 // POP EAX
+	p11c += " 89 8D 54 FF FF FF";                  // MOV [EBP-0xAC],ECX  (displaced)
+	p11c += JMP(Filler(236));                      // JMP 0xb45831, EDX = the name
+	const p11cMissOff = p11c.byteCount();          // .miss
+	p11c += " 5E";                                 // POP ESI
+	const p11cRestOff = p11c.byteCount();          // .restore
+	p11c += " 58";                                 // POP EAX
+	p11c += JMP(Filler(230));                      // JMP .not_custom
+	// ---- unreachable below; kept so the existing fixups still resolve ----
 	p11c += " 81 7D 10 F9 10 00 00";              // CMP DWORD [EBP+0x10], 0x10F9
 	p11c += JL(Filler(230));                       // JL .not_custom
 
@@ -1495,6 +1665,23 @@ CustomJobs.apply0716 = function(_)
 
 	const p11cStrPCHands = p11c.byteCount();
 	p11c += " 50 43 48 61 6E 64 73 00";            // "PCHands\0"
+	const p11cTable = p11c.byteCount();
+	// {jobid, name*} rows, BUILT here: the five official 2025 jobs, then the operator's own
+	// literal PCHands.lua rows (see CustomJobs.handsRows). Each name is "<folder>\<folder>",
+	// the weapon sprite path shape. The pointers are fixed up after the allocation below.
+	const handsRows = CustomJobs.handsRows(_);
+	for (const r of handsRows)
+		p11c += r.id.toHex(4) + " 00 00 00 00";
+	p11c += " 00 00 00 00 00 00 00 00";            // terminator
+	const p11cStrOffs = [];
+	for (const r of handsRows)
+	{
+		p11cStrOffs.push(p11c.byteCount());
+		const str = r.name + "\\" + r.name;
+		for (let i = 0; i < str.length; i++)
+			p11c += str.charCodeAt(i).toHex(1);
+		p11c += " 00";
+	}
 
 	$$(_, '0716.P11c.3', `Allocate and write PCHands query-time trampoline`)
 	const [p11cPhysAlloc, p11cVirAlloc] = Exe.Allocate(p11c.byteCount(), 0x10);
@@ -1508,9 +1695,17 @@ CustomJobs.apply0716 = function(_)
 		235: p11cVirAlloc + p11cLuaFailOff,
 		236: 0xb45831,
 		237: p11cReturnVir,
-		238: 0x51AE20
+		238: 0x51AE20,
+		241: p11cVirAlloc + p11cRestOff,
+		242: p11cVirAlloc + p11cMissOff,
+		243: p11cVirAlloc + p11cHitOff,
+		244: p11cVirAlloc + p11cRawOff,
+		245: p11cVirAlloc + p11cScanOff
 	}));
 	Exe.SetInt32(p11cPhysAlloc + p11cStrOff + 1, p11cVirAlloc + p11cStrPCHands);
+	Exe.SetInt32(p11cPhysAlloc + p11cTabRef + 1, p11cVirAlloc + p11cTable);
+	handsRows.forEach((r, i) =>
+		Exe.SetInt32(p11cPhysAlloc + p11cTable + 8 * i + 4, p11cVirAlloc + p11cStrOffs[i]));
 
 	$$(_, '0716.P11c.4', `Redirect GetMapJobName2 to trampoline`)
 	Exe.SetHex(p11cPhys, SetFillTargets(JMP(Filler(1)), {
@@ -1521,9 +1716,9 @@ CustomJobs.apply0716 = function(_)
 	// ============================================================
 	// Phase 11b: Costume sprite fallback (SPR + ACT + PAL)
 	// ============================================================
-	// (A) NULL check in GetAnimLayerByIndex — prevents crash from
+	// (A) NULL check in GetAnimLayerByIndex - prevents crash from
 	//     missing costume sprite (returns null sentinel).
-	// (B) Costume path fallback in SPR/ACT/PAL loaders — strips
+	// (B) Costume path fallback in SPR/ACT/PAL loaders - strips
 	//     "costume_N\" dir and "_N" suffix, retries with base path.
 
 	$$(_, '0716.P11b.1', `Add NULL check to GetAnimLayerByIndex`)
@@ -1540,7 +1735,7 @@ CustomJobs.apply0716 = function(_)
 	// Build small trampoline: TEST ECX,ECX / JNZ original / MOV EAX, sentinel / RET
 	let p11bNull = "";
 	p11bNull += " 85 C9";                     // TEST ECX, ECX
-	p11bNull += " 75 08";                     // JNZ +8 (to stolen instructions) — skip MOV(5)+RET(3)=8
+	p11bNull += " 75 08";                     // JNZ +8 (to stolen instructions) - skip MOV(5)+RET(3)=8
 	p11bNull += " B8 80 55 25 01";             // MOV EAX, 0x01255580 (null sentinel)
 	p11bNull += " C2 04 00";                   // RET 4 (thiscall, 1 stack param)
 
@@ -1564,7 +1759,7 @@ CustomJobs.apply0716 = function(_)
 	});
 	Exe.SetHex(animLayerPhys, animJmp);
 
-	$$(_, '0716.P11b.2', `Costume sprite fallback — retry with base path`)
+	$$(_, '0716.P11b.2', `Costume sprite fallback - retry with base path`)
 	// Hook JNE after CFile_Open in CSprite__LoadSPRFile (0x728398).
 	// When CFile_Open fails for a costume path, strip "costume_N\" from
 	// the directory and "_N" from the filename, retry CFile_Open with
@@ -1644,7 +1839,7 @@ CustomJobs.apply0716 = function(_)
 	// We need to copy everything AFTER the '\' following "costume_N"
 	// back to where "costume_N\" starts, overwriting it.
 
-	// First: find end of "costume_N\" — scan for '\' or end
+	// First: find end of "costume_N\" - scan for '\' or end
 	p11bFb += " 8B F7";                       // MOV ESI, EDI (start of "costume...")
 
 	// Scan forward for '\' after costume_N
@@ -1653,7 +1848,7 @@ CustomJobs.apply0716 = function(_)
 	p11bFb += " 84 C0";                       // TEST AL, AL
 	p11bFb += JZ(Filler(100));                // JZ no_backslash (shouldn't happen)
 	p11bFb += " 3C 5C";                       // CMP AL, '\' (0x5C)
-	p11bFb += " 74 06";                       // JE +6 (found backslash) — skip INC(1)+JMP(5)=6
+	p11bFb += " 74 06";                       // JE +6 (found backslash) - skip INC(1)+JMP(5)=6
 	p11bFb += " 46";                          // INC ESI
 	p11bFb += JMP(Filler(101));               // JMP scan2
 	// ESI now points to '\' after "costume_N"
@@ -1678,7 +1873,7 @@ CustomJobs.apply0716 = function(_)
 	// Find '.' scanning backwards
 	const p11bFbDotScan = p11bFb.byteCount();
 	p11bFb += " 80 3F 2E";                   // CMP BYTE [EDI], '.'
-	p11bFb += " 74 06";                       // JE +6 (found dot) — skip DEC(1)+JMP(5)=6
+	p11bFb += " 74 06";                       // JE +6 (found dot) - skip DEC(1)+JMP(5)=6
 	p11bFb += " 4F";                          // DEC EDI
 	p11bFb += JMP(Filler(104));               // JMP dot_scan
 	// EDI points to '.'. Path ends like: ..._1.spr or ..._2.spr
@@ -1698,7 +1893,7 @@ CustomJobs.apply0716 = function(_)
 
 	// skip_strip / strip_done / no_backslash: retry CFile_Open with modified path
 	const p11bFbRetry = p11bFb.byteCount();
-	p11bFb += " 5E";                          // POP ESI (restore original filename — now modified in place!)
+	p11bFb += " 5E";                          // POP ESI (restore original filename - now modified in place!)
 	// Retry CFile_Open: LEA ECX,[EBP-0x43c]; PUSH 0; PUSH 1; PUSH 0; PUSH ESI; CALL CFile_Open
 	p11bFb += " 8D 8D C4 FB FF FF";          // LEA ECX, [EBP-0x43c]
 	p11bFb += " 6A 00";                       // PUSH 0
@@ -1742,7 +1937,7 @@ CustomJobs.apply0716 = function(_)
 	});
 	Exe.SetHex(jnePhys, jneRedirect + " 90");
 
-	$$(_, '0716.P11b.5', `ACT file costume fallback — same logic for CActFile__Open`)
+	$$(_, '0716.P11b.5', `ACT file costume fallback - same logic for CActFile__Open`)
 	// CActFile__Open (0x70bac0) has same CFile_Open → JNE pattern.
 	// JNE at 0x70bb6e, success=0x70bd69, error=0x70bb74, CFile at [EBP-0x8c].
 	const actJnePattern = " 0F 85 F5 01 00 00";
@@ -1993,7 +2188,7 @@ CustomJobs.apply0716 = function(_)
 
 
 	// ==========================================================
-	// Phase 12: Skill tree tiers — handled entirely via Lua
+	// Phase 12: Skill tree tiers - handled entirely via Lua
 	// ==========================================================
 	// CMode__InitSkillTreeFromLua assigns tiers: root job (next=Novice) gets
 	// tier 0, non-extended/non-4th jobs get tier 1. Tiers 0 and 1 merge on
@@ -2003,7 +2198,7 @@ CustomJobs.apply0716 = function(_)
 
 
 	// ==========================================================
-	// Phase 13: PCRace — let custom jobs opt into the Doram sprite path
+	// Phase 13: PCRace - let custom jobs opt into the Doram sprite path
 	// ==========================================================
 	// is_doram_job_id (0x00d9cf80) is a hardcoded switch over the stock
 	// Doram class IDs {0x1079..0x107D, 0x10D4, 0x10DB}. It gates the
@@ -2013,7 +2208,7 @@ CustomJobs.apply0716 = function(_)
 	// custom job that wants the Doram race (e.g. PCPaths[id]="summoner")
 	// cannot reach the Doram branch and ends up rendered as human.
 	//
-	// We hook the function's failure exit at 0x00d9cfa4 — every "not a
+	// We hook the function's failure exit at 0x00d9cfa4 - every "not a
 	// stock Doram ID" path lands here, either via JA (range miss) or
 	// via the jump-table default. When fired, we consult global Lua
 	// table PCRace; if PCRace[jobid] is non-nil, return AL=1 (Doram).
@@ -2043,7 +2238,7 @@ CustomJobs.apply0716 = function(_)
 	$$(_, '0716.P13.2', `Verify failure-exit bytes`)
 	const failBytes = Exe.GetHex(p13FailPhys, 6);
 	if (failBytes !== " 32 C0 5D C2 04 00")
-		throw Error("Phase 13: failure exit bytes mismatch — got" + failBytes);
+		throw Error("Phase 13: failure exit bytes mismatch - got" + failBytes);
 
 	$$(_, '0716.P13.3', `Build PCRace trampoline`)
 	// Entered with EBP still saved (POP EBP not yet executed at 0xd9cfa4).
@@ -2069,7 +2264,7 @@ CustomJobs.apply0716 = function(_)
 	p13 += CALL(Filler(91));                // CALL lua_getfield
 	p13 += " 83 C4 0C";                    // ADD ESP, 12
 
-	// lua_type(L,-1) — must be LUA_TTABLE (5), else pop1_nope
+	// lua_type(L,-1) - must be LUA_TTABLE (5), else pop1_nope
 	p13 += " 6A FF";                       // PUSH -1
 	p13 += " FF 35" + g_luaState.toHex(4); // PUSH [g_luaState]
 	p13 += CALL(Filler(94));                // CALL lua_type
@@ -2084,7 +2279,7 @@ CustomJobs.apply0716 = function(_)
 	p13 += CALL(Filler(92));                // CALL lua_rawgeti
 	p13 += " 83 C4 0C";
 
-	// lua_type — any non-nil = Doram
+	// lua_type - any non-nil = Doram
 	p13 += " 6A FF";
 	p13 += " FF 35" + g_luaState.toHex(4);
 	p13 += CALL(Filler(94));                // CALL lua_type
@@ -2092,7 +2287,7 @@ CustomJobs.apply0716 = function(_)
 	p13 += " 85 C0";                       // TEST EAX, EAX (LUA_TNIL == 0)
 	p13 += JZ(Filler(82));                  // JZ .pop2_nope
 
-	// Doram hit — settop(L,-3) pops table + value
+	// Doram hit - settop(L,-3) pops table + value
 	p13 += " 6A FD";                       // PUSH -3
 	p13 += " FF 35" + g_luaState.toHex(4);
 	p13 += CALL(Filler(93));                // CALL lua_settop
@@ -2151,7 +2346,16 @@ CustomJobs.apply0716 = function(_)
 	$$(_, '0716.14', `Ask about copying Lua files and error display`)
 	if (!Warp.TestMode)
 	{
-		Exe.GetUserInput('$copyCJLub', D_Bool, "Copy Custom Job Lua", "Do you want the supporting Lub files copied to <b>'data'</b> folder when patch is applied?", true);
+		if (Exe.GetUserInput('$copyCJLub', D_Bool, "Copy Custom Job Lua",
+			"Custom jobs need seven Lua files inside your client's <b>data</b> folder. "
+			+ "Copy them there for you? You choose the folder next.", true))
+		{
+			Exe.GetUserInput('$cjLuaDir', D_Folder, "Custom Job Lua Target",
+				"Folder to copy them into. They go under <b>data\\Luafiles514\\Lua Files\\JobInfo</b> "
+			  + "inside whatever you choose, so pick your client folder to use them straight away. The "
+			  + "default puts them beside the patched exe, and you move them across with it.",
+				System.DirPath(Warp.TgtExe), {saveDefault: true});
+		}
 		Exe.GetUserInput('$showFailures', D_Choice, "Lua Error Display",
 			"How should custom Lua file loading errors be shown?",
 			'Popup',
@@ -2171,9 +2375,15 @@ CustomJobs.onApplied = function()
 	if (!Warp.TestMode && Exe.GetSavedInput('$copyCJLub'))
 	{
 		$$(_, 1.1, `Prepare the directory paths`)
+
+		/// The target defaults to a data folder beside the OUTPUT exe, which is where this has always
+		/// put them - NOT the client folder, despite what the old prompt implied. $cjLuaDir overrides
+		/// it. Falling back rather than requiring it keeps a profile or session that answered the
+		/// question before this option existed working exactly as it did.
 		const suffix = "/Luafiles514/Lua Files/JobInfo";
 		const srcDir = Warp.Path + "Inputs" + suffix;
-		let tgtDir = System.DirPath(Warp.TgtExe) + "/data" + suffix;
+		const root = Exe.GetSavedInput('$cjLuaDir') || System.DirPath(Warp.TgtExe);
+		let tgtDir = root + "/data" + suffix;
 
 		$$(_, 1.2, `Create the target directory`)
 		const ready = System.MkDir(tgtDir);

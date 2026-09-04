@@ -1,0 +1,226 @@
+diff --git a/conf/groups.yml b/conf/groups.yml
+index ce4d0b1..685be6a 100644
+--- a/conf/groups.yml
++++ b/conf/groups.yml
+@@ -77,6 +77,7 @@ Body:
+       homstats: true
+       showexp: true
+       showzeny: true
++      spbar: true # WARP0716 #34 - toggle own SP visibility in party (needs SHOW_PARTY_SP build)
+       whereis: true
+       # Feature commands
+       refresh: true
+diff --git a/src/custom/defines_pre.hpp b/src/custom/defines_pre.hpp
+index 93b1780..c23a5da 100644
+--- a/src/custom/defines_pre.hpp
++++ b/src/custom/defines_pre.hpp
+@@ -9,6 +9,17 @@
+  * For detailed guidance on these check http://rathena.org/wiki/SRC/config/
+  **/
+ 
+-
++/**
++ * WARP0716 issue #34 - SP bar for party members.
++ *
++ * Sends ZC_NOTIFY_HP_TO_GROUPM as 0x0BAB (22 bytes, hp/maxhp/sp/maxsp) instead
++ * of 0x080E (14 bytes, hp/maxhp). The 2025-07-16 client already dispatches
++ * 0x0BAB and extracts all five fields at the correct packed offsets, but its
++ * terminal handler at 0x00CF8A50 is an empty stub (`ret 0x14`), so an unpatched
++ * client parses the packet and discards it - party HP bars stop updating.
++ *
++ * REQUIRES the matching WARP client patch. Leave this off for stock clients.
++ **/
++#define SHOW_PARTY_SP
+ 
+ #endif /* CONFIG_CUSTOM_DEFINES_PRE_HPP */
+diff --git a/src/map/atcommand.cpp b/src/map/atcommand.cpp
+index f367e9b..1dc4b74 100644
+--- a/src/map/atcommand.cpp
++++ b/src/map/atcommand.cpp
+@@ -9176,6 +9176,19 @@ ACMD_FUNC(showexp)
+ 	return 0;
+ }
+ 
++#ifdef SHOW_PARTY_SP // WARP0716 #34 - toggle whether your SP is shared with the party
++ACMD_FUNC(spbar)
++{
++	sd->state.party_sp_hidden = !sd->state.party_sp_hidden;
++	clif_displaymessage(fd, sd->state.party_sp_hidden
++		? "Your SP is now hidden from the party."
++		: "Your SP is now shown to the party.");
++	if( sd->status.party_id )
++		clif_party_hp( *sd ); // push the change to nearby party members immediately
++	return 0;
++}
++#endif
++
+ ACMD_FUNC(showzeny)
+ {
+ 	if (sd->state.showzeny) {
+@@ -11725,6 +11738,9 @@ void atcommand_basecommands(void) {
+ 		ACMD_DEF(fakename),
+ 		ACMD_DEF(size),
+ 		ACMD_DEF(showexp),
++#ifdef SHOW_PARTY_SP // WARP0716 #34
++		ACMD_DEF(spbar),
++#endif
+ 		ACMD_DEF(showzeny),
+ 		ACMD_DEF(showdelay),
+ 		ACMD_DEF(autotrade),
+diff --git a/src/map/clif.cpp b/src/map/clif.cpp
+index 8306054..80c0e9b 100644
+--- a/src/map/clif.cpp
++++ b/src/map/clif.cpp
+@@ -8110,6 +8110,17 @@ void clif_party_hp( const map_session_data& sd ){
+ 	p.hp = sd.battle_status.hp;
+ 	p.maxhp = sd.battle_status.max_hp;
+ #endif
++#ifdef SHOW_PARTY_SP  // WARP0716 #34
++	if( sd.state.party_sp_hidden ){
++		// @spbar off: hide SP. maxsp stays non-zero so the client's coupled
++		// dual-bar render still fills the HP half (it gates BOTH halves on maxsp != 0).
++		p.sp = 0;
++		p.maxsp = 1;
++	}else{
++		p.sp = sd.battle_status.sp;
++		p.maxsp = sd.battle_status.max_sp;
++	}
++#endif
+ 
+ 	clif_send( &p, sizeof( p ), &sd, PARTY_AREA_WOS );
+ }
+@@ -8164,6 +8175,20 @@ void clif_hpmeter_single( const map_session_data& sd, uint32 id, uint32 hp, uint
+ 	p.hp = hp;
+ 	p.maxhp = maxhp;
+ #endif
++#ifdef SHOW_PARTY_SP  // WARP0716 #34
++	// Callers only have the subject's HP, so resolve the subject to fill SP.
++	// Without this the shared 0x0BAB struct would ship sp/maxsp as 0 and the
++	// bar would blank until the next clif_party_hp.
++	if( map_session_data* tsd = map_id2sd( id ); tsd != nullptr ){
++		if( tsd->state.party_sp_hidden ){   // @spbar off: hide SP, keep maxsp != 0 (see clif_party_hp)
++			p.sp = 0;
++			p.maxsp = 1;
++		}else{
++			p.sp = tsd->battle_status.sp;
++			p.maxsp = tsd->battle_status.max_sp;
++		}
++	}
++#endif
+ 
+ 	clif_send( &p, sizeof( p ), &sd, SELF );
+ }
+@@ -10743,6 +10768,49 @@ void clif_parse_WantToConnection(int32 fd, map_session_data* sd)
+ }
+ 
+ 
++#ifdef SHOW_PARTY_SP  // WARP0716 #34
++/**
++ * Re-push an arriving member's HP+SP to the other party members on their map.
++ *
++ * The inline push in clif_parse_LoadEndAck is too early on a first login: it arrives in the
++ * same batch as the member-online notification, and the client drops an update for a row it
++ * has not built yet, leaving that member's SP half empty until something moves their HP.
++ * Verified in game 2026-08-26 - the identical push paints correctly once the row exists, so
++ * this is a timing fix rather than another attempt at the same cause.
++ * @param id: the arriving player's id
++ */
++static TIMER_FUNC(clif_party_sp_repush){
++	map_session_data* sd = map_id2sd( id );
++
++	if( sd == nullptr || sd->status.party_id == 0 ){
++		return 0;
++	}
++
++	struct party_data* pd = party_search( sd->status.party_id );
++
++	if( pd == nullptr ){
++		return 0;
++	}
++
++	for( int32 i = 0; i < MAX_PARTY; i++ ){
++		map_session_data* psd = pd->data[i].sd;
++
++		if( psd != nullptr && psd != sd && psd->m == sd->m ){
++			clif_hpmeter_single( *psd, sd->id, sd->battle_status.hp, sd->battle_status.max_hp );
++			// ...and the other direction. The arriving client builds ITS party rows in the same
++			// batch, so the inline others->arrival push in LoadEndAck is dropped just as often as
++			// the arrival->others one was, and the newcomer saw every existing member with an
++			// empty SP half until that member's SP next moved. Measured 2026-09-02 with two
++			// clients; an @heal on the standing member filled the half in the same frame.
++			clif_hpmeter_single( *sd, psd->id, psd->battle_status.hp, psd->battle_status.max_hp );
++		}
++	}
++
++	return 0;
++}
++#endif
++
++
+ /// Notification from the client, that it has finished map loading and is about to display player's character (CZ_NOTIFY_ACTORINIT).
+ /// 007d
+ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
+@@ -10821,6 +10889,36 @@ void clif_parse_LoadEndAck(int32 fd,map_session_data *sd)
+ 	if(sd->status.party_id) {
+ 		party_send_movemap(sd);
+ 		clif_party_hp( *sd ); // Show hp after displacement [LuzZza]
++#ifdef SHOW_PARTY_SP  // WARP0716 #34
++		// clif_party_hp above only tells the OTHER members our HP+SP; it never sends
++		// us theirs. An idle party member already standing on the map therefore shows
++		// no SP bar until their next HP change. Push each same-map member's current
++		// HP+SP to us now (clif_hpmeter_single resolves the id to fill SP) so idle
++		// members fill in on load, matching what we broadcast about ourselves.
++		if( struct party_data* pd = party_search( sd->status.party_id ) ){
++			for( int i = 0; i < MAX_PARTY; i++ ){
++				map_session_data* psd = pd->data[i].sd;
++				if( psd != nullptr && psd != sd && psd->m == sd->m ){
++					clif_hpmeter_single( *sd, psd->id, psd->battle_status.hp, psd->battle_status.max_hp );
++					// ...and the mirror, which the block above was missing: tell THEM about US.
++					// clif_party_hp() above is PARTY_AREA_WOS, so it reaches nobody outside
++					// area_size, and a player already standing on the map is left showing the
++					// arriving member with an empty SP half (their gauge still holds the client
++					// patch's maxsp=1 seed) until the arrival's HP or SP next changes.
++					// Measured in game 2026-08-26 with two clients: whoever logged in SECOND saw
++					// everything, and the one already standing there saw no SP for the newcomer
++					// until an @heal moved it, at which point the bar filled in the same frame.
++					clif_hpmeter_single( *psd, sd->id, sd->battle_status.hp, sd->battle_status.max_hp );
++				}
++			}
++		}
++
++		// ...and once more shortly after. On a FIRST login the loop above is too early:
++		// it arrives with the member-online notification and the client drops an update
++		// for a row it has not built yet. Harmless when the inline push already worked,
++		// because it writes the same values.
++		add_timer( gettick() + 1000, clif_party_sp_repush, sd->id, 0 );
++#endif
+ 	}
+ 
+ 	if( sd->bg_id ) clif_bg_hp(sd); // BattleGround System
+diff --git a/src/map/packets_struct.hpp b/src/map/packets_struct.hpp
+index 7673ec1..e79051d 100644
+--- a/src/map/packets_struct.hpp
++++ b/src/map/packets_struct.hpp
+@@ -5117,7 +5117,7 @@ struct PACKET_ZC_NOTIFY_POSITION_TO_GROUPM {
+ } __attribute__((packed));
+ DEFINE_PACKET_HEADER(ZC_NOTIFY_POSITION_TO_GROUPM, 0x0107);
+ 
+-#if PACKETVER_ZERO_NUM >= 20210504
++#if PACKETVER_ZERO_NUM >= 20210504 || defined(SHOW_PARTY_SP)  // WARP0716 #34
+ struct PACKET_ZC_NOTIFY_HP_TO_GROUPM {
+ 	int16 PacketType;
+ 	uint32 AID;
+diff --git a/src/map/pc.hpp b/src/map/pc.hpp
+index 4cb5e93..01a81e9 100644
+--- a/src/map/pc.hpp
++++ b/src/map/pc.hpp
+@@ -405,6 +405,9 @@ public:
+ 		uint32 showdelay :1;
+ 		uint32 showexp :1;
+ 		uint32 showzeny :1;
++#ifdef SHOW_PARTY_SP // WARP0716 #34 - @spbar hides own SP from the party
++		uint32 party_sp_hidden :1;
++#endif
+ 		uint32 noask :1; // [LuzZza]
+ 		uint32 trading :1; //[Skotlex] is 1 only after a trade has started.
+ 		uint32 deal_locked :2; //1: Clicked on OK. 2: Clicked on TRADE

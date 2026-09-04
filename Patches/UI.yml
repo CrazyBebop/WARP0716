@@ -248,6 +248,12 @@ CustomUI:
             author : Stingor
             desc : Brings back the checkbox old Ragexe builds had in the top right corner of the ALT+S Skill Tree, and the behaviour it controlled -- while it is ticked, simply hovering a skill pops the skill detail window next to the cursor instead of having to right-click it. The client still owns the option (Show_SkillDescript, saved in OptionInfo.lua), its command handler and the whole display code, which was merely rebound to the right-click gesture -- this patch re-creates the missing checkbox control and the missing hover branch. Unticked, the client behaves exactly as before, right-click included.
 
+        - ShowPartySP:
+            title : Party HP/SP Bars (Reforged)
+            recommend : no
+            author : CrazyBebop
+            desc : "Splits each party member's bar into an HP (top) and SP (bottom) half and draws the SP number beside it, in the party window and on the detached mini widgets. Optionally sets the HP and SP bar colours, with your own row separate from everyone else's, so you are easy to find in a full party. Requires the matching rAthena change (SHOW_PARTY_SP) so the server sends the 22-byte 0x0BAB party packet with sp/maxsp."
+
         - HideZeroDateInGuildWin:
             title : Hide Zero Date in Guild Window
             recommend : no

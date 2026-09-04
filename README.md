@@ -1,6 +1,6 @@
 # WARP0716
 
-![The WARP0716 patcher](docs/images/warp0716_patcher.png)
+![The WARP0716 patcher](.github/images/warp0716_patcher.png)
 
 ## Development Status - Active Again
 
@@ -30,7 +30,7 @@ The easiest way to play is **WARPGATE**, a one-click downloader and updater.
 
 Unzip it and run it. WARPGATE downloads the full 2025-07-16 client for you, keeps the English translation up to date (powered by [llchrisll/ROenglishRE](https://github.com/llchrisll/ROenglishRE/)), and updates itself. No manual EXE patching, no hunting down GRFs, no ClientGenerator steps. Download, run, and play.
 
-![WARPGATE](docs/images/warpgate.png)
+![WARPGATE](.github/images/warpgate.png)
 
 That's all most people need. The sections below are for server operators and tinkerers who want to build or customize their own client.
 
@@ -40,7 +40,9 @@ See **[CHANGELOG.md](CHANGELOG.md)** for every patch and update, newest first.
 
 The latest is the **July 29, 2026 Ragexe update**: the exit button on server select now works, switching to a different server mid-session is fixed, start-up is leaner with no 8 server limit, and a broken `clientinfo.xml` now tells you what is wrong. Those fixes are in the executable itself, so get the new one through **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)** (the **RAGEXE** tab) rather than by re-WARPing an older exe.
 
-**Custom Jobs Guide:** [HTML](docs/CustomJobs/CUSTOM_JOBS_GUIDE.html) | [Online](https://legacygamers.net/docs/public/customjobs-reforged/)
+**Guides:** [warp.legacygamers.net/warp0716](https://warp.legacygamers.net/warp0716/) (Custom Jobs, Custom Buttons, Party HP/SP Bars). The guides live on the website, not in this repository. The two hair guides, Custom Hairstyles and Hair Colours, are coming with the hair patches.
+
+**Examples:** `examples/` holds the Custom Jobs example job (a drop-in `data/` tree: Lua, sprites, IMFs, icons) with its annotated Lua reference, and the Party HP/SP Bars server patch. Each guide on the website links the folder it needs.
 
 ## Advanced: Patch Your Own EXE with WARP
 

@@ -1,0 +1,884 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 CrazyBebop                                          *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CrazyBebop                                             *
+*   Created Date  : 2026-07-20                                             *
+*   Last Modified : 2026-09-02                                             *
+*                                                                          *
+*   Description   : Party members show an SP bar under their HP bar, with  *
+*                   its own number, on the 2025-07-16 client. Requires the *
+*                   matching rAthena change (SHOW_PARTY_SP) so the server   *
+*                   sends ZC_NOTIFY_HP_TO_GROUPM as 0x0BAB (adds sp/maxsp). *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Give each party-member row a split HP (top) / SP (bottom) bar with an
+///        SP number, on the 2025-07-16 client.
+///
+/// The client already dispatches 0x0BAB (the 22-byte HP+SP party packet) and
+/// extracts all five fields at the correct packed offsets, but its terminal
+/// handler at 0x00CF8A50 is an empty stub (RET 0x14), so an unpatched client
+/// parses the packet and throws it away. With the matching rAthena change
+/// (SHOW_PARTY_SP) the server sends 0x0BAB in place of the HP-only 0x080E.
+///
+/// This patch, with no DLL and no recv hook, has five parts:
+///   1. redirectPacket    - repoints the 0x0BAB dispatch slot at the working
+///                          0x080E handler, so HP still updates over the
+///                          SP-carrying packet (AID/hp/maxhp at +2/+6/+0x0A line up).
+///   2. enlargeGauge      - grows each party gauge's render surface from 60x5 to
+///                          60x12 AT CREATION so the two stacked bars are full
+///                          height. (Resizing at runtime instead draws out of
+///                          bounds and crashes DrawFilledRect, so the surface is
+///                          sized once when it is allocated.)
+///   3. installInitCave   - starts every gauge in dual-bar mode (+0x9C = 1) with a
+///                          max-SP seed of 1, so the split shows from creation and
+///                          the HP half still fills before real SP arrives (the
+///                          dual renderer gates BOTH halves on maxsp != 0).
+///   4. installStoreCave  - on each per-member gauge update stores sp/maxsp into
+///                          the gauge's spare +0xA8/+0xAC. The server never sends
+///                          0x0BAB about yourself, so the self row reads SP from the
+///                          local status block; other rows read it from the packet.
+///   5. installNumberCave - draws "sp/maxsp" on the blue (SP) half, mirroring how
+///                          the client draws its HP number over the green half. The
+///                          self row refreshes SP from local status every frame so
+///                          it is right immediately; rows with no real SP are skipped.
+///
+/// CUIProgressBar::Render draws HP on the top half (+0xA0/+0xA4) and SP on the
+/// bottom half (+0xA8/+0xAC) on its own once the gauge is in dual-bar mode, so
+/// only the SP *number* needs an extra draw (part 5); the bars are automatic.
+///
+ShowPartySP = function(_)
+{
+	$$(_, 1, `Show party member SP bar`);
+
+	// Optional: the sp/maxsp number. The self-SP refresh and the bar itself are installed
+	// either way; only the number's DrawText is gated.
+	//
+	// ★★★★★ A CHOICE, NOT A BOOL, AND NOT BY PREFERENCE.
+	// This has to read positively - "Hide the ..." with Yes / No buttons made Yes mean fewer
+	// things, and the body then had to talk about ON and OFF at a control that has neither.
+	// But a positive D_Bool is unsafe: WARP's console mode returns FALSE for an unset input,
+	// so a headless profile build would silently lose the number.
+	//
+	// `saveDefault: true` looks like the fix and is NOT: there is no D_Bool serialiser behind
+	// it, so the answer is written to LastSession.yml as `type: 10` (D_Text) with an EMPTY
+	// data blob, and what comes back is not the boolean that was clicked. Clicking Yes then
+	// drew no numbers. No other D_Bool in this tree passes an options object; this is why.
+	//
+	// D_Choice returns the chosen display STRING, and false on cancel. So the wording stays
+	// positive AND every false-ish path lands on the safe answer, because false is never
+	// equal to the hide string.
+	const NUM_HIDE = "Bar only, no number";
+	const numPick = Exe.GetUserInput('$partySPNumber', D_Choice,
+		"SP number",
+		"Draw <b>sp / maxsp</b> beside each party member's SP bar?",
+		"Show the number",
+		{choices: ["Show the number", NUM_HIDE]});
+	const showNumber = (numPick !== NUM_HIDE);
+
+	const col = ShowPartySP.askColours(_);
+
+	ShowPartySP.redirectPacket(_);
+	ShowPartySP.installSpTable(_);
+	ShowPartySP.installPacketCave(_);
+	ShowPartySP.enlargeGauge(_);
+	ShowPartySP.installInitCave(_);
+	ShowPartySP.installStoreCave(_);
+	ShowPartySP.installNumberCave(_, showNumber, col);
+
+	ShowPartySP.growRowHeight(_);
+
+	// Same split HP/SP bar on the detached mini party widgets (dragged-out members).
+	ShowPartySP.enlargeMiniGauge(_);
+	ShowPartySP.installMiniInitCave(_);
+	ShowPartySP.installMiniStoreCave(_, col);
+
+	ShowPartySP.offerBackgrounds(_);
+
+	return true;
+};
+
+//==========================================================================
+// Bar colours. CUIProgressBar::Render reads four colour fields off each gauge, so
+// each one can be set per row without touching any other window:
+//
+//     +0x80  the empty track behind both halves      native 0x444444
+//     +0x84  HP fill                                 native 0x25EA16 (green)
+//     +0x88  SP fill                                 native 0xDB651D (blue)
+//     +0x8C  HP fill below the low-HP threshold      native 0x1616EA (red)
+//
+// D_Color returns 0x00BBGGRR, which is exactly the order these fields want, so a
+// picked colour goes straight in with no reordering.
+//
+// ★★★★★ NEVER set these by editing the defaults in the constructor at
+// 0x008355F0. That ctor is CUIAnimatedComponent's, shared with C3dActorPC and
+// CUIButton, so its literals are a pooled source: changing them recolours gauges
+// all over the client. Same trap as IncrZoom's shared 480.0f and the party layout
+// table. Per-gauge writes in our own caves only.
+//
+// +0x8C is deliberately NOT offered. It is the colour a bar turns below 25% HP
+// (the threshold is a hard 25.0 at 0x0102FCD8), so it is a warning, not a theme;
+// leaving it native keeps the warning reading as one whatever else is picked.
+// +0x80 is not offered either - it is the unfilled track, and recolouring that
+// makes an empty bar read as a full one.
+//
+// ★★ The gate is a D_Choice, never a D_Bool with saveDefault. There is no
+// D_Bool serialiser behind that flag, so the answer lands in LastSession.yml as
+// `type: 10` with an empty data blob and a Yes reads back as not-true - that cost
+// a round of "pressing yes does nothing" already. D_Choice returns the display
+// STRING and false on cancel or in an unattended build, and false never equals the
+// pick string, so every odd path lands on native.
+//==========================================================================
+ShowPartySP.askColours = function(_)
+{
+	const NATIVE_HP = ShowPartySP.NATIVE_HP;
+	const NATIVE_SP = ShowPartySP.NATIVE_SP;
+	const off = {on: false, hpSelf: NATIVE_HP, hpOther: NATIVE_HP,
+	                        spSelf: NATIVE_SP, spOther: NATIVE_SP};
+
+	const PICK = "Pick my own";
+	const gate = Exe.GetUserInput('$partyBarColors', D_Choice,
+		"Bar colours",
+		"Choose the colours of the party HP and SP bars?<br><br>"
+	+   "Keeping the native colours is the stock look: <b>green</b> HP over <b>blue</b> SP. "
+	+   "Picking your own lets your row differ from everyone else's, which makes you easy to "
+	+   "find in a full party.<br><br>"
+	+   "Either way a bar below 25% HP still turns <b>red</b>, so the low-HP warning is never lost.",
+		"Keep the native colours",
+		{choices: ["Keep the native colours", PICK]});
+
+	if (gate !== PICK)
+		return off;
+
+	const read = function(key, title, desc, native)
+	{
+		const v = Exe.GetUserInput(key, D_Color, title, desc, native, ROC.ClrSettings);
+		return (v === false) ? native : (v >>> 0);
+	};
+
+	const col = {
+		on: true,
+		hpSelf : read('$partyHPSelfColor',  "Your HP bar colour",
+			"The top half of <b>your own</b> row in the party window.", NATIVE_HP),
+		hpOther: read('$partyHPOtherColor', "Other members' HP bar colour",
+			"The top half of <b>everyone else's</b> row.", NATIVE_HP),
+		spSelf : read('$partySPSelfColor',  "Your SP bar colour",
+			"The bottom half of <b>your own</b> row.", NATIVE_SP),
+		spOther: read('$partySPOtherColor', "Other members' SP bar colour",
+			"The bottom half of <b>everyone else's</b> row.", NATIVE_SP)
+	};
+
+	// Nothing actually moved off native? Then emit no colour code at all, so the build
+	// stays byte-identical to a native one and the extra bytes cost nothing.
+	col.on = (col.hpSelf !== NATIVE_HP) || (col.hpOther !== NATIVE_HP)
+	      || (col.spSelf !== NATIVE_SP) || (col.spOther !== NATIVE_SP);
+
+	if (col.on)
+		$$(_, 1.05, `Bar colours -> HP ${ShowPartySP.hexc(col.hpSelf)}/${ShowPartySP.hexc(col.hpOther)}, `
+		          + `SP ${ShowPartySP.hexc(col.spSelf)}/${ShowPartySP.hexc(col.spOther)} (self/others)`);
+	else
+		$$(_, 1.05, `Bar colours -> all four left native, no colour code emitted`);
+
+	return col;
+};
+
+/// 0x00BBGGRR -> a readable #RRGGBB for the log line. The stored order is the
+/// picker's, not the printer's, so the bytes are reversed on the way out.
+ShowPartySP.hexc = function(v)
+{
+	v = v >>> 0;
+	const p = n => (n & 0xFF).toString(16).padStart(2, "0").toUpperCase();
+	return "#" + p(v) + p(v >>> 8) + p(v >>> 16);
+};
+
+//==========================================================================
+// The mini widget's background is a TEXTURE, so the exe cannot make room for
+// the taller bar. The three bundled TGAs are the stock ones grown 37 -> 44 by
+// duplicating a fill row, which leaves both border lines and all four rounded
+// corners exactly as Gravity drew them.
+//
+// Asked LAST, after every byte edit is already staged, so cancelling here
+// cannot leave the patch half applied. The folder is the switch: unset means
+// no, which is also what a profile-driven headless build produces.
+//==========================================================================
+ShowPartySP.offerBackgrounds = function(_)
+{
+	if (Warp.TestMode)
+		return;
+
+	if (!Exe.GetUserInput('$copyPartyMiniBg', D_Bool, "Copy the mini party backgrounds",
+			"On the detached mini party widgets the taller bar ends flush with the frame, "
+		  + "because their background is a texture and the patch cannot resize it.<br><br>"
+		  + "Copy the three bundled backgrounds that have room for it? You pick the folder next."
+		  + "<br><br>Choosing No changes nothing else: the bars still split, they just sit "
+		  + "tight against the bottom edge.",
+			true))
+		return;
+
+	Exe.GetUserInput('$partyMiniBgDir', D_Folder, "Where to put the backgrounds",
+		"Folder to copy them into. They go under <b>data\\texture\\...\\renewalparty</b> "
+	  + "inside whatever you choose, so pick your client folder to use them straight away. The "
+	  + "default puts them beside the patched exe, and you move them across with it.<br><br>"
+	  + "They are loose files, so deleting that folder puts the stock look back.",
+		System.DirPath(Warp.TgtExe), {saveDefault: true});
+};
+
+///
+/// \brief Copy the bundled backgrounds once the exe has been written.
+///
+/// Pure convenience. A missing or empty target means skip, never fail: the patch's edits are
+/// already in the exe by the time this runs, and an unanswered input in a headless build must
+/// not turn into a broken client.
+///
+/// ★ onApplied is called with `this` UNBOUND, so everything here is reached through the
+/// ShowPartySP name rather than `this`.
+///
+ShowPartySP.onApplied = function()
+{
+	const _ = 'ShowPartySP.onApplied';
+
+	if (Warp.TestMode)
+		return;
+
+	$$(_, 1.1, `The target folder is the switch - unset means the operator said no`)
+	const root = Exe.GetSavedInput('$partyMiniBgDir');
+	if (!root)
+		return;
+
+	$$(_, 1.2, `Build the client's own texture path`)
+
+	/// The interface folder is NOT the Korean text - it is the raw CP949 bytes
+	/// c0 af c0 fa c0 ce c5 cd c6 e4 c0 cc bd ba, which a Western box renders as mojibake, and
+	/// that mojibake IS the name. Written as char codes because WARP narrows strings to paths
+	/// through the ANSI codepage, so each code point below reaches the filesystem as that single
+	/// byte. Same trick as IncrNewCharHairs.onApplied.
+	const UI = String.fromCharCode(0xC0,0xAF,0xC0,0xFA,0xC0,0xCE,0xC5,0xCD,0xC6,0xE4,0xC0,0xCC,0xBD,0xBA);
+	const leaf = "/data/texture/" + UI + "/renewalparty";
+
+	const srcDir = Warp.Path + "Inputs/PartyMiniBg" + leaf;
+	const tgtDir = root + leaf;
+
+	$$(_, 2.1, `Create it and copy all three widget sizes`)
+	if (!System.MkDir(tgtDir))
+		return;
+
+	for (const name of ["img_partymini_bg.tga",
+	                    "img_partymini_bg_mini.tga",
+	                    "img_partymini_bg_maxmini.tga"])
+	{
+		System.Copy(srcDir + "/" + name, tgtDir);
+	}
+};
+
+//==========================================================================
+// Build-specific constants (2025-07-16 client). validate() pins the build.
+//==========================================================================
+ShowPartySP.addr = {
+	// dispatch table 0x00CAA2E0 indexed by (id-0x73); slot for 0x0BAB
+	slot0BAB   : 0x00CACFC0,
+	stub0BAB   : 0x00CA2D94,   // parses 5 fields then calls the RET-0x14 stub
+	handler080E: 0x00CA2CD1,   // real HP handler (AID/hp/maxhp at +2/+6/+0x0A)
+
+	// per-member gauge update: `mov ecx,[edi+esi*4+0x128]` / `call SetValue`
+	storeHook  : 0x007076C5,   // the CALL to patch (E8 rel32)
+	setValue   : 0x00863F10,   // CUIGauge::SetValue(cur,max) -> +0xA0/+0xA4, redraw
+
+	// UIPartyWnd::OnDraw, right after the HP-number DrawText
+	drawHook   : 0x0070467D,   // `mov eax,[esi+0x48]` / `mov [ebp-0x588],eax`
+	drawRet    : 0x00704686,   // resume point after the 9 displaced bytes
+	sprintf    : 0x00529850,   // format(&buf, fmt, a, b) - cdecl
+	drawText   : 0x00A25A70,   // CUIComponent::DrawText(this; x,y,str,len,...) - callee-clean
+	fmtPercent : 0x01010C20,   // "%d/%d"
+
+	pktBuffer  : 0x015E8198,   // dispatch buffer: id +0, AID +2, hp +6, maxhp +0x0A
+	bufSP      : 0x015E81A6,   //   sp    (buffer + 0x0E)
+	bufMaxSP   : 0x015E81AA,    //   maxsp (buffer + 0x12)
+
+	gAccountId : 0x015FB9A4,   // own account id (the (6,0x22) self test compares against this)
+	selfHP     : 0x015FF908,   // own hp    (no longer used for the self test since 2026-09-01)
+	selfTestSite : 0x007046A5, // OnDraw's own `mov eax,[esi+0xC] / cmp eax,[gAccountId]`: member AID at +0xC
+	bufId      : 0x015E8198,   // dispatch buffer: packet id (u16)
+	bufAID     : 0x015E819A,   // dispatch buffer: AID (u32) - the 0x080E handler's first instruction pushes it
+	pktHook    : 0x00CA2CD1,   // 0x080E handler entry (every 0x0BAB lands here after redirectPacket)
+	pktRet     : 0x00CA2CD7,   // resume after the 6 displaced bytes (`push dword [bufAID]`)
+	spSlots    : 12,           // MAX_PARTY: one {AID, sp, maxsp} row per member
+	selfSP     : 0x015FF910,   // own sp    (local status block; server never sends 0x0BAB about self)
+	selfMaxSP  : 0x015FF914,    // own maxsp
+
+	// InitControls, the +0x128 gauge-creation loop: `push 5 / push 0x3c / call SetRenderTargetSize`
+	// sizes each party gauge's render surface to 60x5. Growing the height here (at creation) lets
+	// the dual-bar render draw two full bars; changing height at runtime instead draws out of bounds.
+	gaugeSizeCall : 0x00702BE8,
+	gaugeHeight   : 0x0C,      // 12px: HP top half + SP bottom half
+
+	gaugeInitCall      : 0x00702BEE,   // the `call SetRenderTargetSize` in that same loop
+	setRenderTargetSize: 0x00A1CB70,   // CUIComponent::SetRenderTargetSize(width, height)
+
+	// UIPartyInfoWnd::OnEvent, `mov dword [edi+0x124], 23`. window+0x124 is used TWICE in
+	// UIPartyWnd::OnDraw and both uses matter here:
+	//     rowY = window[0x124] * rowIndex + 0x11              <- the row stride
+	//     DrawFilledRect(0, rowY+2, window[0x14], window[0x124])  <- the blue selection bar
+	// so one constant sets both how far apart rows sit and how tall the highlight is.
+	rowHeightSet   : 0x00706048,   // mov dword [edi+0x124], 23   (UIPartyInfoWnd::OnEvent)
+	rowGrow        : 0x0C - 5,     // +7, exactly how much taller the gauge got
+
+	// ★★★★★ DO NOT ALSO PATCH THE InitControls LAYOUT TABLE.
+	// 0x00702A55 writes 34 and 0x00702A70 writes 27 into the {x, ?, rowHeight} table that
+	// window+0x124 is reloaded from. Growing those looks like the tidy fix - make every writer
+	// agree - and it is wrong: that table is shared with the compact/mini list layout, so raising
+	// it merged the mini party widget's split HP/SP bar back into a single bar AND crashed the
+	// client. Same failure this project already recorded once: a gauge resized without its render
+	// surface draws out of bounds. Tried and reverted 2026-08-25 on the owner's report.
+
+	// --- detached mini party widget (UIPartyMiniWnd); its gauge lives at window+0xC0 ---
+	miniGaugeSize : 0x007085F6,   // `push 5` (SetRenderTargetSize height) in CreateProgressBar
+	miniAddChild  : 0x00708627,   // `call AddChildDirect` - hook for the mini init cave
+	miniAddChildFn: 0x00A1B780,   // CUIComponent::AddChildDirect
+	miniStoreHook : 0x0070B5DC,   // `mov ecx,ebx ; call InvalidateRecursive` in EventHandler case (6,0x22)
+	miniInvalidate: 0x00A23360,   // CUIComponent::InvalidateRecursive
+	miniStoreRet  : 0x0070B5E3     // resume point after the 7 displaced bytes
+};
+
+// Native party-SP fill colour, measured live from a gauge's +0x88 field. Its
+// format (0x00BBGGRR) is the SAME order WARP's D_Color picker returns, so a
+// picked colour writes straight into +0x88 with no reordering. CUIGauge::
+// RenderProgressBars reads this per-gauge, so self and other rows can differ.
+ShowPartySP.NATIVE_SP = 0x00DB651D;
+
+// Native party-HP fill colour, read out of that same constructor: +0x84 is seeded
+// with 0x25EA16 (a bright green) and +0x8C with 0x1616EA (the below-25% red).
+// Neither is party-specific; every CUIProgressBar in the client starts here.
+ShowPartySP.NATIVE_HP = 0x0025EA16;
+
+//==========================================================================
+// Tiny assembler: emit / dword / labels / rel32 call+jmp / rel8 jcc.
+//==========================================================================
+ShowPartySP.asm = function()
+{
+	const bytes  = [];
+	const labels = {};
+	const fixups = [];   // {pos, size, target, rel8?}
+
+	const put32 = function(out, pos, v)
+	{
+		v = v >>> 0;
+		out[pos]     =  v         & 0xFF;
+		out[pos + 1] = (v >>> 8)  & 0xFF;
+		out[pos + 2] = (v >>> 16) & 0xFF;
+		out[pos + 3] = (v >>> 24) & 0xFF;
+	};
+
+	const api = {
+		bytes,
+		emit(...vs) { for (const v of vs) bytes.push(v & 0xFF); },
+		dword(v)    { const p = bytes.length; bytes.push(0,0,0,0); put32(bytes, p, v); },
+		label(n)    { labels[n] = bytes.length; },
+		// E8/E9 rel32 to an absolute virtual address OR a label
+		rel32(op, target) { bytes.push(op); const pos = bytes.length; bytes.push(0,0,0,0); fixups.push({pos, target}); },
+		call(t)     { api.rel32(0xE8, t); },
+		jmp(t)      { api.rel32(0xE9, t); },
+		// 0F 8x rel32 conditional to a label
+		jcc32(op, label) { bytes.push(0x0F, op); const pos = bytes.length; bytes.push(0,0,0,0); fixups.push({pos, target: label}); },
+		// 7x rel8 conditional to a label (short)
+		jcc8(op, label)  { bytes.push(op); const pos = bytes.length; bytes.push(0); fixups.push({pos, target: label, rel8: true}); },
+		finish(baseVir) {
+			const out = bytes.slice();
+			for (const f of fixups)
+			{
+				const tv = (typeof f.target === "string") ? (baseVir + labels[f.target]) : f.target;
+				if (f.rel8)
+				{
+					// ★★★★★ A rel8 that does not reach wraps SILENTLY and lands the jump
+					// somewhere inside our own cave. Every short jump here hops a branch
+					// whose length changes with the options picked, so the margin is not
+					// a constant - check it rather than trusting it.
+					const d = tv - (baseVir + f.pos + 1);
+					if (d < -128 || d > 127)
+						throw Error(`ShowPartySP: short jump to '${f.target}' is ${d} bytes, out of rel8 range`);
+					out[f.pos] = d & 0xFF;
+				}
+				else
+					put32(out, f.pos, tv - (baseVir + f.pos + 4));
+			}
+			return out.map(v => (v & 0xFF).toString(16).padStart(2, "0")).join(" ");
+		}
+	};
+	return api;
+};
+
+ShowPartySP.assertBytes = function(label, virAddr, expected)
+{
+	const phy = Exe.Vir2Phy(virAddr, CODE);
+	if (phy < 0)
+		throw Error(`ShowPartySP: ${label} not mapped (0x${virAddr.toString(16)})`);
+	const size   = expected.replace(/\s+/g, "").length / 2;
+	const actual = Exe.GetHex(phy, size).toLowerCase().replace(/\s+/g, "");
+	if (actual !== expected.toLowerCase().replace(/\s+/g, ""))
+		throw Error(`ShowPartySP: ${label} mismatch, got ${actual}`);
+	return phy;
+};
+
+//==========================================================================
+// 1. Repoint the 0x0BAB dispatch slot at the working 0x080E handler (HP).
+//==========================================================================
+ShowPartySP.redirectPacket = function(_)
+{
+	const A   = ShowPartySP.addr;
+	// The dispatch table lives in a data section, so let WARP auto-detect the
+	// segment (as ReduceExpensiveUIRender does for its vtable slot) rather than
+	// forcing CODE.
+	const phy = Exe.Vir2Phy(A.slot0BAB);
+	if (phy < 0)
+		throw Error('ShowPartySP: 0x0BAB dispatch slot not mapped');
+
+	const cur = Exe.GetUint32(phy);
+	if (cur === A.handler080E)
+	{
+		$$(_, 1.1, `0x0BAB already redirected`);
+		return;
+	}
+	if (cur !== A.stub0BAB)
+		throw Error(`ShowPartySP: unexpected 0x0BAB slot target 0x${cur.toString(16)}`);
+
+	Exe.SetUint32(phy, A.handler080E);
+	$$(_, 1.1, `0x0BAB -> 0x080E handler (party HP over the SP packet)`);
+};
+
+//==========================================================================
+// 1b. Enlarge the party gauge surface at creation so dual bars are full-size.
+//==========================================================================
+ShowPartySP.enlargeGauge = function(_)
+{
+	const A = ShowPartySP.addr;
+	const phy = ShowPartySP.assertBytes("gauge SetRenderTargetSize", A.gaugeSizeCall, "6A 05 6A 3C");
+	Exe.SetHex(phy + 1, A.gaugeHeight.toString(16).padStart(2, "0"));   // push 5 -> push 0x0C
+	$$(_, 1.15, `Party gauge surface height 5 -> ${A.gaugeHeight} (two full bars)`);
+};
+
+//==========================================================================
+// 1c. Init cave: every party gauge starts in dual-bar mode so the bar is
+//     split HP-top / SP-bottom from the moment it exists (not only after an
+//     HP update). The dual renderer needs a non-zero max-SP for the HP half
+//     to fill, so seed max-SP=1; the store cave overwrites it with the real
+//     value on the first update.
+//==========================================================================
+ShowPartySP.installInitCave = function(_)
+{
+	const A = ShowPartySP.addr;
+
+	const relToSRT = (A.setRenderTargetSize - (A.gaugeInitCall + 5)) >>> 0;
+	const expect = "E8 " + [0,8,16,24].map(s => ((relToSRT >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ");
+	const hookPhy = ShowPartySP.assertBytes("gauge init (call SetRenderTargetSize)", A.gaugeInitCall, expect);
+
+	const a = ShowPartySP.asm();
+	// on entry: ecx = the freshly-created gauge, stack args (width,height) still set for SetRenderTargetSize
+	a.emit(0xC7, 0x81); a.dword(0x9C); a.emit(0x01, 0x00, 0x00, 0x00);   // mov dword [ecx+0x9C],1  (dual mode)
+	a.emit(0xC7, 0x81); a.dword(0xAC); a.emit(0x01, 0x00, 0x00, 0x00);   // mov dword [ecx+0xAC],1  (max-SP seed)
+	a.jmp(A.setRenderTargetSize);                                        // tail-call the original
+
+	const [cavePhy, caveVir] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(cavePhy, a.finish(caveVir));
+
+	const rel = (caveVir - (A.gaugeInitCall + 5)) >>> 0;
+	Exe.SetHex(hookPhy, "E8 " + [0,8,16,24].map(s => ((rel >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" "));
+
+	$$(_, 1.17, `Gauge init cave @ 0x${caveVir.toString(16).toUpperCase()} (always dual)`);
+};
+
+//==========================================================================
+// 2. Store cave: sp/maxsp -> gauge +0xA8/+0xAC and +0x9C=1 (dual bar).
+//    Hook = the case-0x22 per-member `call CUIGauge::SetValue`.
+//==========================================================================
+ShowPartySP.le32 = function(v)
+{
+	return [0, 8, 16, 24].map(sh => ((v >>> sh) & 0xFF).toString(16).padStart(2, "0")).join(" ").toUpperCase();
+};
+
+//==========================================================================
+// 1c. The SP table: {AID, sp, maxsp} x MAX_PARTY, in .xdiff, zeroed.
+//
+// Until 2026-09-02 a member's sp/maxsp lived ONLY in the party-window gauge that
+// the (6,0x22) store cave wrote into. The window is built on first open and rebuilt
+// on every open, and its gauges start from the init cave's maxsp=1 seed, so any SP
+// that arrived before the window existed (every member, on login) or before a
+// reopen was gone, and the row showed an empty SP half until that member's SP next
+// moved. Measured 2026-09-02 with two clients: a same-map warp filled the half only
+// while the window was already open, and closing + reopening emptied it again.
+// Keeping the values here, keyed by AID and written at PACKET time, lets the draw
+// cave restore any row from the record it already identifies by [esi+0xC].
+//==========================================================================
+ShowPartySP.installSpTable = function(_)
+{
+	const A = ShowPartySP.addr;
+	const size = A.spSlots * 12;
+	const [phy, vir] = Exe.Allocate(size, 0x10);
+	Exe.SetHex(phy, "00 ".repeat(size).trim());          // all slots empty (AID 0)
+	ShowPartySP.spTable    = vir;
+	ShowPartySP.spTableEnd = vir + size;
+	$$(_, 1.15, `SP table @ 0x${vir.toString(16).toUpperCase()} (${A.spSlots} slots)`);
+};
+
+//==========================================================================
+// 1d. Packet cave: at the 0x080E handler entry, for a 0x0BAB packet, record the
+//     sender's sp/maxsp in the table. Runs whether or not any window exists.
+//     Hook = the handler's first instruction, `push dword [bufAID]` (6 bytes).
+//==========================================================================
+ShowPartySP.installPacketCave = function(_)
+{
+	const A = ShowPartySP.addr;
+	const T = ShowPartySP.spTable, E = ShowPartySP.spTableEnd;
+	const displaced = "FF 35 " + ShowPartySP.le32(A.bufAID);            // push dword [bufAID]
+	const hookPhy = ShowPartySP.assertBytes("packet hook (push [bufAID])", A.pktHook, displaced);
+	const a = ShowPartySP.asm();
+	// Only a 0x0BAB carries sp/maxsp; a stock 0x080E (14 bytes) would leave zeros
+	// past its end, which is harmless, but a real id check costs nine bytes.
+	a.emit(0x66, 0x81, 0x3D); a.dword(A.bufId); a.emit(0xAB, 0x0B);     // cmp word [bufId], 0x0BAB
+	a.jcc32(0x85, "done");                                              // jne done
+	a.emit(0xA1); a.dword(A.bufAID);                                    // mov eax,[bufAID]
+	a.emit(0x85, 0xC0);                                                 // test eax,eax
+	a.jcc32(0x84, "done");                                              // je done
+	a.emit(0xB9); a.dword(T);                                           // mov ecx, TABLE
+	a.label("find");
+	a.emit(0x39, 0x01);                                                 // cmp [ecx],eax
+	a.jcc8(0x74, "store");                                              // je store
+	a.emit(0x83, 0xC1, 0x0C);                                           // add ecx,12
+	a.emit(0x81, 0xF9); a.dword(E);                                     // cmp ecx, END
+	a.jcc8(0x72, "find");                                               // jb find
+	a.emit(0xB9); a.dword(T);                                           // mov ecx, TABLE   (not present: first empty slot)
+	a.label("empty");
+	a.emit(0x83, 0x39, 0x00);                                           // cmp dword [ecx],0
+	a.jcc8(0x74, "new");                                                // je new
+	a.emit(0x83, 0xC1, 0x0C);                                           // add ecx,12
+	a.emit(0x81, 0xF9); a.dword(E);                                     // cmp ecx, END
+	a.jcc8(0x72, "empty");                                              // jb empty
+	a.emit(0xB9); a.dword(T);                                           // mov ecx, TABLE   (full: slot 0)
+	a.label("new");
+	a.emit(0x89, 0x01);                                                 // mov [ecx],eax    (AID)
+	a.label("store");
+	a.emit(0xA1); a.dword(A.bufSP);                                     // mov eax,[bufSP]
+	a.emit(0x89, 0x41, 0x04);                                           // mov [ecx+4],eax
+	a.emit(0xA1); a.dword(A.bufMaxSP);                                  // mov eax,[bufMaxSP]
+	a.emit(0x89, 0x41, 0x08);                                           // mov [ecx+8],eax
+	a.label("done");
+	a.emit(0xFF, 0x35); a.dword(A.bufAID);                              // push dword [bufAID]   (displaced)
+	a.jmp(A.pktRet);                                                    // resume the handler
+	const [cavePhy, caveVir] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(cavePhy, a.finish(caveVir));
+	const rel = (caveVir - (A.pktHook + 5)) >>> 0;
+	Exe.SetHex(hookPhy, "E9 " + ShowPartySP.le32(rel) + " 90");          // jmp cave ; nop
+	$$(_, 1.16, `SP packet cave @ 0x${caveVir.toString(16).toUpperCase()} (${a.bytes.length} bytes)`);
+};
+
+ShowPartySP.installStoreCave = function(_)
+{
+	const A = ShowPartySP.addr;
+
+	// verify the hook site really is `call SetValue`
+	const relToSetVal = (A.setValue - (A.storeHook + 5)) >>> 0;
+	const expect = "E8 " + [0,8,16,24].map(s => ((relToSetVal >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ");
+	const hookPhy = ShowPartySP.assertBytes("store hook (call SetValue)", A.storeHook, expect);
+
+	const a = ShowPartySP.asm();
+	// On entry: ecx = gauge, ebp = the (6,0x22) event frame, [esp+4]=hp, [esp+8]=maxhp.
+	// Self rows never get a 0x0BAB (server sends party HP without self), so read own
+	// SP from the local status block; other members' SP is in the live packet buffer.
+	a.emit(0xC7, 0x81); a.dword(0x9C); a.emit(0x01, 0x00, 0x00, 0x00);   // mov dword [ecx+0x9C],1  (dual bar)
+	a.emit(0x8B, 0x45, 0x14);                                            // mov eax,[ebp+0x14]  (param_5 = member AID)
+	a.emit(0x3B, 0x05); a.dword(A.gAccountId);                           // cmp eax,[gAccountId]
+	a.jcc8(0x75, "other");                                               // jne -> other member
+	a.emit(0xA1); a.dword(A.selfSP);                                     // mov eax,[selfSP]
+	a.emit(0x89, 0x81); a.dword(0xA8);                                   // mov [ecx+0xA8],eax
+	a.emit(0xA1); a.dword(A.selfMaxSP);                                  // mov eax,[selfMaxSP]
+	a.emit(0x89, 0x81); a.dword(0xAC);                                   // mov [ecx+0xAC],eax
+	a.jmp("tail");
+	a.label("other");
+	a.emit(0xA1); a.dword(A.bufSP);                                      // mov eax,[bufSP]
+	a.emit(0x89, 0x81); a.dword(0xA8);                                   // mov [ecx+0xA8],eax
+	a.emit(0xA1); a.dword(A.bufMaxSP);                                   // mov eax,[bufMaxSP]
+	a.emit(0x89, 0x81); a.dword(0xAC);                                   // mov [ecx+0xAC],eax
+	a.label("tail");
+	a.jmp(A.setValue);                                                   // tail-call SetValue(hp,maxhp)
+
+	const [cavePhy, caveVir] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(cavePhy, a.finish(caveVir));
+
+	// repoint the call: E8 rel32 -> cave
+	const rel = (caveVir - (A.storeHook + 5)) >>> 0;
+	Exe.SetHex(hookPhy, "E8 " + [0,8,16,24].map(s => ((rel >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" "));
+
+	$$(_, 1.2, `SP store cave @ 0x${caveVir.toString(16).toUpperCase()} (${a.bytes.length} bytes)`);
+};
+
+//==========================================================================
+// 3. Number cave: refresh the self row's SP from local status every frame, and
+//    - only when showNumber - draw "sp/maxsp" on the blue SP half. The self
+//    refresh is what fills the OWN SP bar, so it runs even in bar-only mode.
+//    Hook = UIPartyWnd::OnDraw right after the HP-number DrawText.
+//==========================================================================
+ShowPartySP.installNumberCave = function(_, showNumber, col)
+{
+	const A = ShowPartySP.addr;
+	const doColor = col.on;
+	// The client draws the HP number 2px above the green (top) half of the gauge.
+	// The blue (SP) half starts at gauge_y+6; drawing the SP number at gauge_y+6
+	// sits it on the blue bar with a small gap under the HP number (which the owner
+	// asked for). (An earlier gauge_y+0x0B floated it below the whole bar, into the
+	// next member's row, so it collided with the next person and the self-select
+	// highlight covered it.)
+	const SPY = 0x06;   // px below gauge top: on the blue SP half, gap below HP number
+
+	// 9 displaced bytes: mov eax,[esi+0x48] ; mov [ebp-0x588],eax
+	const displaced = "8B 46 48 89 85 78 FA FF FF";
+	const hookPhy = ShowPartySP.assertBytes("draw hook", A.drawHook, displaced);
+	// The self test below leans on the member record's account id being at [esi+0xC].
+	// Anchor that on the client's OWN self test just past the hook, so a build where the
+	// record layout moved fails loudly here instead of colouring the wrong row quietly.
+	ShowPartySP.assertBytes("member AID offset (client self test)", A.selfTestSite,
+		"8B 46 0C 3B 05 " + ShowPartySP.le32(A.gAccountId));
+
+	const a = ShowPartySP.asm();
+	// gauge = [edi + [ebp-0x594]*4 + 0x128]
+	a.emit(0x8B, 0x85); a.dword(0xFFFFFA6C >> 0);                        // mov eax,[ebp-0x594]
+	a.emit(0x8B, 0x84, 0x87); a.dword(0x128);                           // mov eax,[edi+eax*4+0x128]
+	// Bar colours: HP fill at +0x84, SP fill at +0x88, both per gauge. That is one
+	// field more than a single scratch register can carry across the self test, so
+	// the OTHER-member pair is written first and the self branch overwrites it.
+	// Two stores on a normal row, four on your own, and nothing held live through
+	// the compare. Drawn every frame, so nothing the client does can reset it.
+	if (doColor)
+	{
+		a.emit(0xBA); a.dword(col.spOther >>> 0);                       // mov edx, spOther
+		a.emit(0x89, 0x90); a.dword(0x88);                              // mov [eax+0x88],edx
+		a.emit(0xBA); a.dword(col.hpOther >>> 0);                       // mov edx, hpOther
+		a.emit(0x89, 0x90); a.dword(0x84);                              // mov [eax+0x84],edx
+	}
+	// self row? Decided by IDENTITY, not by value. ESI is the member record for this
+	// row (the displaced `mov eax,[esi+0x48]` reads it, and the client's own self test
+	// 40 bytes on at 0x007046A5 is `mov eax,[esi+0xC] / cmp eax,[gAccountId]`), so the
+	// account id sits at [esi+0xC]. Until 2026-09-01 this compared the gauge's HP with
+	// your own HP, so any member sitting on exactly your HP took your colours and your
+	// SP number (two same-class same-level characters at full HP do it every time).
+	// The cave never writes ESI, and ESI is callee-saved across the calls above.
+	a.emit(0x8B, 0x4E, 0x0C);                                           // mov ecx,[esi+0x0C]  (member AID)
+	a.emit(0x3B, 0x0D); a.dword(A.gAccountId);                          // cmp ecx,[gAccountId]
+	a.jcc8(0x75, "notself");                                            // jne notself
+	a.emit(0x8B, 0x0D); a.dword(A.selfSP);                              // mov ecx,[selfSP]
+	a.emit(0x89, 0x88); a.dword(0xA8);                                  // mov [eax+0xA8],ecx
+	a.emit(0x8B, 0x0D); a.dword(A.selfMaxSP);                           // mov ecx,[selfMaxSP]
+	a.emit(0x89, 0x88); a.dword(0xAC);                                  // mov [eax+0xAC],ecx
+	if (doColor)
+	{
+		a.emit(0xBA); a.dword(col.spSelf >>> 0);                        // mov edx, spSelf
+		a.emit(0x89, 0x90); a.dword(0x88);                              // mov [eax+0x88],edx
+		a.emit(0xBA); a.dword(col.hpSelf >>> 0);                        // mov edx, hpSelf
+		a.emit(0x89, 0x90); a.dword(0x84);                              // mov [eax+0x84],edx
+	}
+	a.label("notself");
+	// Another member: restore sp/maxsp from the SP table by AID every frame, so a
+	// window built or rebuilt after the packet still shows them (see installSpTable).
+	{
+		const T = ShowPartySP.spTable, E = ShowPartySP.spTableEnd;
+		a.emit(0x8B, 0x4E, 0x0C);                                       // mov ecx,[esi+0x0C]  (member AID)
+		a.emit(0x85, 0xC9);                                             // test ecx,ecx
+		a.jcc32(0x84, "nofound");                                       // je nofound
+		a.emit(0xBA); a.dword(T);                                       // mov edx, TABLE
+		a.label("look");
+		a.emit(0x39, 0x0A);                                             // cmp [edx],ecx
+		a.jcc8(0x74, "found");                                          // je found
+		a.emit(0x83, 0xC2, 0x0C);                                       // add edx,12
+		a.emit(0x81, 0xFA); a.dword(E);                                 // cmp edx, END
+		a.jcc8(0x72, "look");                                           // jb look
+		a.jmp("nofound");                                               // not in the table: leave the gauge alone
+		a.label("found");
+		a.emit(0x8B, 0x4A, 0x04);                                       // mov ecx,[edx+4]   (sp)
+		a.emit(0x89, 0x88); a.dword(0xA8);                              // mov [eax+0xA8],ecx
+		a.emit(0x8B, 0x4A, 0x08);                                       // mov ecx,[edx+8]   (maxsp)
+		a.emit(0x89, 0x88); a.dword(0xAC);                              // mov [eax+0xAC],ecx
+		a.label("nofound");
+	}
+
+	// The sp/maxsp number is optional (bar-only mode leaves it off). The self-SP
+	// refresh above is NOT optional - it is what fills the own SP bar every frame.
+	if (showNumber)
+	{
+	a.emit(0x83, 0xB8); a.dword(0xAC); a.emit(0x01);                    // cmp dword [eax+0xAC],1
+	a.jcc32(0x86, "skip");                                             // jbe skip (no real SP yet: seed=1)
+	// sprintf(&buf, "%d/%d", sp, maxsp)   (&buf = [ebp-0x220], reused after HP text is drawn)
+	a.emit(0xFF, 0xB0); a.dword(0xAC);                                  // push [eax+0xAC] maxsp
+	a.emit(0xFF, 0xB0); a.dword(0xA8);                                  // push [eax+0xA8] sp
+	a.emit(0x68); a.dword(A.fmtPercent);                               // push fmt
+	a.emit(0x8D, 0x8D); a.dword(0xFFFFFDE0 >> 0);                       // lea ecx,[ebp-0x220]
+	a.emit(0x51);                                                       // push ecx
+	a.call(A.sprintf);                                                  // call sprintf
+	a.emit(0x83, 0xC4, 0x10);                                           // add esp,0x10 (cdecl)
+	// strlen(&buf) -> edx
+	a.emit(0x8D, 0x95); a.dword(0xFFFFFDE0 >> 0);                       // lea edx,[ebp-0x220]
+	a.emit(0x8D, 0x4A, 0x01);                                           // lea ecx,[edx+1]
+	a.label("loop");
+	a.emit(0x8A, 0x02, 0x42, 0x84, 0xC0);                              // mov al,[edx]; inc edx; test al,al
+	a.jcc8(0x75, "loop");                                              // jne loop
+	a.emit(0x2B, 0xD1);                                                // sub edx,ecx -> strlen
+	// DrawText(this=window; x+0x42, gauge_y+SPY, &buf, strlen, 0, 0xA, 0,0,0)
+	a.emit(0x8B, 0x85); a.dword(0xFFFFFA6C >> 0);                       // mov eax,[ebp-0x594]
+	a.emit(0x8B, 0x84, 0x87); a.dword(0x128);                          // mov eax,[edi+eax*4+0x128]
+	a.emit(0x6A, 0x00, 0x6A, 0x00, 0x6A, 0x00);                        // push 0,0,0
+	a.emit(0x6A, 0x0A, 0x6A, 0x00);                                    // push 0xA, 0
+	a.emit(0x52);                                                      // push edx (strlen)
+	a.emit(0x8B, 0x48, 0x20);                                          // mov ecx,[eax+0x20] gauge y
+	a.emit(0x8D, 0x95); a.dword(0xFFFFFDE0 >> 0);                      // lea edx,[ebp-0x220] &buf
+	a.emit(0x8B, 0x40, 0x1C);                                          // mov eax,[eax+0x1C] gauge x
+	a.emit(0x83, 0xC1, SPY);                                           // add ecx, SPY
+	a.emit(0x52, 0x51);                                                // push edx; push ecx
+	a.emit(0x83, 0xC0, 0x42);                                          // add eax,0x42
+	a.emit(0x8B, 0xCF);                                                // mov ecx,edi (window)
+	a.emit(0x50);                                                      // push eax
+	a.call(A.drawText);                                                // call DrawText
+	a.label("skip");
+	}
+	a.emit(0x8B, 0x46, 0x48);                                          // mov eax,[esi+0x48]   (displaced)
+	a.emit(0x89, 0x85); a.dword(0xFFFFFA78 >> 0);                       // mov [ebp-0x588],eax  (displaced)
+	a.jmp(A.drawRet);                                                  // resume OnDraw
+
+	const [cavePhy, caveVir] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(cavePhy, a.finish(caveVir));
+
+	// hook: jmp cave + NOPs to fill the 9 displaced bytes
+	const rel = (caveVir - (A.drawHook + 5)) >>> 0;
+	Exe.SetHex(hookPhy, "E9 " + [0,8,16,24].map(s => ((rel >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ") + " 90 90 90 90");
+
+	$$(_, 1.3, `SP ${showNumber ? "number+self-refresh" : "self-refresh (bar-only)"} cave @ 0x${caveVir.toString(16).toUpperCase()} (${a.bytes.length} bytes)`);
+};
+
+//==========================================================================
+// 4. Detached mini party widget (UIPartyMiniWnd) - same split HP/SP bar.
+//    Its gauge is the same CUIGauge (at window+0xC0), drawn by the shared
+//    CUIGauge::RenderProgressBars, so enlarge + dual-mode + an SP store give
+//    the split bar exactly as the main window. No number (the mini bars have
+//    no HP number either).
+//==========================================================================
+//==========================================================================
+// 3b. Party row height. The gauge got 7px taller, so the rows have to.
+//
+// Without this the patch looks fine with a party of one and breaks the moment a
+// second member joins: row 1 is drawn 23px below row 0, row 0's bar is now 12px,
+// so the SP half of every row except the last is painted over by the next row.
+// The blue selected-member highlight is the same constant, which is why it also
+// stopped covering the bar.
+//==========================================================================
+ShowPartySP.growRowHeight = function(_)
+{
+	const A = ShowPartySP.addr;
+
+	// C7 87 24 01 00 00 17 00 00 00  =  mov dword ptr [edi+0x124], 23
+	const phy = ShowPartySP.assertBytes("party row height", A.rowHeightSet,
+		"C7 87 24 01 00 00 17 00 00 00");
+
+	Exe.SetInt32(phy + 6, 23 + A.rowGrow);
+	$$(_, 1.16, `Party row height 23 -> ${23 + A.rowGrow}`);
+};
+
+ShowPartySP.enlargeMiniGauge = function(_)
+{
+	const A = ShowPartySP.addr;
+	const phy = ShowPartySP.assertBytes("mini gauge SetRenderTargetSize", A.miniGaugeSize, "6A 05");
+	Exe.SetHex(phy + 1, A.gaugeHeight.toString(16).padStart(2, "0"));   // push 5 -> push 0x0C
+	$$(_, 1.4, `Mini party gauge surface height 5 -> ${A.gaugeHeight}`);
+};
+
+ShowPartySP.installMiniInitCave = function(_)
+{
+	const A = ShowPartySP.addr;
+
+	const relToAdd = (A.miniAddChildFn - (A.miniAddChild + 5)) >>> 0;
+	const expect = "E8 " + [0,8,16,24].map(s => ((relToAdd >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ");
+	const hookPhy = ShowPartySP.assertBytes("mini AddChild", A.miniAddChild, expect);
+
+	const a = ShowPartySP.asm();
+	// on entry: ecx = the mini window, gauge = [ecx+0xC0], AddChild arg already pushed
+	a.emit(0x8B, 0x81); a.dword(0xC0);                                  // mov eax,[ecx+0xC0]  (gauge)
+	a.emit(0xC7, 0x80); a.dword(0x9C); a.emit(0x01, 0x00, 0x00, 0x00);  // mov dword [eax+0x9C],1  (dual)
+	a.emit(0xC7, 0x80); a.dword(0xAC); a.emit(0x01, 0x00, 0x00, 0x00);  // mov dword [eax+0xAC],1  (max-SP seed)
+	a.jmp(A.miniAddChildFn);                                            // tail-call AddChildDirect
+
+	const [cavePhy, caveVir] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(cavePhy, a.finish(caveVir));
+
+	const rel = (caveVir - (A.miniAddChild + 5)) >>> 0;
+	Exe.SetHex(hookPhy, "E8 " + [0,8,16,24].map(s => ((rel >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" "));
+
+	$$(_, 1.42, `Mini gauge init cave @ 0x${caveVir.toString(16).toUpperCase()} (always dual)`);
+};
+
+ShowPartySP.installMiniStoreCave = function(_, col)
+{
+	const A = ShowPartySP.addr;
+	const doColor = col.on;
+
+	// hook: mov ecx,ebx ; call InvalidateRecursive  (7 bytes) at the (6,0x22) match
+	const relToInv = (A.miniInvalidate - (A.miniStoreHook + 2 + 5)) >>> 0;
+	const expect = "8B CB E8 " + [0,8,16,24].map(s => ((relToInv >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ");
+	const hookPhy = ShowPartySP.assertBytes("mini store hook", A.miniStoreHook, expect);
+
+	const a = ShowPartySP.asm();
+	// on entry: ebx = the matching mini window, esi = the member AID (param_5).
+	a.emit(0x8B, 0x83); a.dword(0xC0);                                  // mov eax,[ebx+0xC0]  (gauge)
+	a.emit(0xC7, 0x80); a.dword(0x9C); a.emit(0x01, 0x00, 0x00, 0x00);  // mov dword [eax+0x9C],1  (ensure dual)
+	a.emit(0x3B, 0x35); a.dword(A.gAccountId);                          // cmp esi,[gAccountId]
+	a.jcc8(0x75, "other");                                              // jne -> other member
+	a.emit(0x8B, 0x0D); a.dword(A.selfSP);                              // mov ecx,[selfSP]
+	a.emit(0x89, 0x88); a.dword(0xA8);                                  // mov [eax+0xA8],ecx
+	a.emit(0x8B, 0x0D); a.dword(A.selfMaxSP);                           // mov ecx,[selfMaxSP]
+	a.emit(0x89, 0x88); a.dword(0xAC);                                  // mov [eax+0xAC],ecx
+	if (doColor)
+	{
+		a.emit(0xBA); a.dword(col.spSelf >>> 0); a.emit(0x89, 0x90); a.dword(0x88);  // mov edx,spSelf; mov [eax+0x88],edx
+		a.emit(0xBA); a.dword(col.hpSelf >>> 0); a.emit(0x89, 0x90); a.dword(0x84);  // mov edx,hpSelf; mov [eax+0x84],edx
+	}
+	a.jmp("tail");
+	a.label("other");
+	a.emit(0x8B, 0x0D); a.dword(A.bufSP);                              // mov ecx,[bufSP]
+	a.emit(0x89, 0x88); a.dword(0xA8);                                  // mov [eax+0xA8],ecx
+	a.emit(0x8B, 0x0D); a.dword(A.bufMaxSP);                           // mov ecx,[bufMaxSP]
+	a.emit(0x89, 0x88); a.dword(0xAC);                                  // mov [eax+0xAC],ecx
+	if (doColor)
+	{
+		a.emit(0xBA); a.dword(col.spOther >>> 0); a.emit(0x89, 0x90); a.dword(0x88); // mov edx,spOther; mov [eax+0x88],edx
+		a.emit(0xBA); a.dword(col.hpOther >>> 0); a.emit(0x89, 0x90); a.dword(0x84); // mov edx,hpOther; mov [eax+0x84],edx
+	}
+	a.label("tail");
+	a.emit(0x8B, 0xCB);                                                // mov ecx,ebx          (displaced)
+	a.call(A.miniInvalidate);                                          // call InvalidateRecursive (displaced)
+	a.jmp(A.miniStoreRet);                                             // resume EventHandler
+
+	const [cavePhy, caveVir] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(cavePhy, a.finish(caveVir));
+
+	const rel = (caveVir - (A.miniStoreHook + 5)) >>> 0;
+	Exe.SetHex(hookPhy, "E9 " + [0,8,16,24].map(s => ((rel >>> s) & 0xFF).toString(16).padStart(2, "0")).join(" ") + " 90 90");
+
+	$$(_, 1.44, `Mini SP store cave @ 0x${caveVir.toString(16).toUpperCase()} (${a.bytes.length} bytes)`);
+};
+
+ShowPartySP.validate = function()
+{
+	return Exe.BuildDate === 20250716;
+};

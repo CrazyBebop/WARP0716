@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind, CrazyBebop                     *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2026-07-15                                             *
+*   Last Modified : 2026-08-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,7 +50,8 @@ ResizeMobBar = function(_)
 	const result = Exe.GetUserInput(varName, D_VecU8, `${prefix} Mob HP Bar Dimensions`, `Enter the new HP bar size for ${prefix} monsters (in pixels)`, [oldW, oldH], {
 		min: 1,
 		name0: "Bar Width",
-		name1: "Bar Height"
+		name1: "Bar Height",
+		saveDefault: true
 	});
 	if (result === false)
 		Cancel("Size", `(${oldW} x ${oldH})`);
@@ -144,10 +145,9 @@ ResizeMobBar.stage = function(patchName)
 			Exe.BeginTag(CACHE.getTag(cacheKey));
 			CACHE.put('MBAR_TagOpen', true);
 
-			// Build the skeleton once with stock 60x5 for all three parts; each
-			// bar then overwrites only its own two push immediates below. This is
-			// order-independent (no cross-stage size reads). Layout: boss part 26
-			// bytes, mini part 26 bytes, normal part 17 bytes.
+			// Lay the skeleton down once with stock 60x5 in all three parts. The real
+			// sizes are stamped in below, on every stage, from the saved inputs.
+			// Layout: boss part 26 bytes, mini part 26, normal part 17 = 69 total.
 			const code =
 				cmpTy(2) + jne(17) + p32(5) + p32(60) + movcx + jmpR(21) +
 				cmpTy(1) + jne(17) + p32(5) + p32(60) + movcx + jmpR(47) +
@@ -156,14 +156,42 @@ ResizeMobBar.stage = function(patchName)
 			Exe.SetJMP(Exe.Vir2Phy(HOOK_VIR, CODE), tramVir, 1); // E9 + 1 NOP = 6 bytes
 		}
 
-		// Overwrite THIS bar's own height/width immediates in its part.
-		// Members = [Normal, MiniBoss, Boss]; push-imm offsets (height, width):
-		const idx  = this.Members.indexOf(patchName);
-		const hOff = [53, 36, 10][idx]; // push <height> imm32
-		const wOff = [58, 41, 15][idx]; // push <width>  imm32
-		const [myW, myH] = CACHE.entry(cacheKey, patchName);
-		Exe.SetInt32(tramPhy + hOff, myH);
-		Exe.SetInt32(tramPhy + wOff, myW);
+		// Read every bar size from the SAVED INPUTS, not from the shared cache.
+		//
+		// The cache only holds a bar's real size once that bar's own patch body has run, so
+		// what a stage() emits depended on how many siblings had gone before it. Patch
+		// order is not stable between runs, so builds from a byte-identical profile
+		// disagreed: measured 5/15 correct before any fix.
+		//
+		// GetSavedInput answers from the profile/session regardless of which patches have
+		// run, so every stage can emit all three correctly. A bar that is not enabled has
+		// no saved input and falls back to its stock size, which is what the skeleton held.
+		const sizeOf = (varName, dflt) =>
+		{
+			// A hand-written profile can omit `display:`, and GetSavedInput throws on that
+			// rather than returning nothing - which aborted the whole stage and left the
+			// stock skeleton in place. Fall back to the cache instead.
+			try
+			{
+				const v = Exe.GetSavedInput(varName);
+				if (Array.isArray(v) && v.length > 1)
+					return [Number(v[0]), Number(v[1])];
+			}
+			catch (e) { /* fall through */ }
+			return dflt;
+		};
+		const [nW, nH] = sizeOf('$normalBarSize',   [normW, normH]);
+		const [mW, mH] = sizeOf('$miniBossBarSize', [miniBossW, miniBossH]);
+		const [bW, bH] = sizeOf('$bossBarSize',     [bossW, bossH]);
+
+		const hOffs = [53, 36, 10]; // push <height> imm32
+		const wOffs = [58, 41, 15]; // push <width>  imm32
+		const dims  = [[nW, nH], [mW, mH], [bW, bH]];
+		dims.forEach(([w, h], i) =>
+		{
+			Exe.SetInt32(tramPhy + hOffs[i], h);
+			Exe.SetInt32(tramPhy + wOffs[i], w);
+		});
 
 		return;
 	}

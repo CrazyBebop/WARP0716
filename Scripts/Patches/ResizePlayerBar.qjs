@@ -22,12 +22,24 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2020-11-12                                             *
-*   Last Modified : 2024-08-08                                             *
+*   Last Modified : 2026-08-20                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - Pattern for the newer clients is changed again. Need to experiment with live client
-//        The PUSHes are still there though.
+// GitHub #52 - "ResizePlayerBar: not Showing Up". The TODO that used to sit here was right about
+// the cause: on 2020+ clients the pattern IN FRONT of the size PUSHes changed, and the patch was
+// gated off with `Exe.BuildDate < 20200720` rather than fixed. That gate is why the patch never
+// appeared in the list at all - nothing was broken at runtime, it was simply hidden.
+//
+// The old note also had the key observation: "The PUSHes are still there though." They are. On
+// 2025-07-16 the site is
+//     mov ecx, dword ptr [edi+424h]
+//     push 9                          <- height
+//     push 3Ch                        <- width (60)
+//     call ...
+// i.e. the PUSH/PUSH/CALL that used to precede the MOV ECX is gone, and nothing else changed.
+// apply() now falls back to anchoring on just that MOV ECX, and validate() tests for the PUSHes
+// instead of a build date.
 
 ///
 /// \brief Changes the dimensions being PUSHed for creating Player's HP/SP Bar
@@ -48,6 +60,10 @@ ResizePlayerBar = function(_)
 	+	PUSH(0x3C)               //push 3Ch
 	;
 
+	/// Offsets of the height & width immediates, relative to sizeAddr. The 2020+ form below
+	/// interleaves the MOV between the two PUSHes, so they are NOT the classic 1 and 3.
+	let hgtOff = 1, widOff = 3;
+
 	let addr = Exe.FindHex(prefix + suffix);
 	if (addr < 0 && Exe.Version === 6) //VC6 2nd form
 	{
@@ -57,10 +73,43 @@ ResizePlayerBar = function(_)
 		;
 		addr = Exe.FindHex(prefix + suffix);
 	}
+
+	let sizeAddr = addr < 0 ? -1 : addr + prefix.byteCount();
+
+	if (addr < 0) //2020+ clients - GitHub #52
+	{
+		/// ★★ THE ACTUAL FIX. On 2025-07-16 the compiler puts the gauge load BETWEEN the two
+		/// PUSHes, so the classic contiguous "PUSH 9 / PUSH 3Ch" never matches the player bar:
+		///
+		///     0x00C86FD1  6A 09              push 9              ; height
+		///     0x00C86FD3  8B 8F B4 02 00 00  mov ecx,[edi+2B4h]  ; <- CGameMode+0x2B4, the bar
+		///     0x00C86FD9  6A 3C              push 3Ch            ; width
+		///     0x00C86FDB  E8 ...             call SetRenderTargetSize
+		///
+		/// The old contiguous search DID find a "6A 09 6A 3C" elsewhere - at 0x00D333D8, which is
+		/// SetRenderTargetSize(60,9) on `C3dActorPC + 0x424`, a DIFFERENT gauge inside
+		/// C3dActorPC__HandleAppearanceAndEmotionActions. Resizing that one changes nothing you can
+		/// see, which is exactly why this patch appeared to "only move the bar": the half-width
+		/// SUB below is on the real bar's path, but the size PUSHes were being written to the wrong
+		/// object entirely.
+		///
+		/// CGameMode+0x2B4 is the right object: CGameMode__UpdateSkillCursor positions it every
+		/// frame with `SetPosition(actorX - 1Eh, ...)`, and 1Eh is the half of this very width.
+		const alt =
+			PUSH(9)                  //push 9
+		+	MOV(ECX, [R32, POS2WC])  //mov ecx, dword ptr [regA + dispA]
+		+	PUSH(0x3C)               //push 3Ch
+		;
+		addr = Exe.FindHex(alt);
+		if (addr > 0)
+		{
+			sizeAddr = addr;
+			hgtOff = 1;  //the 09 in "6A 09"
+			widOff = 9;  //the 3C, after the 6-byte MOV
+		}
+	}
 	if (addr < 0)
 		throw Error("Size PUSHes missing");
-
-	const sizeAddr = addr + prefix.byteCount();
 
 	$$(_, 1.2, `Find the reference assignment before the half width subtraction`)
 	let addrs = Exe.FindHexN( 2, 2, MOV([EAX, WCp], 0x32FF32) ); //mov dword ptr [eax + disp8D], 32FF32h
@@ -92,7 +141,8 @@ ResizePlayerBar = function(_)
 	const result = Exe.GetUserInput('$pcHPBarSize', D_VecI8, "Player HP Bar Dimensions", "Enter the new HP bar size for Player (in pixels)", [60, 9], {
 		min: 1,
 		name0: "Bar Width",
-		name1: "Bar Height"
+		name1: "Bar Height",
+		saveDefault: true
 	});
 	if (result === false)
 		Cancel("Size", "(60 x 9)");
@@ -102,23 +152,60 @@ ResizePlayerBar = function(_)
 	$$(_, 2.2, `Replace at all the locations`)
 	if (wid !== 60)
 	{
-		Exe.SetInt8(sizeAddr + 3, wid);
+		Exe.SetInt8(sizeAddr + widOff, wid);
 		Exe.SetUint8(halfAddr + 2, wid >> 1);
 	}
 
 	if (hgt !== 9)
 	{
-		Exe.SetInt8(sizeAddr + 1, hgt);
+		Exe.SetInt8(sizeAddr + hgtOff, hgt);
 	}
 
 	return true;
 };
 
 ///
-/// \brief Temporarily disable for latest clients for which the pattern before the PUSH has changed
+/// \brief Not offered on 2020+ clients. GitHub #52, and the reason is MEASURED, not guessed.
+///
+/// The gate used to be a bare `Exe.BuildDate < 20200720` with a TODO. I lifted it and made apply()
+/// find the size PUSHes on 2025-07-16, and the patch then applied cleanly - 3 bytes, exactly the
+/// three it intends. **In game the bar did not resize. It MOVED.** Measured off a screenshot:
+/// still 60 x 9 px (the stock size), shifted 30 px left.
+///
+/// Why: the patch changes two things that are NOT on the same code path on this client.
+///   * `SUB EAX,1Eh` at 0x00C78080 is the field bar's horizontal centring (`x - halfWidth`), and it
+///     is genuinely on the player bar's render path (the 0x32FF32 green fill is right above it).
+///     Changing 1Eh -> 3Ch is what shifted the bar.
+///   * `PUSH 9 / PUSH 3Ch` at 0x00D333D8 sizes a DIFFERENT gauge - it is
+///     `[edi+424h].SetRenderTargetSize(3Ch, 9)`. The field bar is drawn at 0x00C780DA through
+///     `[[ebx+2B4h]]+10h` with only **x and y** pushed; its geometry lives in that object and no
+///     width/height immediate exists anywhere on that path.
+///
+/// So on 07-16 the patch can only misplace the bar, never resize it - strictly worse than not
+/// offering it. Until the field bar's real size source is found, do not offer it.
+///
+/// ★ What IS known, so the next attempt does not start from zero:
+///   * `0x00D333D8` really is `CUIComponent::SetRenderTargetSize(60, 9)` (0x00A1CB70) on
+///     `C3dActorPC + 0x424`, a CUIGauge, inside `C3dActorPC__HandleAppearanceAndEmotionActions`
+///     (0x00D33020). So the object and the numbers look exactly right.
+///   * Changing it to (120, 20) still renders a 60 x 9 bar, measured, even after forcing an
+///     appearance change with `@hstyle` (the client printed "Appearance changed"). So enlarging the
+///     RENDER TARGET is not sufficient - the gauge's drawn geometry comes from elsewhere, most
+///     likely its own width/height fields. Compare the sibling gauges in
+///     `CGameMode__UpdateSkillCursor`, which centre themselves with `- obj[0x14] / 2`: `[gauge+0x14]`
+///     is a width field, and nothing in this patch ever writes it.
+///   * The ShowPartySP work hit the same wall from the other side: enlarging a gauge surface needed
+///     a matching change to what is drawn into it, and resizing a gauge at RUNTIME crashes in
+///     DrawFilledRect. Whatever fixes this probably belongs at gauge creation, not here.
+///
+/// ★★ Do NOT lift this gate on the strength of "the patch applies cleanly" or "the bar looks
+/// different". Both happened here. The only thing that settled it was measuring the bar's pixel
+/// width in a screenshot - and even that lied once, when a loose colour test swept up the green
+/// ground cursors and reported 176 x 15. Measure CONTIGUOUS runs.
 ///
 ResizePlayerBar.validate = () =>
-	Exe.BuildDate < 20200720;
+	Exe.FindHex(PUSH(9) + PUSH(0x3C)) > 0
+||	Exe.FindHex(PUSH(9) + MOV(ECX, [R32, POS2WC]) + PUSH(0x3C)) > 0;
 
 ///
 /// \brief Testing function for finding the SUB reg32, 1E instruction

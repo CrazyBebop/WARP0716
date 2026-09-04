@@ -2,55 +2,164 @@
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
 *   Copyright (C) 2020-2024 Andrei Karas (4144)                            *
+*   Copyright (C) 2026 CrazyBebop                                          *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Shinryo, Andrei Karas (4144), CrazyBebop               *
+*   Last Modified : 2026-08-25                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
-/// \brief Modify Zoom to specific percentages (25%, 50%, 75%, Maximum)
+/// \brief Change the camera's maximum zoom-out distance (g_camMaxDist).
+///
+/// The client keeps that cap in a global which is assigned from a pooled 480.0f literal.
+/// That same literal is ALSO the "480" of CRenderer::SetViewportDimensions'
+/// reference-resolution scale (height / 480.0, the sibling of width / 640.0), and that
+/// scale feeds ~28 sprite/effect/culling sites. Overwriting the literal in place - which
+/// is what this patch used to do - therefore moved the renderer too.
+///
+/// So instead of editing the shared literal we park our own copy of the value and repoint
+/// only the camera's loads at it. The two are trivially distinguishable: the camera reads
+/// it with MOVSS (F3 0F 10 ..) and immediately stores it into the cap, while the renderer
+/// divides straight out of memory with DIVSS (F3 0F 5E ..). Only the MOVSS loads move.
+///
+/// One more thing to know before debugging a "the zoom patch does nothing" report: the client
+/// picks between TWO caps of its own, 480.0 and 400.0, in two places - at startup in
+/// CGameMode__LoadOptionInfo (0x00D75D04 / 0x00D75D0E) and again on a server config-update
+/// packet (CConnection__PktCallback_ConfigUpdate_a, 0x00691901 / 0x00691913). We repoint the
+/// 480 arm of both and leave the 400 arm alone, so the client keeps its own zoom option. With
+/// that option OFF the cap is 400, which is BELOW stock, and no zoom patch is visible at all.
+/// The 400.0 literal cannot be edited in place either: it has 15 load sites.
 ///
 IncrZoom = function(_) {
-    $$(_, 1.1, `Search for the default zoom pattern in the executable`)
+    $$(_, 1.1, `Find the default camera distance (480.0f) in the constant pool`)
 
-    // Pattern to be found: 480.0 in IEEE-754
-    const findPattern = "00 00 F0 43 00 00"; // Current FAR_DIST
-    let addr = Exe.FindHex(findPattern, Exe.GetSectBegin(DATA), Exe.FileSize);
+    const findPattern = "00 00 F0 43 00 00"; // 480.0f, followed by the low half of 640.0f
+    const cnstPhy = Exe.FindHex(findPattern, Exe.GetSectBegin(DATA), Exe.FileSize);
 
-    if (addr < 0) {
-        throw Error("Pattern '00 00 F0 43 00 00' not found in the executable.");
+    if (cnstPhy < 0) {
+        throw Error("Default camera distance (480.0f) not found");
     }
 
-    $$(_, 1.2, `Select the zoom value to be applied`)
+    $$(_, 1.2, `Map it to a VIRTUAL address so we can match the instructions that read it`)
 
-    // IEEE-754 values in hexadecimal
-    const newZoom = this.Data.get(_); // Selected zoom value
+    const cnstVir = Exe.Phy2Vir(cnstPhy);
+    if (cnstVir < 0) {
+        throw Error("Default camera distance is outside a mapped section");
+    }
 
-    if (!newZoom) {
+    $$(_, 1.3, `Select the distance to be applied`)
+
+    const newZoom = IncrZoom.Distance(_); // world units, same scale as the stock 480
+    if (typeof newZoom !== 'number' || !(newZoom > 0)) {
         throw Error("Zoom not specified or invalid value.");
     }
 
-    $$(_, 1.3, `Replace the pattern with the new value`)
-    Exe.SetHex(addr, newZoom);
+    $$(_, 2.1, `Find the camera's MOVSS loads of that constant (skips the renderer's DIVSS)`)
 
-    console.log(`Zoom changed to: ${newZoom}`);
+    const loaders = Exe.FindHexN(
+        " F3 0F 10 [00...101]" + cnstVir.toHex(4), // movss xmm?, dword ptr [<cnstVir>]
+        Exe.GetSectBegin(CODE),
+        Exe.GetSectEnd(CODE)
+    );
+
+    if (loaders.isEmpty()) {
+        throw Error("Camera distance is never loaded");
+    }
+
+    $$(_, 2.2, `Park our own copy of the value so nothing else moves with it`)
+
+    const [valPhy, valVir] = Exe.Allocate(4, 4);
+    Exe.SetFloat(valPhy, newZoom);
+
+    $$(_, 2.3, `Repoint every camera load at our copy`)
+
+    for (const addr of loaders) {
+        Exe.SetInt32(addr + 4, valVir); // the disp32 of movss xmm?, [disp32]
+    }
+
+    console.log(`Camera zoom distance changed to: ${newZoom} (${loaders.length} load site(s))`);
     return true;
 };
 
 ///
 /// \brief Wrappers for individual patches
 ///
-Zoom25Percent = IncrZoom;
-Zoom50Percent = IncrZoom;
-Zoom75Percent = IncrZoom;
-ZoomMax       = IncrZoom;
+ZoomOut25Percent = IncrZoom;
+ZoomIn25Percent  = IncrZoom;
+Zoom50Percent    = IncrZoom;
+Zoom75Percent    = IncrZoom;
+ZoomMax          = IncrZoom;
+ZoomCustom       = IncrZoom;
 
 ///
-/// \brief Mapping of zoom values to the specified percentages
+/// \brief Resolve a patch name to the camera distance it wants, in world units.
+///
+/// Every entry except ZoomCustom is a fixed value from the table below. ZoomCustom asks the
+/// operator instead, and converts on the spot - the write is Exe.SetFloat, so there is no
+/// hex table to keep in step.
+///
+IncrZoom.Distance = function(name) {
+    if (name !== 'ZoomCustom') {
+        const dist = IncrZoom.Data.get(name);
+        if (dist === undefined) {
+            throw Error("Zoom not specified or invalid value.");
+        }
+        return dist;
+    }
+
+    // Percent OVER the stock 480, which is how every "Increase Zoom Out (to N%)" title in
+    // this group already reads - so 50 typed here is exactly Zoom50Percent. The group's one
+    // percentage measured the other way, ZoomIn25Percent, stays a preset for that reason.
+    const DEF = 134; // just under ZoomMax, the measured clean ceiling. Higher is allowed
+                     // (owner, 2026-08-25) so the knob can be pushed past what looks good.
+
+    const pct = Exe.GetUserInput('$zoomPercent', D_Uint16, "Zoom Out Increase",
+        "How much <b>further than stock</b> the camera may pull back, in percent.<br><br>"
+    +   "The presets in this group are <b>25</b> (480 becomes 600), <b>50</b> (720), "
+    +   "<b>75</b> (840) and <b>134</b>, which is just under Max. The client default is 480.<br><br>"
+    +   "Above <b>135</b> the client draws black at the screen edges, which is why Max stops there. "
+    +   "Higher values are allowed here on purpose, for experimenting.<br><br>"
+    +   "<b>Remember to use /zoom in game</b> or none of this shows. The client keeps its own "
+    +   "zoom-out setting, and with that off the camera is capped at 400.",
+        DEF, {min: 1, max: 400, saveDefault: true});
+
+    // A real GUI cancel, and only that. An unattended console build does NOT reach here:
+    // saveDefault makes GetUserInput hand back the default as a number, which is what keeps
+    // headless builds deterministic. Without saveDefault it returns false whenever nothing is
+    // saved, and this patch would abort in every automated build. Measured, not assumed.
+    if (pct === false)
+        Cancel('Zoom Out Increase', DEF);
+
+    return 480 * (100 + pct) / 100;
+};
+
+///
+/// ZoomMax is 1126.8, NOT the 1224.0 it carried until 2026-08-25. 1224 was inherited from the
+/// original patch and is past what this client can draw: the owner scrolled out on a live 1224
+/// build and reported black at the edges, then stopped at the last clean distance. That stopping
+/// point was read straight out of the process (the zoom target at 0x012291CC, stable over 3s of
+/// sampling) rather than eyeballed - 1126.8, which is 480 * 2.3475, or +134.75% over stock.
+///
+/// \brief Mapping of each fixed patch to its camera distance, in world units.
+///
+/// The stock distance is 480.0. The "Increase" entries are literal percentages over it,
+/// so the number in the patch title is the number you get:
+///
+///     +25% -> 600.0   +50% -> 720.0   +75% -> 840.0   Max -> 1126.8 (+134.75%)
+///
+/// (Before 2026-07-29 the +50% and +75% entries carried 510.0 and 730.0, i.e. +6% and
+/// +52%, so neither matched its own title. GitHub #50.)
 ///
 IncrZoom.Data = MakeMap(
-    'Zoom25Percent', "00 00 00 43 00 00",
-    'Zoom50Percent', "00 00 FF 43 00 00",
-    'Zoom75Percent', "00 80 36 44 00 00",
-    'ZoomMax',       "00 00 99 44 00 00" 
+    'ZoomIn25Percent' ,  128.0, //  25% OF the default - the odd one out: this one zooms IN
+    'ZoomOut25Percent',  600.0, //  480 * 1.25
+    'Zoom50Percent'   ,  720.0, //  480 * 1.50
+    'Zoom75Percent'   ,  840.0, //  480 * 1.75
+    'ZoomMax'         , 1126.8  //  480 * 2.3475 - MEASURED, see the note above
 );

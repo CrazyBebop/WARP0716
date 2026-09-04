@@ -36,13 +36,25 @@ ButtonVis:
             title : Hide Buttons (New UI)
             recommend : no
             author : Neo-Mind,Skylove,Cremané
-            desc : Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Useful for removing buttons for features your server does not support.
-        
+            desc : Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way.
+
         - ShowNewButtons:
             title : Show Buttons (New UI)
             recommend : no
             author : Neo-Mind,Skylove,Cremané
-            desc : Restores selected hidden buttons below the HP/SP bars in the Basic Info Window (new UI style). Use to bring back buttons that were removed in newer client versions.
+            desc : Restores selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has; picking one that is already shown does nothing. Use it to bring back buttons the client hides by default, which on 2025-07-16 are <b>Battleground, Booking and Twitter</b>. Do not pick the same button here and in <i>Hide Buttons (New UI)</i> - that is rejected with an error naming it.
+
+CustomBtns:
+    title : CUSTOM BUTTONS
+    mutex : false
+    color : mediumseagreen
+
+    patches:
+        - CustomButtons:
+            title : Add your own buttons
+            recommend : no
+            author : CrazyBebop
+            desc : Adds extra buttons of your own to the row below the HP/SP bars in the Basic Info Window, beyond the 25 the client ships with. Each one is written as <b>iconName = behaves like</b>, where the icon name is also the file name - the client loads <b>bt_&lt;iconName&gt;.bmp</b> and <b>bt_&lt;iconName&gt;_press.bmp</b> from <b>data\texture\&lt;UI folder&gt;\menu_icon\</b> as 32x34 24-bit BMPs with magenta (FF00FF) transparent, so without those files the button draws blank. <b>behaves like</b> names one of the stock buttons and the new one does whatever that one does.
 
 CharCreation:
     title : CHARACTER CREATION
@@ -158,13 +170,28 @@ ReturnToLogin:
             author : Neo-Mind , Andrei Karas (4144)
             desc : Returns to the login window instead of closing the client when disconnected from the server. Lets players reconnect without having to relaunch the game.
         
-        - CancelToLogin:
-            title : Cancel to Login Window
-            recommend : yes
-            author : Neo-Mind , Andrei Karas (4144)
-            desc : Makes the Cancel button on the character selection screen go back to the login window instead of quitting the game entirely. Convenient for switching accounts without relaunching.
-            needs : RestoreLoginWindow
-
+#  RETIRED 2026-08-08 - dead on the 2025-07-16 client, proven, not assumed. Retired the way
+#  upstream retired NoHardCodedAddr (Network.yml:53): declaration commented, implementation and
+#  Nemo id table left intact, so re-enabling is uncommenting this block.
+#
+#  CancelToLogin - unsatisfiable AND redundant. `needs: RestoreLoginWindow`, which sits in the
+#                  same LoginMode MUTEX group as the UseOldLogin every profile here selects, so
+#                  it can never apply. And it is not needed: there is no button labelled
+#                  "Cancel" on character select (X, Delete Character, Game Start) - "the Cancel
+#                  Button case" is WARP's CODE-level name. The X already raises msgstringtable
+#                  3432 "Do you want to return to the login screen?" and returns to login
+#                  natively; this patch targets the branch raising entry 17 "Are you sure that
+#                  you want to quit?" ending in SendMsg(2)=quit. Verified on a build carrying
+#                  NEITHER ReturnToLogin patch.
+#  * DisConnToLogin above is UNAFFECTED and stays - it is live in LGRO_2025-07-16_dev.yml.
+#
+#        - CancelToLogin:
+#            title : Cancel to Login Window
+#            recommend : yes
+#            author : Neo-Mind , Andrei Karas (4144)
+#            desc : Makes the Cancel button on the character selection screen go back to the login window instead of quitting the game entirely. Convenient for switching accounts without relaunching.
+#            needs : RestoreLoginWindow
+#
 ShowButton:
     title : SHOW BUTTON
     mutex : false

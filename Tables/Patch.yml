@@ -135,7 +135,7 @@
 222 : ShowReplayBtn
 223 : MoveUpItemCount
 225 : ShowRegisterBtn
-226 : NoWalkDelay
+#226 : NoWalkDelay      # RETIRED 2026-08-10 - merged into CustomWalkDelay (it was that patch with the value pinned to 0)
 227 : CustomWalkDelay
 228 : NoDoramCreation
 229 : ShowBGEmblem
@@ -235,3 +235,5 @@
 359 : ReduceExpensiveUIRender
 360 : RestoreSongsEffect
 361 : CustomCodePage
+362 : CustomButtons
+364 : ShowPartySP

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CH.C (jchcc), Neo-Mind                                 *
 *   Created Date  : 2021-01-14                                             *
-*   Last Modified : 2023-08-26                                             *
+*   Last Modified : 2026-08-10                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -340,7 +340,7 @@ NewButtonVis = function(_)
 	}
 
 	$$(_, 4.1, `Setup values based on patchName`)
-	let varName, title, suffix, btnChoices;
+	let varName, title, suffix;
 
 	const Refs = CACHE.get('NBV_Refs');
 	if (_ === 'HideNewButtons')
@@ -348,25 +348,57 @@ NewButtonVis = function(_)
 		varName = '$newHiddenButtons';
 		title = "Hide Buttons";
 		suffix = "hidden";
-		btnChoices = Refs.Visible;
 	}
 	else //Show New Buttons
 	{
 		varName = '$newShownButtons';
 		title = "Show Buttons";
 		suffix = "shown";
-		btnChoices = Refs.Hidden;
 	}
 
-	$$(_, 4.2, `Retrieve the user's selection`)
-	const selection = Exe.GetUserInput(varName, D_MultiChoice, title, "Choose the buttons to be " + suffix, [], {choices: btnChoices});
+	$$(_, 4.2, `Offer every button this client has, not just the ones in the opposite state`)
+
+	/// GitHub #24. These two patches used to offer complementary lists: Hide Buttons listed only the
+	/// buttons the SOURCE exe currently creates, and Show Buttons only the ones it currently skips.
+	/// On 2025-07-16 the client skips Battleground (0x178), Booking (0x17B) and Twitter (0x206) - the
+	/// switch table at the MOVZX reads 0 for those three ids - so those three never appeared in Hide
+	/// Buttons, which reads as "the option is missing".
+	///
+	/// Worse, it is not merely cosmetic: select Battleground in Show Buttons and there is then no way
+	/// to express "hide it again" in Hide Buttons, because the choice lists are derived once from the
+	/// unpatched source. So both patches now list everything and simply mean what their names say.
+	/// Picking a button that is already in the requested state is a harmless no-op, and the prompt
+	/// says which ones those are.
+	const btnChoices = [...this.Data.values()].filter(name => Refs.IDMap.has(name));
+	const already = (_ === 'HideNewButtons' ? Refs.Hidden : Refs.Visible);
+
+	let desc = "Choose the buttons to be " + suffix;
+	if (already && !already.isEmpty())
+		desc += ".\nThis client already has these " + suffix
+		     + ", so selecting them changes nothing: " + already.join(", ");
+
+	const selection = Exe.GetUserInput(varName, D_MultiChoice, title, desc, [], {choices: btnChoices});
 	if (selection === false || selection.isEmpty())
 		Cancel("No new buttons are " + suffix);
 
-	$$(_, 4.3, `Save the selection`)
+	$$(_, 4.3, `Reject a button asked to be both hidden and shown`)
+
+	/// Now that both patches list everything, the same button can be picked in both. stage() applies
+	/// the other patch's selection second, so the loser would be whichever the user thinks of as
+	/// "theirs" - silently the opposite of what they asked for. Fail loudly instead.
+	const otherPatch = this.Members[1 - this.Members.indexOf(_)];
+	const otherSel = CACHE.get('Selection:' + otherPatch);
+	if (otherSel)
+	{
+		const clash = selection.filter(name => otherSel.includes(name));
+		if (!clash.isEmpty())
+			throw Error("Also selected in the other patch, so the result would be arbitrary - pick one: " + clash.join(", "));
+	}
+
+	$$(_, 4.4, `Save the selection`)
 	CACHE.put('Selection:' + _, selection);
 
-	$$(_, 4.4, `Call the helper to stage the changes`)
+	$$(_, 4.5, `Call the helper to stage the changes`)
 	CACHE.addUser('NBV', _);
 
 	this.stage(_);

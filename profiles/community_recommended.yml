@@ -1,4 +1,4 @@
-# Community Recommended Profile — 2025-07-16 Client
+# Community Recommended Profile - 2025-07-16 Client
 #
 # All recommend:yes patches from the WARP patch definitions.
 # This is the minimal set to get a working English client.
@@ -8,6 +8,25 @@
 #   2. Update the 'from' path below to match your exe filename
 #   3. Run: win32/WARP_console.exe -using profiles/community_recommended.yml
 #   4. Your patched exe will be in Outputs/
+
+#
+# 2026-08-08 - four patches removed after a live audit. Each was verified, not assumed; the full
+# derivation is in warp0716/docs/PATCH_HISTORY.md under that date.
+#
+#   NoHardCodedAddr  its declaration is commented out in Patches/Network.yml, so WARP could never
+#                    apply it. The clientinfo injector already zeroes those strings.
+#   MsgStrings       the langtype gate it patches does not exist on this client. Tested at
+#                    <langtype>0</langtype> - the login screen stayed fully English.
+#   QuestDisplay     the string questID2display.txt does not occur anywhere in this client. Quest
+#                    text comes from the SystemEN lua files handled below.
+#   CancelToLogin    needs RestoreLoginWindow, which is mutually exclusive with UseOldLogin below,
+#                    so it can never apply - and the client already returns to the login window
+#                    from character select on its own.
+#
+# NoPassEncr is KEPT and is not optional if you use langtype 4 or 7: with it removed, login at
+# langtype 4 fails outright. It does nothing at langtype 0 or 1.
+#
+# Verified: 37 patches requested, 37 applied.
 
 from: "Inputs/2025-07-16_Ragexe_unpacked.exe"
 to: "Outputs/patched.exe"
@@ -84,8 +103,6 @@ patches:
     - FixArrowsCharset
     - TranslateClient
     - NoGGuard
-    - MsgStrings
-    - QuestDisplay
     - CustomItemInfoLub
     - CustomAchieveLub
     - CustomTownInfoLub
@@ -103,16 +120,14 @@ patches:
     # Network
     - NoNagle
     - NoPassEncr
-    - NoHardCodedAddr
     # UI
     - OpenToServiceSelect
     - GuildBrackets
     - FixChatAt
     - NoHourly
-
     - NoHelpMsg
     - FixSkillbarReset
     - NoGravityAds
     - NoGravityLogo
+    # Window
     - FixLatestNCWin
-    - CancelToLogin

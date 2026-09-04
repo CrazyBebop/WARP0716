@@ -245,29 +245,41 @@ IncrZoom:
     mutex : true
 
     patches:
-        - Zoom25Percent:
+        - ZoomIn25Percent:
             title : Decrease Zoom Out (to 25%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Restricts the zoom-out range to about 25% of the maximum, bringing the camera closer than default. For a more zoomed-in gameplay experience.
-        
+            desc : Pulls the camera <b>closer</b> than default, to about a quarter of the stock distance (480 &rarr; 128). The odd one out in this group - every other entry here zooms out.
+
+        - ZoomOut25Percent:
+            title : Increase Zoom Out (to 25%)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144) , CrazyBebop
+            desc : Extends the zoom-out range by <b>25%</b> over the default (480 &rarr; 600). The gentlest of the four increases - use it when Max feels too far out. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+
         - Zoom50Percent:
             title : Increase Zoom Out (to 50%)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Extends the zoom-out range to about 50% of the maximum, letting you see more of the map around your character.
-        
+            desc : Extends the zoom-out range by <b>50%</b> over the default (480 &rarr; 720), letting you see more of the map around your character. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+
         - Zoom75Percent:
             title : Increase Zoom Out (to 75%)
             recommend : no
             author : Shinryo , Andrei Karas (4144) , Functor
-            desc : Extends the zoom-out range to about 75% of the maximum. Provides a wide field of view useful for WoE, PvP, and large-scale fights.
-        
+            desc : Extends the zoom-out range by <b>75%</b> over the default (480 &rarr; 840). A wide field of view, useful for WoE, PvP and large-scale fights. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+
         - ZoomMax:
             title : Increase Zoom Out (to Max)
             recommend : no
             author : Shinryo , Andrei Karas (4144)
-            desc : Unlocks the full zoom-out range, allowing the camera to pull back as far as possible. Maximum visibility, but sprites may appear very small.
+            desc : Pulls the camera back as far as this client can actually draw (480 &rarr; 1127). Maximum visibility, though sprites get small. &#9733; This was 1224 until 2026-08-25; that value is past the render limit and shows black at the screen edges. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+
+        - ZoomCustom:
+            title : Increase Zoom Out (custom %)
+            recommend : no
+            author : Shinryo , Andrei Karas (4144) , CrazyBebop
+            desc : Asks you for the increase as a <b>percentage over the client default</b> and converts it for you, so typing <b>60</b> gives the camera 60% more range (480 &rarr; 768). The presets above are the common values; this one covers everything in between. Defaults to <b>134</b>, just under Max. Anything above 135 draws black at the screen edges, and is allowed here anyway so you can experiment. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
 
 LoginMode:
     title : LOGIN MODE

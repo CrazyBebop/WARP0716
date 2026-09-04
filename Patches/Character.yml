@@ -209,17 +209,11 @@ WalkDelay:
     mutex : true
     
     patches:
-        - NoWalkDelay:
-            title : Remove Walk Delay
-            recommend : no
-            author : MegaByte , X-EcutiOnner
-            desc : Removes the delay between walk-click inputs entirely, allowing immediate movement response. <b>Note:</b> May cause the client to send duplicate movement packets to the server.
-        
         - CustomWalkDelay:
-            title : Customize Walk Delay
+            title : Walk Delay (Reforged)
             recommend : no
-            author : MegaByte , X-EcutiOnner
-            desc : Changes the delay between walk-click inputs to a custom value (in milliseconds). Lower values make movement more responsive. <b>Note:</b> Very low values may cause the client to send duplicate movement packets.
+            author : MegaByte , X-EcutiOnner , CrazyBebop
+            desc : Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0.
 
 ResButtonVis:
     title : RESURRECT BUTTON VISIBILITY

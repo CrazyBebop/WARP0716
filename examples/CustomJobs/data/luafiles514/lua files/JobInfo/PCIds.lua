@@ -9,7 +9,7 @@
 -- ============================================================
 -- Stock job IDs are auto-populated by the do-block below, so you can
 -- write `PCNames[PCIds.LORD_KNIGHT2] = "Lord Tite"` (or
--- `PCNames[4014] = "Lord Tite"` — both forms work) in PCNames.lua.
+-- `PCNames[4014] = "Lord Tite"` - both forms work) in PCNames.lua.
 --
 -- Add YOUR custom job IDs after the "ADD CUSTOM JOBS BELOW" marker.
 --
@@ -20,7 +20,7 @@
 PCIds = PCIds or {}
 
 -- ============================================================
--- Stock job IDs (auto-populated — do not edit this block)
+-- Stock job IDs (auto-populated - do not edit this block)
 -- ============================================================
 -- Aliases provided for both rAthena (LORD_KNIGHT2) and legacy WARP
 -- (LORD_MOUNT) mounted-variant naming, plus rAthena (_T) and legacy

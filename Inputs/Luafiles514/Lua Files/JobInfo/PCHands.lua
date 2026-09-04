@@ -1,9 +1,18 @@
 --[[
   CustomJobs Lua Data
   Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
-  Last Modified: 2026-03-16
+  Last Modified: 2026-09-02
 ]]--
 
+-- ============================================================
+-- NOTE (2026-09-02): this table is read when you APPLY the patch, not by the client.
+-- WARP bakes every literal row here into the patched exe (through PCIds.lua for
+-- the id), after the five official 2025 jobs (Druid, Karnos, Alitea), so re-apply
+-- WARP after editing this file. Only a quoted string is a row: inheritance forms
+-- such as (PCHands[PCIds.NOVICE] or "") mean "stock hands" and add nothing.
+-- The runtime Lua lookup crashes the 2025-07-16 client (2026-08-27), which is
+-- why the table is baked at all. See docs/PATCH_HISTORY.md 2026-09-02.
+-- ============================================================
 -- ============================================================
 -- Custom Job Hand/Weapon Sprite Paths
 -- ============================================================
