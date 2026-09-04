@@ -18,7 +18,7 @@
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
 *   Created Date  : 2026-07-12                                             *
-*   Last Modified : 2026-07-12                                             *
+*   Last Modified : 2026-07-23                                             *
 *                                                                          *
 *   brief Shows each weapon's original item SPR/ACT while dual-wielding or *
 *   equipping only an off-hand weapon. This is a self-contained static     *
@@ -32,6 +32,8 @@
 *   - Stock dual setup collapses real items to generic types 25..30.       *
 *   - Stock single-item setup resolves the real item resource pair in      *
 *     slot 5.                                                              *
+*   - D8A1D0(item) returns a positive weapon view for weapons only; shield  *
+*     and other non-weapon item IDs can still be nonzero in either hand.    *
 *   - Item ACT actions 88..95 are blank because stock uses a combined ACT; *
 *     the direction-matched individual attack actions are 80..87.          *
 *                                                                          *
@@ -50,6 +52,9 @@ const DualWeaponStatic = {
 	ActFrameCall: 0x00D36EE4,
 	ActFrameCallBytes: "E8 C7 85 9D FF",
 	ActGetFrame: 0x0070F4B0,
+	ItemToWeaponView: 0x00D8A1D0,
+	ItemToWeaponViewBytes: "55 8B EC 56 8B 75 08",
+	ItemDatabase: 0x015FA3C0,
 	ResourceAddRef: 0x00A8E800,
 	ResourceRelease: 0x00A8F910
 };
@@ -167,6 +172,22 @@ DualWeaponStatic.buildEquipHook = function(trampolineVir)
 		a.call(trampolineVir);
 	};
 
+	const requireWeaponItem = function(kind, failLabel)
+	{
+		// D8A1D0 is __thiscall with RET 4. Match D403A0's stock positive-view
+		// predicate so shields and other non-weapon equipment remain untouched.
+		if (kind === "main")
+			a.emit(0x53);                   // PUSH EBX
+		else if (kind === "off")
+			a.emit(0x57);                   // PUSH EDI
+		else
+			throw Error(`DualWeaponStatic: unknown item register ${kind}`);
+		a.emit(0xB9); a.dword(DualWeaponStatic.ItemDatabase);
+		a.call(DualWeaponStatic.ItemToWeaponView);
+		a.emit(0x85, 0xC0);                 // TEST EAX,EAX
+		a.jcc(0x8E, failLabel);             // JLE fail
+	};
+
 	const loadSlots = function(failLabel)
 	{
 		a.emit(0x8B, 0x86); a.dword(0x4AC); // MOV EAX,[ESI+4AC] SPR begin
@@ -229,8 +250,10 @@ DualWeaponStatic.buildEquipHook = function(trampolineVir)
 	original("current");
 	a.emit(0x85, 0xFF);                   // TEST EDI,EDI
 	a.jcc(0x84, "done");                 // no off-hand
+	requireWeaponItem("off", "done");     // shield/non-weapon off-hand
 	a.emit(0x85, 0xDB);                   // TEST EBX,EBX
 	a.jcc(0x84, "offhand_only");
+	requireWeaponItem("main", "done");    // non-weapon main-hand
 
 	// Dual: retain the off item from the single-item slot-5 path.
 	original("offAsMain");
@@ -306,6 +329,9 @@ DualWeaponStatic.buildActionBridge = function()
 	a.jcc(0x82, "original");               // JB
 	a.emit(0x83, 0x7C, 0x24, 0x04, 0x5F); // CMP action,95
 	a.jcc(0x87, "original");               // JA
+
+	// First restrict the bridge to a live candidate pair installed in slot 5/6.
+	// Item classification below therefore stays off unrelated ACT lookups.
 	a.emit(0x8B, 0x87); a.dword(0x4AC);     // EAX=SPR array
 	a.emit(0x85, 0xC0);
 	a.jcc(0x84, "original");
@@ -318,8 +344,7 @@ DualWeaponStatic.buildActionBridge = function()
 	a.jcc(0x85, "slot5");
 	a.emit(0x83, 0x78, 0x18, 0x00);        // CMP SPR[6],0
 	a.jcc(0x84, "original");
-	a.emit(0x83, 0x6C, 0x24, 0x04, 0x08);  // SUB action,8
-	a.jmp("original");
+	a.jmp("validate_items");
 
 	// Slot 5 remaps only when slot 6 also has an SPR, distinguishing our
 	// two-pair dual state from stock single/combined weapon resources.
@@ -330,6 +355,33 @@ DualWeaponStatic.buildActionBridge = function()
 	a.jcc(0x84, "original");
 	a.emit(0x83, 0x78, 0x18, 0x00);        // CMP SPR[6],0
 	a.jcc(0x84, "original");
+
+	// Mirror the equipment hook's item classification before interpreting a
+	// candidate pair as patch-owned. A shield ID is nonzero but D8A1D0
+	// returns no weapon view for it.
+	a.label("validate_items");
+	a.emit(0x8B, 0x87); a.dword(0x444);     // EAX=off item
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "original");
+	a.emit(0x51, 0x50);                    // save ACT ECX / PUSH off item
+	a.emit(0xB9); a.dword(DualWeaponStatic.ItemDatabase);
+	a.call(DualWeaponStatic.ItemToWeaponView);
+	a.emit(0x85, 0xC0);
+	a.emit(0x59);                          // restore ACT ECX; flags preserved
+	a.jcc(0x8E, "original");               // JLE
+
+	// A zero main item is the supported off-hand-only state. Otherwise both
+	// equipped items must resolve to weapon views before remapping actions.
+	a.emit(0x8B, 0x87); a.dword(0x440);     // EAX=main item
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "weapon_items_valid");
+	a.emit(0x51, 0x50);                    // save ACT ECX / PUSH main item
+	a.emit(0xB9); a.dword(DualWeaponStatic.ItemDatabase);
+	a.call(DualWeaponStatic.ItemToWeaponView);
+	a.emit(0x85, 0xC0);
+	a.emit(0x59);                          // restore ACT ECX; flags preserved
+	a.jcc(0x8E, "original");               // JLE
+	a.label("weapon_items_valid");
 	a.emit(0x83, 0x6C, 0x24, 0x04, 0x08);  // SUB action,8
 
 	a.label("original");
@@ -337,12 +389,12 @@ DualWeaponStatic.buildActionBridge = function()
 	return a;
 };
 
-AllowDualWeaponSprites = function(_)
+AllowDualCustomWeaponSprites = function(_)
 {
 	if (Exe.BuildDate !== DualWeaponStatic.BuildDate)
 		throw Error("DualWeaponStatic supports only the 2025-07-16 client");
 
-	$$(_, 1, `Verify the target equipment entry and ACT-frame call site`);
+	$$(_, 1, `Verify the equipment, item classifier, and ACT-frame call sites`);
 	const equipPhy = DualWeaponStatic.assertBytes(
 		"D403A0 equipment entry",
 		DualWeaponStatic.EquipUpdate,
@@ -352,6 +404,11 @@ AllowDualWeaponSprites = function(_)
 		"D36EE4 ACT-frame call",
 		DualWeaponStatic.ActFrameCall,
 		DualWeaponStatic.ActFrameCallBytes
+	);
+	DualWeaponStatic.assertBytes(
+		"D8A1D0 item-to-weapon-view entry",
+		DualWeaponStatic.ItemToWeaponView,
+		DualWeaponStatic.ItemToWeaponViewBytes
 	);
 
 	$$(_, 2, `Create the stock D403A0 trampoline`);
@@ -380,7 +437,7 @@ AllowDualWeaponSprites = function(_)
 	if (typeof PatchDiagnostics !== "undefined" &&
 		typeof PatchDiagnostics.add === "function")
 	{
-		PatchDiagnostics.add("AllowDualWeaponSprites.Static", {
+		PatchDiagnostics.add("AllowDualCustomWeaponSprites.Static", {
 			trampolineVir,
 			equipHookVir,
 			actionHookVir,
@@ -392,7 +449,7 @@ AllowDualWeaponSprites = function(_)
 	return true;
 };
 
-AllowDualWeaponSprites.validate = function()
+AllowDualCustomWeaponSprites.validate = function()
 {
 	if (Exe.BuildDate !== DualWeaponStatic.BuildDate)
 		return false;
@@ -407,6 +464,11 @@ AllowDualWeaponSprites.validate = function()
 			"D36EE4 ACT-frame call",
 			DualWeaponStatic.ActFrameCall,
 			DualWeaponStatic.ActFrameCallBytes
+		);
+		DualWeaponStatic.assertBytes(
+			"D8A1D0 item-to-weapon-view entry",
+			DualWeaponStatic.ItemToWeaponView,
+			DualWeaponStatic.ItemToWeaponViewBytes
 		);
 		return true;
 	}
