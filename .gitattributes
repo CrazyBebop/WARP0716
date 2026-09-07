@@ -1,0 +1,5 @@
+# Required byte formats for the dual-weapon patch.
+Scripts/Patches/AllowDualCustomWeaponSprites.qjs text eol=crlf
+Inputs/DualWeaponRuntime/*.dwcp binary
+Inputs/DualWeaponRuntime/*.dwls binary
+Inputs/DualWeaponRuntime/*.grf binary
