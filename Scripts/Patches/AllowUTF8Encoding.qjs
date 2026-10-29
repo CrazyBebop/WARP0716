@@ -447,6 +447,13 @@
 ///        and honours the 'data folder first' setting. GRF entries are matched
 ///        case-insensitively (the client lowercases the name before hashing).
 ///
+///        Saying yes to the install prompt copies Inputs\emoji.grf beside the
+///        client and adds an entry for it to DATA.INI, because an archive that
+///        nothing names is never mounted - the file would sit there while the
+///        client still drew flat GDI silhouettes. If the client uses an
+///        embedded GRF list instead (GRFsEmbedded), add emoji.grf to that
+///        list; the copied file is not read by itself.
+///
 ///        CFileMgr::Get returns a VirtualAlloc'd buffer, so the loader
 ///        allocates the same way on its own fallback path and one free covers
 ///        both. That fallback is CreateFileA, i.e. loose files only, and is
@@ -726,7 +733,7 @@ AllowUTF8Encoding = function(_)
 		/// The grf carries the data\emoji sprites this stage draws from, so the
 		/// question is only worth asking when the sprite path actually went in.
 		if (!Warp.TestMode)
-			Exe.GetUserInput('$copyEmojiGrf', D_Bool, "Copy Emoji Grf", "Do you want the supporting Grf file copied to <b>'client'</b> folder when patch is applied?", true);
+			Exe.GetUserInput('$copyEmojiGrf', D_Bool, "Copy Emoji Grf", "Do you want the supporting Grf file copied to the <b>'client'</b> folder and registered in <b>DATA.INI</b> when patch is applied? If you use an embedded GRF list instead, add <b>emoji.grf</b> to it yourself.", true);
 	}
 
 	Exe.EndTag();
@@ -1761,23 +1768,177 @@ AllowUTF8Encoding.validate = () =>
 	Exe.FindHex(AllowUTF8Encoding.TextResolverSig) > 0;
 
 ///
-/// \brief Extra steps when the patch is applied (Copy the Grf file if requested)
+/// \brief Extra steps when the patch is applied (install the emoji pack)
+///
+///        The grf is copied beside the client and an entry is added to DATA.INI,
+///        because an archive that nothing names is never mounted - the sprites
+///        would be there but the client would still draw GDI silhouettes.
 ///
 AllowUTF8Encoding.onApplied = function()
 {
-	if (Warp.TestMode || !Exe.GetSavedInput('$copyEmojiGrf'))
-		return;
-
 	const _ = 'AllowUTF8Encoding.onApplied';
 
-	$$(_, 1.1, `Prepare the directory paths`)
+	$$(_, 1, `Only install the pack when the user actually answered yes`)
+	/// A D_Bool coming back from a profile or a saved session is the TEXT
+	/// "false", which is a non-empty string and therefore truthy. Accept only
+	/// the spellings that really mean yes, so an answered "No" copies nothing.
+	if (Warp.TestMode)
+		return;
+
+	let answer;
+	try
+	{
+		answer = Exe.GetSavedInput('$copyEmojiGrf');
+	}
+	catch (e)
+	{
+		/// The question is only asked when stage 4 ran, so a missing input is
+		/// simply nothing to install - not an error worth aborting on.
+		return;
+	}
+
+	if (!["true", "1"].includes(String(answer).trim().toLowerCase()))
+		return;
+
+	$$(_, 2.1, `Prepare the directory paths`)
 	const srcDir = Warp.Path + "Inputs";
 	const tgtDir = System.DirPath(Warp.TgtExe);
 
-	$$(_, 2, `Copy the grf file to the target directory (overwriting the existing ones)`)
-	for (const name of
-	[
-		"emoji"
-	])
-		System.Copy(srcDir + "/" + name + ".grf", tgtDir, true);
+	$$(_, 2.2, `Copy the grf file to the target directory (overwriting the existing one)`)
+	if (!System.Copy(srcDir + "/emoji.grf", tgtDir, true))
+	{
+		console.warn("AllowUTF8Encoding: could not copy emoji.grf to " + tgtDir);
+		return;
+	}
+
+	$$(_, 3, `Register the grf in DATA.INI so the client mounts it`)
+	AllowUTF8Encoding.registerGrf(tgtDir, "emoji.grf");
+};
+
+///
+/// \brief Make sure DATA.INI names the grf, adding an entry when it does not.
+///
+///        The client mounts the archives listed in the [Data] section of
+///        DATA.INI; a grf dropped beside the exe is not read just by being
+///        there. The section is read with GetPrivateProfileString, so section
+///        and key names are case-insensitive and the keys are the digits 0-9.
+///        The new line goes under the first free key.
+///
+///        Everything else in the file is preserved as-is, including comments,
+///        other sections and the existing line endings. When no free key is
+///        left the entry is not forced - the archive simply stays unregistered
+///        and a warning names the file that has to be edited by hand.
+///
+AllowUTF8Encoding.registerGrf = function(dir, name)
+{
+	const path = dir + "/DATA.INI";
+
+	$$('AllowUTF8Encoding.registerGrf', 1, `Read the existing INI, if any`)
+	let fp = new TextFile(path, ASCII, "r");
+	let text = fp.Valid ? fp.Read(fp.Size) : "";
+	if (fp.Valid)
+		fp.Close();
+
+	/// Windows INI files are CRLF in practice, but a file created by another
+	/// tool may use LF. Keep whichever style it already has.
+	const eol = text.indexOf("\n") < 0 || text.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
+
+	$$('AllowUTF8Encoding.registerGrf', 2, `Locate the [Data] section`)
+	/// The trailing line break belongs to the header, so the body starts on
+	/// the line after it. Matching it case-insensitively mirrors the client.
+	const header = /^[ \t]*\[[ \t]*data[ \t]*\][^\r\n]*(?:\r?\n|$)/im.exec(text);
+
+	if (header == null)
+	{
+		$$('AllowUTF8Encoding.registerGrf', 3, `No [Data] section - append one`)
+		if (text.length > 0 && !/[\r\n]$/.test(text))
+			text += eol;
+
+		if (text.length > 0)
+			text += eol;
+
+		text += "[Data]" + eol + "0=" + name + eol;
+		return AllowUTF8Encoding.writeIni(path, text);
+	}
+
+	const bodyStart = header.index + header[0].length;
+	const rest = text.slice(bodyStart);
+	const next = /^[ \t]*\[/m.exec(rest);
+	const bodyEnd = next == null ? text.length : bodyStart + next.index;
+
+	$$('AllowUTF8Encoding.registerGrf', 4, `Check the existing entries`)
+	const used = [];
+	let present = false;
+
+	for (const line of text.slice(bodyStart, bodyEnd).split(/\r?\n/))
+	{
+		const pair = /^[ \t]*([^=;#\s][^=]*?)[ \t]*=[ \t]*(.*?)[ \t]*$/.exec(line);
+		if (pair == null)
+			continue;
+
+		const key = pair[1].trim();
+		const value = pair[2].trim().replace(/^\.\\/, "").toLowerCase();
+
+		if (/^\d+$/.test(key))
+			used.push(Number(key));
+
+		if (value === name.toLowerCase())
+			present = true;
+	}
+
+	if (present)
+	{
+		$$('AllowUTF8Encoding.registerGrf', 5, `Already listed - nothing to do`)
+		return true;
+	}
+
+	let key = -1;
+	for (let i = 0; i <= 9; i++)
+	{
+		if (!used.includes(i))
+		{
+			key = i;
+			break;
+		}
+	}
+
+	if (key < 0)
+	{
+		console.warn("AllowUTF8Encoding: DATA.INI already lists 10 grfs, add " + name + " to it manually");
+		return false;
+	}
+
+	$$('AllowUTF8Encoding.registerGrf', 6, `Add the entry at the end of the [Data] section`)
+	/// Inserting at bodyEnd keeps the entry inside the section even when it is
+	/// followed by other sections. A line break is added first only when the
+	/// previous byte is not already one - i.e. when the section ends without a
+	/// trailing newline.
+	const lead = bodyEnd > 0 && !/[\r\n]/.test(text.charAt(bodyEnd - 1)) ? eol : "";
+
+	text = text.slice(0, bodyEnd)
+	     + lead + key + "=" + name + eol
+	     + text.slice(bodyEnd);
+
+	return AllowUTF8Encoding.writeIni(path, text);
+};
+
+///
+/// \brief Write DATA.INI back with the same ASCII encoding it was read with.
+///
+AllowUTF8Encoding.writeIni = function(path, text)
+{
+	let fp = new TextFile(path, ASCII, "w");
+	if (!fp.Valid)
+	{
+		console.warn("AllowUTF8Encoding: could not open " + path + " for writing");
+		return false;
+	}
+
+	const ok = fp.Write(text);
+	fp.Close();
+
+	if (!ok)
+		console.warn("AllowUTF8Encoding: could not update " + path);
+
+	return ok;
 };

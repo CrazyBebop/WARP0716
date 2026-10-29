@@ -515,4 +515,4 @@ TextRendering:
             title : Allow UTF-8 encoding
             recommend : no
             author : Hanashi
-            desc : Makes the client speak UTF-8 end to end - text display, layout, typing/pasting and colored emoji sprites. Data files must actually be saved as UTF-8 to benefit.
+            desc : Makes the client speak UTF-8 end to end - text display, layout, typing/pasting and colored emoji sprites. Data files must actually be saved as UTF-8 to benefit. When you answer yes to its prompt, <b>emoji.grf</b> is copied beside the client and registered in <b>DATA.INI</b>; if you use an embedded GRF list instead, add <b>emoji.grf</b> to that list.
