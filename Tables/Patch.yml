@@ -237,3 +237,6 @@
 361 : CustomCodePage
 362 : CustomButtons
 364 : ShowPartySP
+
+365 : ChatMeasurementCache
+366 : ChatStutterFix

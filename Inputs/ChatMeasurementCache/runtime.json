@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "client": 20250716,
+  "size": 8196,
+  "exports": {
+    "@ChatFragmentWidth@32": 240,
+    "ChatCacheApi": 8192,
+    "ChatCacheLayout": 4096,
+    "_ChatGlyphWidth@16": 976
+  },
+  "layout": [
+    38596,
+    104,
+    5428,
+    8,
+    268,
+    524,
+    8,
+    21720,
+    21724,
+    21828,
+    108,
+    112,
+    116,
+    1140
+  ],
+  "source_sha256": "de90d867ae270d70ce7d8b0206cbe3ce943c0a5eefe2fe180c7ac6ba4707fe33",
+  "payload_sha256": "b6cd569a722cd4796f79dd171dcdf3a85b8b34fa58a183e36f28ffa9c9056768",
+  "imports": [],
+  "compiler": "MSVC x86",
+  "compiler_version": "14.51.36231",
+  "exception_policy": "Native exception dispatch unchanged; an unwound miss disables caching until restart"
+}

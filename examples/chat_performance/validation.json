@@ -1,0 +1,334 @@
+{
+  "target": "fixed-base 2025-07-16 Ragexe",
+  "original_input_sha256": "ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff",
+  "research_credit": [
+    "SCIEL",
+    "ICE",
+    "gidzdlcrz (ICE-derived history-site proposal)"
+  ],
+  "source_information": [
+    "Cache_Fix.txt",
+    "Stutter_Fix.txt"
+  ],
+  "historical_live_benchmark": {
+    "date": "2026-10-30",
+    "scope": "Local integration profile including ChatItemIcons and other fixed UI patches; these are historical local measurements, not unmodified upstream FPS claims.",
+    "source_client_sha256": "e17feb6e08d2fd8cee880c762b5e37ae2a3190e800d5275619c0977a0e7f765a",
+    "method": "PresentMon 2.6.0 ETW, two 30-second samples per state in mirrored order; chat spam and all ten dummies taking AoE damage.",
+    "summary": [
+      {
+        "state": "Both off",
+        "average_fps": 139.94807101982067,
+        "one_percent_low_fps": 48.498458693793424,
+        "worst_frame_ms": 53.3351,
+        "frames_over_33_333_ms": 18
+      },
+      {
+        "state": "Stutter only",
+        "average_fps": 138.10617350630673,
+        "one_percent_low_fps": 48.097434276064504,
+        "worst_frame_ms": 51.7897,
+        "frames_over_33_333_ms": 17
+      },
+      {
+        "state": "Cache only",
+        "average_fps": 140.92085162804696,
+        "one_percent_low_fps": 70.6690674964571,
+        "worst_frame_ms": 40.4506,
+        "frames_over_33_333_ms": 1
+      },
+      {
+        "state": "Both on",
+        "average_fps": 140.71666991818853,
+        "one_percent_low_fps": 69.57677156458433,
+        "worst_frame_ms": 35.4999,
+        "frames_over_33_333_ms": 1
+      }
+    ],
+    "limitations": [
+      "Single local client/session; weather/OS activity not frozen.",
+      "Small average-FPS differences are not a significance test.",
+      "Stutter-only did not show an independent frame-time improvement in this workload."
+    ]
+  },
+  "historical_instrumented_local_tests": {
+    "classifier_vectors": 305,
+    "native_append_wrapping_vectors": 172,
+    "native_splitter_vectors": 192,
+    "four_runtime_state_wrapping_vectors": 96,
+    "win32_worker_four_states": true,
+    "logging_off_and_cold_fragment_bootstrap": true
+  },
+  "production_scope": {
+    "runtime_logging": false,
+    "runtime_counters": false,
+    "timing_probes": false,
+    "config_polling": false,
+    "worker_thread": false,
+    "runtime_debug_controls": false,
+    "diagnostic_descriptors": false,
+    "selection": "Select each fix independently in WARP"
+  },
+  "upstream_validation": {
+    "base_commit": "48dde104ea4e7487eb4c1cc52ded7d2abe433966",
+    "builds": {
+      "baseline": {
+        "exe": "baseline/Ragnarok.exe",
+        "sha256": "ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff",
+        "patches": []
+      },
+      "stutter": {
+        "exe": "stutter/Ragnarok.exe",
+        "sha256": "31764dde8c52d2f4bb5ef4f8ea72ff6f47a80fecb39dda179dd62d65c13eddbb",
+        "patches": [
+          "ChatStutterFix"
+        ]
+      },
+      "cache": {
+        "exe": "cache/Ragnarok.exe",
+        "sha256": "d2f3fbc9c0a4f1a9d59a033f47b674f225bdef133586eb022341a503675cd503",
+        "patches": [
+          "ChatMeasurementCache"
+        ]
+      },
+      "both": {
+        "exe": "both/Ragnarok.exe",
+        "sha256": "6509c541f52091425f11f9deda310447de449cfbb5e87f8df886da366e91dd1e",
+        "patches": [
+          "ChatMeasurementCache",
+          "ChatStutterFix"
+        ]
+      },
+      "reverse-invocation": {
+        "exe": "reverse-invocation/Ragnarok.exe",
+        "sha256": "6509c541f52091425f11f9deda310447de449cfbb5e87f8df886da366e91dd1e",
+        "patches": [
+          "ChatStutterFix",
+          "ChatMeasurementCache"
+        ]
+      },
+      "recommended": {
+        "exe": "recommended/Ragnarok.exe",
+        "sha256": "43019739b508ce606dfdd9844f465cf069ceda0a4a107827a013ff84dbc3775c",
+        "patches": [
+          "EnableWho",
+          "EnableShowName",
+          "MediumCamAngle",
+          "UseOldLogin",
+          "AlwaysAscii",
+          "CallKoreaClientInfo",
+          "DataFolderFirst",
+          "PlainTextDesc",
+          "LoadKrExtSettings",
+          "HideBuildInfo",
+          "FixArrowsCharset",
+          "TranslateClient",
+          "NoGGuard",
+          "CustomItemInfoLub",
+          "CustomAchieveLub",
+          "CustomTownInfoLub",
+          "CustomTipboxLub",
+          "CustomMapInfoLub",
+          "CustomOngQuestInfoLub",
+          "CustomRcmdQuestInfoLub",
+          "CustomspopupLub",
+          "CustomQuestQualiLub",
+          "GRFsFromIni",
+          "EnableSysMenu",
+          "No1and1Arg",
+          "RestoreIcon",
+          "NoNagle",
+          "NoPassEncr",
+          "OpenToServiceSelect",
+          "GuildBrackets",
+          "FixChatAt",
+          "NoHourly",
+          "NoHelpMsg",
+          "FixSkillbarReset",
+          "NoGravityAds",
+          "NoGravityLogo",
+          "FixLatestNCWin",
+          "ChatMeasurementCache",
+          "ChatStutterFix"
+        ]
+      },
+      "prewrap-control": {
+        "exe": "prewrap-control/Ragnarok.exe",
+        "sha256": "2793aeb5df387ba94f9c7cce7404dab478ebecbaa90f8e17b81045c9d84885cb",
+        "patches": [
+          "ChatMeasurementCache",
+          "ChatStutterFix"
+        ],
+        "history_hooks_restored": true,
+        "changed_ranges": [
+          [
+            4442938,
+            4443020
+          ],
+          [
+            4443761,
+            4443841
+          ]
+        ],
+        "all_other_bytes_identical": true
+      }
+    },
+    "native_classifier_vectors": 305,
+    "native_append_wrapping_vectors": 172,
+    "native_splitter_vectors": 192,
+    "four_independent_build_state_vectors": 96,
+    "native_splitter_measurements": {
+      "original": 4400,
+      "cache": 21
+    },
+    "win32_cache_host": "PASS native Win32 cache: identical widths, cold fragment, invalidation, busy fallback, SEH unwind; native calls cache-on=13 cache-off=4400",
+    "runtime_diagnostics_present": false,
+    "new_live_gameplay_acceptance": false,
+    "verified_date": "2026-10-31",
+    "real_warp_build_cases": 6,
+    "matched_prewrap_only_control": true,
+    "native_suite_passed": true,
+    "history_standard_vectors": 36,
+    "history_guarded_tag_vectors": 6,
+    "history_register_stack_receiver_contracts": true,
+    "incompatible_input_rejections": [
+      {
+        "site": "prewrap",
+        "rejected": true,
+        "no_hook_changes": true
+      },
+      {
+        "site": "history1",
+        "rejected": true,
+        "no_hook_changes": true
+      },
+      {
+        "site": "history2",
+        "rejected": true,
+        "no_hook_changes": true
+      },
+      {
+        "site": "native-fallback",
+        "rejected": true,
+        "no_hook_changes": true
+      }
+    ],
+    "native_history_temporary_strings": {
+      "plain": {
+        "original": 1,
+        "candidate": 0
+      },
+      "literal_angle_false_positive": {
+        "original": 1,
+        "candidate": 1
+      },
+      "recognized_tag_before_native_parser": {
+        "original": 2,
+        "candidate": 1
+      }
+    },
+    "history_renderer_boundary": "Stopped at the unchanged recognized-tag parser; full rendering is a separate test",
+    "receipt_sha256": {
+      "Outputs/chat-tests/builds.json": "5e917f4d81308f3961bef408b20f40604b2b5a4e9f364bb25d3ec8b5cfc671c1",
+      "Outputs/chat-tests/native/build-states.json": "bfc25e9e6f25b9a9cab1804bff5bcc5c8f87184b8cd2f61f38346f051713276d",
+      "Outputs/chat-tests/native/history/history-tests.json": "a871968bca030ee4b6221bb6019341fb664c871e89a9635dce315928dbb540f4",
+      "Outputs/chat-tests/guard-rejections.json": "126d1f097febb589b7f2b8d85ede5ba419c54f5dd0d4fcc5064ee6da79ae367e",
+      "Outputs/chat-performance/native-cache-host/result.json": "4275e651627c26b583ca8cd8351bf2308fd47b8c0f52c7bd289e4a0fade5baa7"
+    }
+  },
+  "test_environment": {
+    "os": "Windows 11 Home Single Language",
+    "architecture": "64-bit",
+    "display_version": "26H2",
+    "build": "26300.9711",
+    "client_architecture": "32-bit x86 (WOW64)",
+    "verified_date": "2026-10-31",
+    "verification": "Current Win32_OperatingSystem CIM caption/build/architecture and registry DisplayVersion/UBR; x86 cache host executed under WOW64.",
+    "windows_10_comparison_performed": false
+  },
+  "history_site_proposal": {
+    "commenter": "gidzdlcrz",
+    "comment_url": "https://github.com/CrazyBebop/WARP0716/pull/75#issuecomment-6527631827",
+    "pastebin_url": "https://pastebin.com/JBB7LHuY",
+    "stated_derivation": "ICE release",
+    "adaptation": "Keep the original pre-wrap matcher; guard both history blocks and runtime tag grammar before using the angle-marker shortcut."
+  },
+  "stutter_sites": [
+    "0x0083D452",
+    "0x0083D73A",
+    "0x0083DA71"
+  ],
+  "local_guarded_history_comparison": {
+    "date": "2026-10-31",
+    "scope": "Separate uninstrumented local integration builds, including ChatItemIcons; Default theme held fixed. These are not fresh upstream-only FPS measurements.",
+    "method": "Two accepted 30-second inner windows per build, seconds 8-38 of chat spam plus scheduled AoEs on ten dummies; candidate then control.",
+    "total_present_intervals": 17235,
+    "variants": {
+      "current": {
+        "runs": [
+          "default-current-r1",
+          "default-current-r2"
+        ],
+        "run_fps": [
+          143.17663281062792,
+          143.65801952740892
+        ],
+        "mean_fps": 143.41732616901842,
+        "mean_one_percent_low_fps": 90.07218634455036,
+        "mean_p99_ms": 9.833848499999998,
+        "worst_ms": 22.113,
+        "frames": 8605,
+        "frames_over_16_667_ms": 4,
+        "frames_over_33_333_ms": 0,
+        "messages": [
+          1313,
+          1314
+        ],
+        "pid": 27764,
+        "client_sha256": "82f482e8ea22c760b03f9bf2bae8e411e799ff947c3c7353ae5a07760d254174"
+      },
+      "both": {
+        "runs": [
+          "default-both-r1",
+          "default-both-r2"
+        ],
+        "run_fps": [
+          143.79476943708954,
+          143.87902883329403
+        ],
+        "mean_fps": 143.8368991351918,
+        "mean_one_percent_low_fps": 98.31630336231343,
+        "mean_p99_ms": 9.636574999999997,
+        "worst_ms": 12.108,
+        "frames": 8630,
+        "frames_over_16_667_ms": 0,
+        "frames_over_33_333_ms": 0,
+        "messages": [
+          1312,
+          1311
+        ],
+        "pid": 29676,
+        "client_sha256": "8bd32eb764e9c4024570f2dc73a6cab7927046052ef42603d6d5c304705bae2e"
+      }
+    },
+    "average_fps_delta": 0.41957296617337647,
+    "average_fps_delta_percent": 0.29255388967361906,
+    "limitations": [
+      "Initial theme-changing/focus-failed runs excluded.",
+      "Two sequential trials per build, no randomization or frozen OS/weather activity.",
+      "Seven casts per run were scheduled invocations; all ten targets took damage, without per-cast acceptance receipts.",
+      "Both builds retain the cache and pre-wrap optimization; this does not isolate the cache benefit.",
+      "The 0.29 percent mean-FPS difference does not establish an average-FPS gain; cleaner tails need replication."
+    ]
+  },
+  "updated_source_sha256": {
+    "Scripts/Patches/ChatStutterFix.qjs": "3974461bad8b8fdc888dcbf427a7918551cf2cc8bf09483a2e518f7221f6d114",
+    "tools/build_chat_performance_fixture.py": "525aafff0ae2e41d3c18e4a65ed8a8951429d2f46726ac70a6b231e056c3dbe6",
+    "tools/chat_patch_layout.py": "fef38dbc45f5b4739696b405fbaa54326e188efd991a52cb2b3934f2a7d68584",
+    "tools/chat_stutter_cases.py": "f1ac22c6d4509b04971a8eab2cfbe35730d34219003d0707e167fef0dc563f40",
+    "tools/verify_chat_performance.py": "3565708c213fb135f9b96634e7ac43865e861f482bf9d194f92afca5d37d5b0c",
+    "tools/test_chat_history_stutter.py": "c0993bb262fcf830a483d365cb01e8bbd5c71db496a942c83ffe91ce0ea7de39",
+    "tools/test_chat_stutter_guards.py": "5ee468f0d2d276fad248b11e23927b1c9d74770724f0b91e090e81dddbc85925",
+    "tools/test_chat_performance.py": "a3223f3ae73347b1aaceaf1f9af3bd600a623a0eee23287040e83ab5166b58bd"
+  }
+}

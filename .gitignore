@@ -27,3 +27,6 @@ desktop.ini
 # Guides are NOT in the repo (owner, 2026-09-02). They live on the website, warp.legacygamers.net,
 # whose source tree is projects/lgn_warp/website/. README images sit in .github/images/.
 /docs/
+
+# Python validation tools
+__pycache__/

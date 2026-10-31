@@ -1,0 +1,127 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-10-30                                             *
+*   Last Modified : 2026-10-30                                             *
+*   Description   : Shared byte guards and x86 emission for 2025-07-16.    *
+*                   Used by both native chat fixes at patch time only.     *
+*                   No client logging, diagnostics or runtime worker.      *
+*   Evidence      : examples/chat_performance/validation.json              *
+*   Verifier      : tools/verify_chat_performance.py                       *
+*                                                                          *
+\**************************************************************************/
+
+
+ChatPerformanceNative = {};
+
+ChatPerformanceNative.bytesToHex = function(bytes)
+{
+	return bytes.map(value =>
+		(value & 0xFF).toString(16).padStart(2, "0")
+	).join(" ");
+};
+
+ChatPerformanceNative.asm = function()
+{
+	const bytes = [];
+	const labels = {};
+	const fixups = [];
+	const put32 = function(out, pos, value)
+	{
+		const v = value >>> 0;
+		out[pos] = v & 0xFF;
+		out[pos + 1] = (v >>> 8) & 0xFF;
+		out[pos + 2] = (v >>> 16) & 0xFF;
+		out[pos + 3] = (v >>> 24) & 0xFF;
+	};
+	return {
+		bytes,
+		emit: function(...values)
+		{
+			for (const value of values)
+				bytes.push(value & 0xFF);
+		},
+		dword: function(value)
+		{
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			put32(bytes, pos, value);
+		},
+		label: function(name)
+		{
+			if (Object.prototype.hasOwnProperty.call(labels, name))
+				throw Error(`Chat performance: duplicate label ${name}`);
+			labels[name] = bytes.length;
+		},
+		rel32: function(opcode, target)
+		{
+			bytes.push(opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		call: function(target) { this.rel32(0xE8, target); },
+		jmp: function(target) { this.rel32(0xE9, target); },
+		jcc: function(opcode, target)
+		{
+			bytes.push(0x0F, opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		finish: function(baseVir)
+		{
+			const out = bytes.slice();
+			for (const fixup of fixups)
+			{
+				if (typeof fixup.target === "string" &&
+					!Object.prototype.hasOwnProperty.call(labels, fixup.target))
+					throw Error(`Chat performance: unresolved label ${fixup.target}`);
+				const targetVir = typeof fixup.target === "string"
+					? baseVir + labels[fixup.target]
+					: fixup.target;
+				put32(out, fixup.pos, targetVir - (baseVir + fixup.pos + 4));
+			}
+			return ChatPerformanceNative.bytesToHex(out);
+		}
+	};
+};
+
+ChatPerformanceNative.allocateBytes = function(bytes, alignment = 1)
+{
+	const [phy, vir] = Exe.Allocate(bytes.length, alignment);
+	Exe.SetHex(phy, ChatPerformanceNative.bytesToHex(bytes));
+	return vir;
+};
+
+ChatPerformanceNative.assertCode = function(label, virAddr, expectedBytes)
+{
+	const phy = Exe.Vir2Phy(virAddr, CODE);
+	if (phy < 0)
+		throw Error(`Chat performance: ${label} is not mapped`);
+	const expected = expectedBytes.replace(/\s+/g, " ").trim().toUpperCase();
+	const actual = Exe.GetHex(phy, expected.split(" ").length)
+		.replace(/\s+/g, " ").trim().toUpperCase();
+	if (actual !== expected)
+		throw Error(`Chat performance: ${label} mismatch, got ${actual}`);
+	return phy;
+};
