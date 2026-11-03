@@ -23,17 +23,27 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, CrazyBebop                                   *
 *   Created Date  : 2021-03-02                                             *
-*   Last Modified : 2026-03-26                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
-
-// TODO - VC14.16 has new interface. Need to find its corresponding scroll creation & limiting codes
 
 ///
 /// \brief Modify the comparisons in cases for Hair Style and Color arrows in UIMakeCharWnd::SendMsg and also update the scrollbar length
 ///
 IncrNewCharHairs = function(_)
 {
+	$$(_, 1.0, `Clients with the thumbnail grid need a completely different approach`)
+
+	/// Everything below this branch assumes the OLD character creation window: a name field plus a
+	/// hair style and a hair colour SCROLLBAR, each with a clamp we can raise.
+	///
+	/// The 2025-07-16 client never shows that window. Its creation dialog is a fixed grid of 24 hair
+	/// thumbnails. The old window's code is still linked in, so every pattern below still matches and
+	/// the patch still reports success - it just edits a window nobody sees. That silent no-op is
+	/// GitHub #36, and patchGrid() below is the actual fix for it.
+	if (Exe.FindHex(" 8D 47 01 66 89 86 66 02 00 00") > 0)
+		return this.patchGrid(_);
+
 	$$(_, 1.1, `Find the reference PUSH (before the arrow switch case)`)
 	const addrs = Exe.FindHexN(PUSH(0x2714)); //push 2714h
 	if (addrs.isEmpty())
@@ -369,6 +379,7 @@ IncrNewCharHairs = function(_)
 		max: 1000,
 		name0: "Hair Color Limit",
 		name1: "Hair Style Limit",
+		saveDefault: true,
 	});
 
 	if (result === false)
@@ -405,6 +416,289 @@ IncrNewCharHairs = function(_)
 			$$(_, 2.7, `Fix the scrollbar for Hair Style`)
 			this.fixSB('style', 22, hsNewLimit);
 		}
+	}
+
+	return true;
+};
+
+///
+/// \brief Character creation on 2025-07-16+ is a fixed 4x6 grid of hair thumbnails, not the old
+///        pair of scrollbars. This pages that grid so more than the built-in styles are reachable.
+///
+/// How the grid works (measured in the running client, 2026-07-29):
+///
+///   * A loop builds exactly 24 buttons into <window+0x2D0>, positioned at
+///         x = 606 + (i % 4) * 38      y = 59 + (i / 4) * 37
+///     so 4 columns by 6 rows, which fills the panel exactly - there is no room for a 7th row.
+///   * Each button stores its own style index at <button+0x120>, race at +0x124, sex at +0x128.
+///     The thumbnail is loaded by name from that index:
+///         make_character_ver2\img_hairStyle%02d.bmp        (male)
+///         make_character_ver2\img_hairStyle_girl%02d.bmp   (female)
+///     with the number = index + 1. kRO ships 01..23 only.
+///   * The DRAW path refuses to draw when <button+0x120> exceeds 0x16, which is why cell 24 is
+///     blank in the stock client. THAT comparison, not the click guard, is what caps the grid -
+///     raising the click guard on its own changes nothing on screen.
+///
+/// Cell 24 is therefore already dead space, so this patch turns it into a NEXT PAGE control:
+/// cells 1..23 show styles (page * 23 + i + 1), and cell 24 advances the page and wraps.
+///
+/// The server still supplies one thumbnail per extra style, dropped into
+///   data\texture\<UI>\make_character_ver2\  as img_hairStyle<NN>.bmp / img_hairStyle_girl<NN>.bmp
+/// Loose files there are read, so they do not have to be packed into a GRF.
+///
+IncrNewCharHairs.patchGrid = function(_)
+{
+	const PER_PAGE = 23; //cells 0..22 pick a style, cell 23 is the pager
+
+	$$(_, 1.1, `Ask for the style limit`)
+
+	/// ONE input, because this client has one knob.
+	///
+	/// The old prompt asked for a hair COLOUR limit as well, and on the grid client that number was
+	/// read by nothing. The colour row is a fixed set of nine buttons built into <window+0x330>, and
+	/// <window+0x354> - exactly where a tenth would land - is a live member with 13 references in the
+	/// char-create region. There is no comparison to raise and nowhere for a second value to go.
+	/// It was previously shipped labelled "(not used on this client)", which is a control that does
+	/// nothing wearing a sticker that says so.
+	///
+	/// $newHairLimits is the pre-split two-element key. It still means something on the OLD creation
+	/// window (the branch above this function), where a colour scrollbar really does have a clamp, so
+	/// the key is not going away. Here it is read only to carry a profile written before the split:
+	/// element 1 was always the style limit.
+	///
+	/// Order matters. The new key wins whenever it exists, so an interactive user can still change
+	/// the value; the legacy key is consulted only in its absence. Switching keys without this would
+	/// leave every existing profile with nothing saved under the new name, and an unanswered input in
+	/// a headless build is the shape that made PR #58 apply nothing while WARP still exited 0.
+	let styles;
+	const carried = Exe.GetSavedInput('$newHairLimits');
+	const legacy = (Array.isArray(carried) && carried.length > 1) ? Number(carried[1]) : false;
+
+	if (legacy !== false && !Exe.GetSavedInput('$newHairStyleLimit'))
+	{
+		styles = legacy;
+	}
+	else
+	{
+		const result = Exe.GetUserInput('$newHairStyleLimit', D_Uint16, "New Char Limits",
+			"Hair styles to offer during character creation. Needs one thumbnail per style in " +
+			"data\\texture\\<UI>\\make_character_ver2\\ - kRO ships 23. The default 45 is the "
+			+ "highest style kRO has sprites for.",
+			legacy !== false ? legacy : 45, {max: 128, saveDefault: true});
+
+		if (result === false)
+			Cancel("Limits", "23 styles (the built-in grid) - enter a number above 23 to page the picker");
+
+		styles = Number(result);
+	}
+	if (styles <= PER_PAGE)
+		Cancel("Limits", "the grid already offers " + PER_PAGE + " styles");
+
+	if (styles > 128)
+		throw Error("The client compares the style index against a signed byte, so 128 is the ceiling");
+
+	const pages = Math.ceil(styles / PER_PAGE);
+
+	$$(_, 1.2, `Allocate the page counter`)
+	const [pagePhy, pageVir] = Exe.Allocate(4, 4);
+	Exe.SetHex(pagePhy, " 00 00 00 00");
+
+	const G  = pageVir.toHex(4);
+	const PP = PER_PAGE.toHex(1);
+
+	$$(_, 2.1, `Raise the draw limit - the comparison that actually blanks a cell`)
+	const drawPhy = Exe.FindHex(" 83 BE 20 01 00 00 16 8B 8E 2C 01 00 00 7E");
+	if (drawPhy < 0)
+		throw Error("Hair thumbnail draw limit missing");
+
+	/// The pager cell must be DRAWABLE to show an arrow, so the limit has to clear the arrow's own
+	/// index as well as the real styles. It is an imm8 (`83 /7 ib`), so 127 is the ceiling; above
+	/// that the arrow is skipped rather than rewriting the instruction to its imm32 form.
+	const ARROW_IDX = 98;                  //draws img_hairStyle99.bmp, clear of any real style
+	const ARROW = styles <= ARROW_IDX;
+	const BLANK = 255;                     //any index above the draw limit renders nothing
+	Exe.SetInt8(drawPhy + 6, ARROW ? ARROW_IDX : styles - 1);
+
+	$$(_, 3.1, `Seed every button with page * PER_PAGE + index when the grid is built`)
+
+	/// EAX holds the loop counter here and is reused as the button array slot immediately after,
+	/// so the trampoline has to leave it alone. Clobbering it stores the buttons out of bounds and
+	/// the entire grid disappears.
+	const createPhy = Exe.FindHex(" 89 87 20 01 00 00 89 B7 24 01 00 00");
+	if (createPhy < 0)
+		throw Error("Hair button index store missing");
+
+	/// The pager cell gets an index deliberately above the draw limit so it never renders a
+	/// thumbnail. Without this it would keep whatever style it was seeded with and look like a
+	/// selectable hair that does nothing.
+	const createRet = Exe.Phy2Vir(createPhy + 6, CODE);
+	/// With the draw limit raised to clear the arrow, a cell holding an index PAST the real style
+	/// count would now try to draw a thumbnail that does not exist - that is the trailing cells on
+	/// the last page. They are pushed back above the limit explicitly, so only the pager gets a
+	/// drawable out-of-range index.
+	///
+	/// ***** Every displacement below is RECORDED with byteCount() and computed, never counted.
+	/// A first draft of this block was hand-counted and two of its three short jumps were wrong.
+	let cc = "";
+	cc += " 52";                            //push edx
+	cc += " 8B D0";                         //mov edx, eax             ; the loop counter
+	cc += " 51";                            //push ecx
+	cc += " 83 F8" + PP;                    //cmp eax, PER_PAGE
+	const ccPagerAt = cc.byteCount();
+	cc += " 7D 00";                         //jge short _pager
+	cc += " 8B 0D" + G;                     //mov ecx, dword ptr [g_hairPage]
+	cc += " 6B C9" + PP;                    //imul ecx, ecx, PER_PAGE
+	cc += " 03 D1";                         //add edx, ecx             ; page*PP + i
+	cc += " 81 FA" + styles.toHex(4);       //cmp edx, <styles>
+	const ccRealAt = cc.byteCount();
+	cc += " 7C 00";                         //jl short _store          ; a real style
+	cc += " BA" + BLANK.toHex(4);           //mov edx, BLANK           ; past the end, stay blank
+	const ccSkipAt = cc.byteCount();
+	cc += " EB 00";                         //jmp short _store
+	const ccPagerTgt = cc.byteCount();
+	cc += " BA" + (ARROW ? ARROW_IDX : styles).toHex(4);   //mov edx, <arrow|styles>  ; _pager
+	const ccStoreTgt = cc.byteCount();
+	cc += " 89 97 20 01 00 00";             //mov [edi+0x120], edx     ; _store
+	cc += " 59";                            //pop ecx
+	cc += " 5A";                            //pop edx
+	const ccJmpAt = cc.byteCount();
+	cc += " E9 00 00 00 00";                //jmp <createRet>
+
+	const createCode = cc;
+	const [createHookPhy, createHookVir] = Exe.Allocate(createCode.byteCount(), 0x10);
+	Exe.SetHex(createHookPhy, createCode);
+
+	const rel8 = (from, to) =>
+	{
+		const d = to - (from + 2);
+		if (d < -128 || d > 127)
+			throw Error(`IncrNewCharHairs: short jump out of range (${d}) at +${from}`);
+		return d & 0xFF;
+	};
+	Exe.SetUint8(createHookPhy + ccPagerAt + 1, rel8(ccPagerAt, ccPagerTgt));
+	Exe.SetUint8(createHookPhy + ccRealAt  + 1, rel8(ccRealAt,  ccStoreTgt));
+	Exe.SetUint8(createHookPhy + ccSkipAt  + 1, rel8(ccSkipAt,  ccStoreTgt));
+	Exe.SetInt32(createHookPhy + ccJmpAt   + 1, createRet - (createHookVir + ccJmpAt + 5));
+
+	Exe.SetJMP(createPhy, createHookVir);
+	Exe.SetNOPs(createPhy + 5, 1);
+
+	$$(_, 4.1, `Clicking a cell selects page * PER_PAGE + index + 1`)
+	const stylePhy = Exe.FindHex(" 8D 47 01 66 89 86 66 02 00 00");
+	if (stylePhy < 0)
+		throw Error("Hair style assignment missing");
+
+	const styleRet = Exe.Phy2Vir(stylePhy + 10, CODE);
+	const styleCode =
+		" A1" + G                    //mov eax, dword ptr [g_hairPage]
+	+	" 6B C0" + PP                //imul eax, eax, PER_PAGE
+	+	" 8D 44 38 01"               //lea eax, [eax + edi + 1]
+	+	" 66 89 86 66 02 00 00"      //mov word ptr [esi+0x266], ax
+	+	" E9 00 00 00 00"            //jmp <styleRet>
+	;
+	const [styleHookPhy, styleHookVir] = Exe.Allocate(styleCode.byteCount(), 0x10);
+	Exe.SetHex(styleHookPhy, styleCode);
+	Exe.SetInt32(styleHookPhy + 20, styleRet - (styleHookVir + 24));
+
+	Exe.SetJMP(stylePhy, styleHookVir);
+	Exe.SetNOPs(stylePhy + 5, 5);
+
+	$$(_, 5.1, `Turn cell 24 into the page control`)
+
+	/// This replaces the guard's own out-of-range JGE so we can claim index 23 before the client
+	/// throws the click away. The flags from its CMP still have to reach that JGE, hence PUSHFD.
+	const guardPhy = Exe.FindHex(" 83 FF 06 EB 03 83 FF 17 0F 8D");
+	if (guardPhy < 0)
+		throw Error("Hair click guard missing");
+
+	const jgePhy  = guardPhy + 8;                  //the 0F 8D
+	const bailVir = Exe.GetTgtAddr(jgePhy + 2, 4); //where the guard normally goes
+	const fallVir = Exe.Phy2Vir(jgePhy + 6, CODE); //and where it falls through to
+
+	/// ★ The last page is only full when the limit is a multiple of PER_PAGE, so the grid normally
+	/// ends with cells that have no style behind them. Nothing used to stop those being clicked:
+	/// the style hook stores page * PER_PAGE + index + 1 unconditionally, so the final cells
+	/// selected styles past the limit. With a limit of 43 the client offered 44, 45 and 46, and
+	/// picking 46 popped the loader's "sprite not found" modal and left the character headless.
+	/// Reported in game 2026-08-14. The check belongs here because this hook already owns the
+	/// client's own discard path (bailVir); the flags for the original JGE are still live, so the
+	/// comparison is done before POPFD and POP does not disturb them.
+	const guardCode =
+		" 9C"                        //pushfd
+	+	" 83 FF" + PP                //cmp edi, PER_PAGE              ; the pager cell?
+	+	" 75 59"                     //jne short _range
+	+	" 9D"                        //popfd
+	+	" A1" + G                    //mov eax, dword ptr [g_hairPage]
+	+	" 40"                        //inc eax
+	+	" 3D" + pages.toHex(4)       //cmp eax, <pages>
+	+	" 7C 02"                     //jl short _store
+	+	" 33 C0"                     //xor eax, eax                   ; wrap round
+	+	" A3" + G                    //mov dword ptr [g_hairPage], eax  ; _store
+	+	" 53"                        //push ebx
+	+	" 33 DB"                     //xor ebx, ebx
+	                                 //_next:
+	+	" 8B 8C 9E D0 02 00 00"      //mov ecx, dword ptr [esi + ebx*4 + 0x2D0]
+	+	" A1" + G                    //mov eax, dword ptr [g_hairPage]
+	+	" 6B C0" + PP                //imul eax, eax, PER_PAGE
+	+	" 03 C3"                     //add eax, ebx
+	+	" 89 81 20 01 00 00"         //mov dword ptr [ecx+0x120], eax
+	+	" 6A 00 6A 00 6A 00 6A 00 6A 28 6A 00" //the argument set the client itself uses here
+	+	" 8B 01"                     //mov eax, dword ptr [ecx]
+	+	" FF 90 94 00 00 00"         //call dword ptr [eax+0x94]      ; invalidate the button
+	+	" 43"                        //inc ebx
+	+	" 83 FB" + PP                //cmp ebx, PER_PAGE
+	+	" 7C CF"                     //jl short _next
+	+	" 5B"                        //pop ebx
+	+	" 8B CE"                     //mov ecx, esi
+	+	" 8B 06"                     //mov eax, dword ptr [esi]
+	+	" FF 90 98 00 00 00"         //call dword ptr [eax+0x98]      ; redraw the window
+	+	" E9 00 00 00 00"            //jmp <bailVir>
+	                                 //_range: is there a style behind this cell at all?
+	+	" 50"                        //push eax
+	+	" A1" + G                    //mov eax, dword ptr [g_hairPage]
+	+	" 6B C0" + PP                //imul eax, eax, PER_PAGE
+	+	" 03 C7"                     //add eax, edi                   ; zero based style index
+	+	" 3D" + styles.toHex(4)      //cmp eax, <styles>
+	+	" 58"                        //pop eax                        ; POP leaves the flags alone
+	+	" 7D 0C"                     //jge short _reject
+	                                 //_passthrough:
+	+	" 9D"                        //popfd
+	+	" 0F 8D 00 00 00 00"         //jge <bailVir>
+	+	" E9 00 00 00 00"            //jmp <fallVir>
+	                                 //_reject:
+	+	" 9D"                        //popfd
+	+	" E9 00 00 00 00"            //jmp <bailVir>                  ; discard, exactly as the client would
+	;
+	const [guardHookPhy, guardHookVir] = Exe.Allocate(guardCode.byteCount(), 0x10);
+	Exe.SetHex(guardHookPhy, guardCode);
+
+	Exe.SetInt32(guardHookPhy +  91, bailVir - (guardHookVir +  95)); //jmp after the refresh
+	Exe.SetInt32(guardHookPhy + 117, bailVir - (guardHookVir + 121)); //the original jge
+	Exe.SetInt32(guardHookPhy + 122, fallVir - (guardHookVir + 126)); //and its fall through
+	Exe.SetInt32(guardHookPhy + 128, bailVir - (guardHookVir + 132)); //the out of range discard
+
+	Exe.SetJMP(jgePhy, guardHookVir);
+	Exe.SetNOPs(jgePhy + 5, 1);
+
+	$$(_, 9.1, `Offer to copy the bundled thumbnails`)
+
+	/// Asked LAST, after every edit above is staged, so cancelling here cannot leave the patch
+	/// half applied. Neither answer is required: onApplied skips the copy when the folder is
+	/// unset, which is what a profile-driven build produces.
+	// A profile or session hands a D_Bool back as the text "true" / "false", and "false" is truthy:
+	// test the value (an answered No used to copy).
+	if (!Warp.TestMode &&
+	    ["true", "1"].includes(String(Exe.GetUserInput('$copyHairThumbs', D_Bool, "Copy Hair Thumbnails",
+	        "The picker needs one thumbnail per style and kRO only ships 23. Copy the 44 bundled "
+	      + "ones for styles 24 to 45, both genders? You choose the folder next. Without a "
+	      + "thumbnail a style still selects and still works, but its cell draws blank.",
+	        true))))
+	{
+		Exe.GetUserInput('$hairThumbDir', D_Folder, "Thumbnail Target",
+			"Folder to copy them into. They go under <b>data\\texture\\...\\make_character_ver2</b> "
+		  + "inside whatever you choose, so pick your client folder to use them straight away. The "
+		  + "default puts them beside the patched exe, and you move them across with it.",
+			System.DirPath(Warp.TgtExe), {saveDefault: true});
 	}
 
 	return true;
@@ -496,3 +790,51 @@ IncrNewCharHairs.fixSB = function(type, oldLimit, newLimit)
 ///
 IncrNewCharHairs.validate = () =>
 	Exe.Version >= 6;
+
+///
+/// \brief Copy the bundled style 24-45 thumbnails, if the operator asked for them.
+///
+/// Pure convenience. A missing or empty target means skip, never fail: the patch's edits are already
+/// in the exe by the time this runs, and an unanswered input in a headless build must not turn into
+/// a broken client.
+///
+IncrNewCharHairs.onApplied = function()
+{
+	const _ = 'IncrNewCharHairs.onApplied';
+
+	if (Warp.TestMode)
+		return;
+
+	$$(_, 1.1, `The answer and the target folder both say yes`)
+	/// A folder saved by an earlier build must not copy on its own, and the answer comes back as the
+	/// text "true" / "false" from a profile ("false" is truthy), so its value is tested.
+	if (!["true", "1"].includes(String(Exe.GetSavedInput('$copyHairThumbs'))))
+		return;
+	const root = Exe.GetSavedInput('$hairThumbDir');
+	if (!root)
+		return;
+
+	$$(_, 1.2, `Build the client's own texture path`)
+
+	/// The interface folder is NOT the Korean text - it is the raw CP949 bytes
+	/// c0 af c0 fa c0 ce c5 cd c6 e4 c0 cc bd ba, which a Western box renders as mojibake, and that
+	/// mojibake IS the name. Written as char codes because WARP narrows strings to paths through the
+	/// ANSI codepage, so each code point below reaches the filesystem as that single byte. Verified
+	/// against the bytes on disk 2026-08-19.
+	const UI = String.fromCharCode(0xC0,0xAF,0xC0,0xFA,0xC0,0xCE,0xC5,0xCD,0xC6,0xE4,0xC0,0xCC,0xBD,0xBA);
+	const leaf = "/data/texture/" + UI + "/make_character_ver2";
+
+	const srcDir = Warp.Path + "Inputs/HairThumbnails" + leaf;
+	const tgtDir = root + leaf;
+
+	$$(_, 2.1, `Create it and copy both genders for 24..45`)
+	if (!System.MkDir(tgtDir))
+		return;
+
+	for (let n = 24; n <= 45; n++)
+	{
+		const nn = (n < 10 ? "0" : "") + n;
+		System.Copy(srcDir + "/img_hairstyle" + nn + ".bmp", tgtDir);
+		System.Copy(srcDir + "/img_hairstyle_girl" + nn + ".bmp", tgtDir);
+	}
+};

@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Neo-Mind, CrazyBebop                                   *
 *   Created Date  : 2021-01-15                                             *
-*   Last Modified : 2026-03-09                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -156,12 +156,20 @@ CustomShields = function(_)
 	//=========================//
 	// Inject Lua file loading //
 	//=========================//
+	/// Anchored on jobName_F, loaded right before jobName into the same Lua state. jobName is where
+	/// Add Lua Overrides (llchrisll's CLS) hooks its own loader, and two loaders on one site cannot
+	/// both survive WARP's merge: the last one written wins and the other's files never load
+	/// (ReqShieldName missing, or NPC sprite names empty: GitHub #21 and #59).
+	const anchor = Exe.FindText("Lua Files\\DataInfo\\jobName_F", CASE_INSENSITIVE) > 0
+		? "Lua Files\\DataInfo\\jobName_F"
+		: "Lua Files\\DataInfo\\jobName";
+
 	LUA.addLoaders(
 		[
 			"Lua Files\\DataInfo\\ShieldTable",
 			"Lua Files\\DataInfo\\ShieldTable_F"
 		],
-		"Lua Files\\DataInfo\\jobName"
+		anchor
 	);
 
 	//========================================================//
@@ -527,7 +535,9 @@ CustomShields.validate = IsPost2010;
 ///
 CustomShields.onApplied = function()
 {
-	if (!Warp.TestMode && Exe.GetSavedInput('$copyCSLub'))
+	// A profile or session hands a D_Bool back as the text "true" / "false", and "false" is truthy:
+	// test the value (an answered No used to copy).
+	if (!Warp.TestMode && ["true", "1"].includes(String(Exe.GetSavedInput('$copyCSLub'))))
 	{
 		const _ = 'CustomShields.onApplied';
 

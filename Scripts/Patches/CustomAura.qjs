@@ -2,6 +2,7 @@
 *                                                                          *
 *   Copyright (C) ?-2015 Shinryo                                           *
 *   Copyright (C) 2013-2024 Neo-Mind                                       *
+*   Copyright (C) 2026 CrazyBebop                                          *
 *                                                                          *
 *   This file is a part of WARP project (specific to RO clients)           *
 *                                                                          *
@@ -21,14 +22,14 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Shinryo, Neo-Mind                                      *
+*   Author(s)     : Shinryo, Neo-Mind, CrazyBebop                          *
 *   Created Date  : 2020-11-10                                             *
-*   Last Modified : 2024-08-08                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
 
-// TODO - 2nd set of PUSHes are not found easily in VC14.16 clients. need another approach after inspection in client.
-//        disabling that part for now.
+// The 2nd set of PUSHes (step 4) is only searched for in VC9-VC11 clients. VC14 clients draw the
+// aura with the coded CLevel99Effect class instead, handled through its RTTI in step 5.
 
 ///
 /// \brief Change the filename references used for Level99 Aura effect
@@ -78,10 +79,13 @@ CustomAuraSprites = function(_)
 	const offRB = 1;
 
 	const codePP = SwapFillers( template, 1, {1: ppika2} ); //path => "effect\pikapika2.bmp"
-	const offPP = template.byteCount() + 2;
 
 	// PUSH reg for VC6 & some clients in VC9. PUSH 0 for the remaining
 	const infix = Exe.Version === 6 || (Exe.Version === 9 && Exe.BuildDate > 20101116) ? PUSH_R : PUSH_0 ;
+
+	// The second path's operand follows the infix and its own PUSH opcode. PUSH 0 is two bytes, so a
+	// fixed +2 landed one byte early on those clients and overwrote the PUSH opcode (GitHub #74).
+	const offPP = template.byteCount() + infix.byteCount() + 1;
 
 	addr = Exe.FindHex(codeRB + infix + codePP);
 	if (addr < 0)
@@ -132,6 +136,48 @@ CustomAuraSprites = function(_)
 		$$(_, 4.3, `Update the string addrs`)
 		Exe.SetInt32(offRB + 1, addrAF);
 		Exe.SetInt32(offPP + 1, addrAR);
+	}
+
+	if (Exe.Version >= 14)
+	{
+		/// VC14 clients (2025-07-16) draw the Level 99 aura with coded effect classes instead of the
+		/// effect switch patched above. CLevel99Effect's Init (vtable slot 1) loads pikapika2 for its
+		/// floating layers and then calls a helper that loads ring_blue. Only those two PUSHes are
+		/// redirected, so the warp portal (CMapMagicZoneEffect), which loads the same textures from
+		/// its own code, keeps them (GitHub #74).
+		$$(_, 5.1, `Find CLevel99Effect's vtable through its RTTI type descriptor`)
+		const nameVir = Exe.FindText(".?AVCLevel99Effect@@");
+		if (nameVir < 0)
+			throw Error("CLevel99Effect type descriptor not found");
+
+		const colCode = " 00 00 00 00 00 00 00 00 00 00 00 00" + (nameVir - 8).toHex(4);
+		const colPhy = Exe.FindHex(colCode, Exe.GetSectBegin(DATA), Exe.FileSize);
+		if (colPhy < 0 || Exe.FindHex(colCode, colPhy + 1, Exe.FileSize) >= 0)
+			throw Error("CLevel99Effect object locator missing or not unique");
+
+		const vtPhy = Exe.FindHex(Exe.Phy2Vir(colPhy).toHex(4), Exe.GetSectBegin(DATA), Exe.FileSize);
+		if (vtPhy < 0)
+			throw Error("CLevel99Effect vtable not found");
+
+		$$(_, 5.2, `Find the pikapika2 PUSH in CLevel99Effect::Init`)
+		const initPhy = Exe.Vir2Phy(Exe.GetInt32(vtPhy + 8));
+		const ppPhy = Exe.FindHex(PUSH(ppika2), initPhy, initPhy + 0x60);
+		if (ppPhy < 0)
+			throw Error("CLevel99Effect pikapika2 PUSH not found");
+
+		$$(_, 5.3, `Find the ring_blue PUSH in the helper Init calls just before it returns`)
+		const retPhy = Exe.FindHex(" 5F 5E 5B 8B E5 5D C3", ppPhy, initPhy + 0x100);
+		if (retPhy < 0 || Exe.GetUint8(retPhy - 5) !== 0xE8)
+			throw Error("CLevel99Effect ring helper CALL not found");
+
+		const ringPhy = Exe.GetTgtAddr(retPhy - 4, PHYSICAL);
+		const rbPhy = Exe.FindHex(PUSH(rblue), ringPhy, ringPhy + 0x60);
+		if (rbPhy < 0)
+			throw Error("CLevel99Effect ring_blue PUSH not found");
+
+		$$(_, 5.4, `Update the string addrs`)
+		Exe.SetInt32(rbPhy + 1, addrAF);
+		Exe.SetInt32(ppPhy + 1, addrAR);
 	}
 
 	return true;

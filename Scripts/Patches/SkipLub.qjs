@@ -149,6 +149,8 @@ SkipTownInfo = function(_)
 
 ///
 /// \brief Disable for Unsupported Clients - Check for the lua file
+///        (2025-07-16 spells it with a backslash, System\Towninfo.lub)
 ///
 SkipTownInfo.validate = () =>
-	Exe.FindText("System/Towninfo.lub", PHYSICAL) > 0;
+	Exe.FindText("System/Towninfo.lub", PHYSICAL) > 0 ||
+	Exe.FindText("System\\Towninfo.lub", PHYSICAL) > 0;

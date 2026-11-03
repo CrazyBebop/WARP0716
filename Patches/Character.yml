@@ -79,14 +79,14 @@ CustomChar:
         - AllowPL2Leave:
             title : Allow party leader to leave
             recommend : no
-            author : Andrei Karas (4144) , Neo-Mind
-            desc : Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists.
+            author : Andrei Karas (4144) , Neo-Mind , CrazyBebop
+            desc : Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists. On rAthena, a leader who leaves disbands the party.
         
         - AllowSkillSpam:
             title : Allow spam skills by hotkey
             recommend : no
             author : Neo-Mind, Functor , Andrei Karas (4144) , CrazyBebop , Victor Hugo
-            desc : Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations.
+            desc : Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations. Optionally switched on and off in game with a slash command (default /skillspam, starts off).
         
         - AllowGuildInClan:
             title : Allow guild activities in clan
@@ -111,6 +111,12 @@ CustomChar:
             recommend : no
             author    : Ai4rei/AN, Neo-Mind, CrazyBebop
             desc      : Removes the hard-coded hair style limit, allowing the client to load any hair sprite by number. Supports up to 65535 styles.
+
+        - MoreBodyStyles:
+            title     : More Body Styles (alternate outfits)
+            recommend : no
+            author    : CrazyBebop
+            desc      : Lets a job have more alternate outfits than the one the client knows. List each extra outfit as outfit id = job id, costume; its sprites load from costume_<N>. The server must know the outfit id (job enum, script constant, AlternateOutfits, and on rAthena a Jobs entry of its own in job_stats, or @bodystyle answers Appearance changed and nothing changes). Stock outfits are unchanged.
 
 CustomAutoFollow:
     title : AUTO FOLLOW CUSTOMIZATION
@@ -213,7 +219,7 @@ WalkDelay:
             title : Walk Delay (Reforged)
             recommend : no
             author : MegaByte , X-EcutiOnner , CrazyBebop
-            desc : Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0.
+            desc : "Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0."
 
 ResButtonVis:
     title : RESURRECT BUTTON VISIBILITY

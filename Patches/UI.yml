@@ -40,7 +40,7 @@ CustomUI:
 
         - NoLookalikeNameWarning:
             title : No bogus "not your guildsman" whisper warning
-            recommend : yes
+            recommend : no
             author : Stingor
             desc : Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They are meant to flag impostors who swap a capital I for a lowercase l, but the comparison is far too loose -- it calls two names alike as soon as min(lenA,lenB)-2 characters match by position. A guild with a member named "Test" therefore warns on every whisper from "Gettar". Firing constantly, the warning only teaches players to ignore the one line that would matter. Verified scope -- the comparison helper is used by nothing else in the client, so only those two messages disappear.
 
@@ -170,12 +170,6 @@ CustomUI:
             author : Andrei Karas (4144) , Neo-Mind
             desc : Allows players to dismiss NPC cutin (portrait) images by pressing the ESC key. Without this, cutins can only be closed by the NPC script itself.
             
-        - EnableNoticeMails:
-            title: Enable "Notice" email section
-            recommend : no
-            author : Neo-Mind
-            desc : Enables the "Notice" tab in the Renewal mail window, allowing server administrators to send bulletin-style announcements that appear in players' mailboxes as special notices.
-
         - EnableNpcDialogueScrolling:
             title     : NPC Dialog Scroll
             recommend : no

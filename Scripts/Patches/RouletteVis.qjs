@@ -27,7 +27,7 @@
 \**************************************************************************/
 
 ///
-/// \brief NOP out or Add the Roulette Icon UIWindow creation code (ID = 0x11D or 0x10C)
+/// \brief Add the Roulette Icon UIWindow creation code (ID = 0x11D or 0x10C)
 ///        and hook it to where it was supposed to be present
 ///
 RouletteVis = function(_)
@@ -80,15 +80,6 @@ RouletteVis = function(_)
 		$$(_, 2.4, `Add our code and jump to it from jmpAddr`)
 		AutoHook(jmpAddr, code, args);
 	}
-	else
-	{
-		$$(_, 3.1, `Ensure its not already hidden`)
-		if (Exe.GetUint8(retnAddr) !== 0x68 || Exe.GetInt32(retnAddr + 1) !== id)
-			Cancel("Roulette Icon is already hidden");
-
-		$$(_, 3.2, `NOP it out otherwise (5 for PUSH, 5 for MOV ECX, 5 for CALL similar to the steps for 0B5h above)`)
-		Exe.SetNOPs(retnAddr, 15);
-	}
 
 	return true;
 };
@@ -103,4 +94,3 @@ RouletteVis.validate = () =>
 /// \brief Wrappers for individual patches
 ///
 ShowRoulette = RouletteVis;
-HideRoulette = RouletteVis;

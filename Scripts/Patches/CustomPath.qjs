@@ -149,7 +149,7 @@ CustomPath = function(_)
 
 	/* Rune-system files are loaded via inline MOVUPS+MOVQ+MOV(byte|dword)
 	 * copy sequences with hardcoded byte counts and length immediates
-	 * (see Ghidra RE notes on CRuneSystemMgr::LoadLuaTables).  No PUSH
+	 * (see the RE notes on CRuneSystemMgr::LoadLuaTables).  No PUSH
 	 * reference exists for the 4 MOV-loaded sites, so they need their
 	 * own detection path. */
 	/* Byte-copy sites (MOV r8, m8 at +0x25) can be extended by up to +3

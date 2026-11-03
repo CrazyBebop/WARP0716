@@ -1,0 +1,221 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 CrazyBebop                                          *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CrazyBebop                                             *
+*   Created Date  : 2026-10-21                                             *
+*   Last Modified : 2026-10-21                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief More alternate outfits (body styles) than the one the client knows per job (GitHub #32).
+///
+/// A 2025 server sends the body style as a job id: the job itself, or one of its alternate outfit
+/// ids (rAthena's job_outfits.yml, JOB_RUNE_KNIGHT_2ND = 4332 and so on). The client knows only the
+/// stock ids 4332..4349: is_job_id_in_range sends them down the costume path, convert_job_to_trans_or_baby
+/// maps each to the job whose sprite name it uses, and every costume path is built with a constant 1:
+///
+///     \몸통\%s\costume_%d\%s_%s_%d.%s        body sprites (twice: GetJobNameEx, GetJobSprNameEx)
+///     %s\body\costume_%d\%s_%s_%d_%d.pal     palettes
+///     몸\costume_%d\%s_%s_%d_%d.pal          palettes
+///
+/// This patch takes a list of extra outfits, `outfit id = job id, costume`. The three calls to the
+/// range test go through a wrapper: a listed outfit takes the costume path, hands the listed job on
+/// to the sprite-name lookup that follows (the callers keep the outfit id in ESI and push it next),
+/// and remembers its costume number; anything else gets the stock test and costume 1. The four
+/// sprintf calls that build costume paths go through a second wrapper that writes that number into
+/// the costume arguments. Only CALL targets change, so nothing here touches the bytes Enable Custom
+/// Jobs patches (its Phase 10 extends the range test's own body, which the wrapper still calls).
+///
+/// Stock outfits keep costume 1 and behave exactly as before. The server must know each new outfit id
+/// (an enum value, its script constant and an AlternateOutfits entry), and the sprites go in
+/// costume_<N> folders named <job>_<sex>_<N>.
+///
+MoreBodyStyles = function(_)
+{
+	$$(_, 1.1, `Read the extra outfits`)
+	const spec = Exe.GetUserInput('$moreBodyStyles', D_Text, "More Body Styles",
+		"One extra outfit per line, written as <b>outfit id = job id, costume</b>.<br><br>" +
+		"<b>outfit id</b> is the alternate outfit job id your server sends (its AlternateOutfits entry). " +
+		"<b>job id</b> is the job whose sprite names it uses, the way the client maps its own outfits " +
+		"(4332 Rune Knight 2nd uses 4060). <b>costume</b> is the folder number: 2 loads " +
+		"costume_2\\&lt;job&gt;_&lt;sex&gt;_2.spr / .act and its palettes.<br><br>" +
+		"Example:<br>&nbsp;&nbsp;&nbsp;&nbsp;4440 = 4060, 2",
+		"", {multiline: true});
+
+	if (spec === false || `${spec}`.trim().isEmpty())
+		Cancel("No outfits were specified");
+
+	const rows = [];
+	for (const raw of `${spec}`.split(/\r?\n/))
+	{
+		const line = raw.replace(/#.*/, '').trim();
+		if (line.isEmpty())
+			continue;
+
+		const m = /^(\d+)\s*=\s*(\d+)\s*,\s*(\d+)$/.exec(line);
+		if (!m)
+			throw Error(`Cannot read "${line}": write outfit id = job id, costume`);
+
+		const [outfit, job, costume] = [Number(m[1]), Number(m[2]), Number(m[3])];
+		if (outfit < 1 || job < 0 || costume < 1 || costume > 99)
+			throw Error(`"${line}": the costume must be 1 to 99 and the ids positive`);
+		if (rows.some(r => r[0] === outfit))
+			throw Error(`Outfit ${outfit} is listed twice`);
+
+		rows.push([outfit, job, costume]);
+	}
+
+	$$(_, 2.1, `Find the range test (its stock bytes; Enable Custom Jobs may also rewrite its body)`)
+	const rangePhy = Exe.FindHex(" 55 8B EC 8B 45 08 05 14 EF FF FF 83 F8 11 0F 96 C0 5D C2 04 00");
+	if (rangePhy < 0)
+		throw Error("is_job_id_in_range not found");
+	const rangeVir = Exe.Phy2Vir(rangePhy, CODE);
+
+	$$(_, 2.2, `Find the costume path formats and the sprintf calls that use them`)
+	/// [format, argument offsets on sprintf's stack (from ESP at entry) that hold the costume number]
+	const formats =
+	[
+		["\\\xB8\xF6\xC5\xEB\\%s\\costume_%d\\%s_%s_%d.%s", [0x10, 0x1C]],
+		["%s\\body\\costume_%d\\%s_%s_%d_%d.pal", [0x10, 0x20]],
+		["\xB8\xF6\\costume_%d\\%s_%s_%d_%d.pal", [0x0C, 0x1C]]
+	];
+
+	let sprintfVir = 0;
+	let lo = Infinity;
+	let hi = 0;
+	const calls = [];
+	for (const fmt of formats)
+	{
+		const fmtVir = Exe.FindText(fmt[0]);
+		if (fmtVir < 0)
+			throw Error("Costume path format not found");
+		fmt.push(fmtVir);
+
+		const pushes = Exe.FindHexN(PUSH(fmtVir) + " 50 E8");
+		if (pushes.isEmpty())
+			throw Error("Costume path sprintf not found");
+
+		for (const p of pushes)
+		{
+			const tgt = Exe.GetTgtAddr(p + 7);
+			if (sprintfVir && tgt !== sprintfVir)
+				throw Error("Costume paths call different formatters");
+			sprintfVir = tgt;
+			calls.push(p + 6);
+			lo = Math.min(lo, p);
+			hi = Math.max(hi, p);
+		}
+	}
+	if (calls.length !== 4)
+		throw Error(`Expected 4 costume path sprintf calls, found ${calls.length}`);
+
+	$$(_, 2.3, `Find the range test's calls before them`)
+	const rangeCalls = Exe.FindHexN(" E8", lo - 0x800, hi).filter(a => Exe.GetTgtAddr(a + 1) === rangeVir);
+	if (rangeCalls.length !== 3)
+		throw Error(`Expected 3 calls to is_job_id_in_range, found ${rangeCalls.length}`);
+
+	$$(_, 3.1, `Allocate the outfit table and the costume number`)
+	let table = "";
+	for (const [outfit, job, costume] of rows)
+		table += outfit.toHex(4) + job.toHex(4) + costume.toHex(4);
+	table += (0).toHex(4);
+	const [tablePhy, tableVir] = Exe.Allocate(table.byteCount() + 4, 4);
+	Exe.SetHex(tablePhy, table + (1).toHex(4));
+	const costumeVir = tableVir + table.byteCount();
+
+	$$(_, 3.2, `Build the range test wrapper`)
+	/// stdcall (outfit id), returns AL. For a listed outfit: costume path, ESI = the listed job
+	/// (the caller pushes ESI to the sprite-name lookup next), costume number stored. Otherwise the
+	/// stock test, tail-called with its argument in place, and costume 1.
+	/// short jumps are derived from the byte counts, never counted by hand
+	const rel8 = (from, to) => ((to - from) & 0xFF).toHex(1);
+	const head =
+		" 8B 44 24 04"                       //mov eax, [esp+4]
+	+	" 53"                                //push ebx
+	+	" BB" + tableVir.toHex(4)            //mov ebx, <table>
+	;
+	const hit =
+		" 8B 53 08"                          //_hit: mov edx, [ebx+8]
+	+	" 89 15" + costumeVir.toHex(4)       //mov [costume], edx
+	+	" 8B 73 04"                          //mov esi, [ebx+4]
+	+	" 5B"                                //pop ebx
+	+	" B0 01"                             //mov al, 1
+	+	" C2 04 00"                          //retn 4
+	;
+	const oLoop = head.byteCount();          //_loop: mov edx, [ebx] / test edx, edx (4 bytes)
+	const oJeStock = oLoop + 4;
+	const oJeHit = oJeStock + 2 + 2;         //after je _stock + cmp edx, eax
+	const oJmpLoop = oJeHit + 2 + 3;         //after je _hit + add ebx, 12
+	const oHit = oJmpLoop + 2;
+	const oStock = oHit + hit.byteCount();
+	const range =
+		head
+	+	" 8B 13 85 D2"                       //_loop: mov edx, [ebx]; test edx, edx
+	+	" 74" + rel8(oJeStock + 2, oStock)   //je _stock
+	+	" 39 C2"                             //cmp edx, eax
+	+	" 74" + rel8(oJeHit + 2, oHit)       //je _hit
+	+	" 83 C3 0C"                          //add ebx, 12
+	+	" EB" + rel8(oJmpLoop + 2, oLoop)    //jmp _loop
+	+	hit
+	+	" 5B"                                //_stock: pop ebx
+	+	" C7 05" + costumeVir.toHex(4) + (1).toHex(4)  //mov dword ptr [costume], 1
+	+	JMP(Filler(1))                       //jmp is_job_id_in_range
+	;
+
+	$$(_, 3.3, `Build the sprintf wrapper`)
+	/// cdecl like sprintf: for a costume format, write the costume number into its costume arguments
+	let fmtCode = " 8B 44 24 08"                 //mov eax, [esp+8] ; the format
+	+	" 8B 0D" + costumeVir.toHex(4);          //mov ecx, [costume]
+	for (const [, offsets, fmtVir] of formats)
+	{
+		const set = offsets.map(o => " 89 4C 24" + o.toHex(1)).join("");   //mov [esp+o], ecx
+		fmtCode += " 3D" + fmtVir.toHex(4)       //cmp eax, <format>
+		+	" 75" + set.byteCount().toHex(1)     //jne _next
+		+	set;
+	}
+	fmtCode += JMP(Filler(2));                   //jmp sprintf
+
+	const all = range + fmtCode;
+	const [codePhy, codeVir] = Exe.Allocate(all.byteCount(), 0x10);
+	Exe.SetHex(codePhy, SetFillTargets(all,
+	{
+		start: codeVir,
+		1: rangeVir,
+		2: sprintfVir
+	}));
+	const fmtVirStart = codeVir + range.byteCount();
+
+	$$(_, 4.1, `Route the three range test calls and the four costume sprintf calls`)
+	for (const a of rangeCalls)
+		Exe.SetTgtAddr(a + 1, codeVir);
+	for (const a of calls)
+		Exe.SetTgtAddr(a + 1, fmtVirStart);
+
+	return true;
+};
+
+///
+/// \brief The 2025-07-16 client only (the costume paths and the range test are matched exactly).
+///
+MoreBodyStyles.validate = () =>
+	Exe.BuildDate === 20250716;

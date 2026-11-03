@@ -1,3 +1,140 @@
+# CrazyBebop - 2025-07-16 build (November 2, 2026)
+
+> **Patch update - re-WARP to apply.** Seven new patches (two from the community), the hair release, nine issue fixes, five Custom Jobs fixes, four patches that now work on this client, nine that never had anything to patch removed, a crash fix for Party HP/SP Bars, and a new Filipino language pack. Re-apply WARP to use them. The website gains a **Docs** section, starting with this client's function catalog.
+>
+> Easiest route: open **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**, use the **WARP** tab to update this patch set, then re-apply your profile. Guides for the patches that need files from you are at **[warp.legacygamers.net/warp0716](https://warp.legacygamers.net/warp0716/)**.
+
+## November Update (Part 2)
+
+### Fixed: Party HP/SP Bars crashed the client on warp
+
+The September patch could crash the client on a warp while you were in a party. The mini widget's update read the member's name where it expected the bar, so a short name crashed and a long one quietly corrupted memory. It reads the bar now, and checks it exists first. If you applied Party HP/SP Bars in September, re-apply WARP.
+
+### New patch: Enable Druid classes (2026)
+
+Teaches this client Gravity's Druid line, the way the 2026 kRO clients play it: **Druid, Karnos and Alitea**, their riding forms, and the **Werewolf** and **Wereraptor** forms. Jobs, skill tree tabs, riding, attack and skill motions, both transformations, Nature Protection, the claw combo and every skill effect, taken from kRO's 2026-10-07 client. It reads everything from data.grf, so no Lua job files are needed, and it can copy five English skill and job Lua files for you when you apply it. If WARPGATE installs your English translation (its LANG tab), answer No: the translation carries those five files already.
+
+It needs a server that knows these jobs, their skills and the two form statuses, and kRO's content from September 2, 2026 or newer, which WARPGATE 1.0.15's Game content update brings: the June 4, 2026 data.grf lacks Karnos's and Alitea's animal forms and the effects and sounds of Nature Rage and Plume Piercer. rAthena master does not have the line yet; it is datawulf's (rathena#9765), so there are two server patches in `examples/EnableDruidClasses/`, and the patch offers the right one when you apply it:
+
+- **`EnableDruidClasses.master.patch`** for a server on **plain rAthena master**: the whole Druid line, packaged from datawulf's `codex/kro-alitea` branch with every skill, plus our changes. One `git apply` and a rebuild. All credit for the Druid line's server code goes to datawulf and its authors.
+- **`EnableDruidClasses.server.patch`** for a server already on datawulf's `druid` or `codex/kro-alitea` branch: our changes only.
+
+Our changes make the transformation effect play as the form starts instead of when it ends, and set Alitea's skill costs and two skill ranges to kRO's. **[Druid Classes guide](https://warp.legacygamers.net/warp0716/EnableDruidClasses/)**.
+
+### New patch: Hair colour guard, and extra hair colours
+
+A hair colour whose style ships no `.pal` file does not just look wrong: the client shows a *Cannot find File* error and then **crashes**. The guard refuses that colour instead, in character creation, and repaints the colour swatches when a style change resets the colour, so the lit swatch matches the character.
+
+It also asks how many colours the picker should offer. **9** is the client's own and changes nothing. Above 9 the row gains a tenth cell that **pages** to the next nine, the way the hair style grid does. Each added colour needs its palette files and its swatch art; the **[Hair Colours guide](https://warp.legacygamers.net/warp0716/HairColours/)** covers both. It works with the shared head palette patches too (**Enable shared head palettes**, Male & Female or Unisex).
+
+### More hairstyles at character creation ([#36](https://github.com/CrazyBebop/WARP0716/issues/36), [#23](https://github.com/CrazyBebop/WARP0716/issues/23), [#38](https://github.com/CrazyBebop/WARP0716/issues/38))
+
+Reported by MegamiNoBisho, kimmypudgelord and gidzdlcrz. **Increase char create Hair limits (Reforged)** never worked on this client: it raised the limits of an older creation window that 2025-07-16 still contains but never shows, and reported success. It now pages the real one, a grid of 24 thumbnails, with the last cell turned into an arrow to the next page. Each extra style needs a thumbnail; kRO ships 1 to 23 only, so this patch set includes the ones it never shipped.
+
+**Allow 65k Hair Styles** crashed on hairstyle 43, an off-by-one past the end of the client's 43-entry table; fixed. It now also asks for the **highest style you ship**, and a style above that falls back to style 1 instead of leaving the character without a head. Together with Custom Jobs (#38), both confirmed in game: styles 43 and 45 render, a missing one falls back, character select and back.
+
+### New patch: More Body Styles (alternate outfits) ([#32](https://github.com/CrazyBebop/WARP0716/issues/32))
+
+Requested by MegamiNoBisho. A job can have more alternate outfits than the one the client knows: list each one as `outfit id = job id, costume`, and its sprites and palettes load from `costume_<N>`. Stock outfits and Custom Jobs are untouched.
+
+Your server has to know the outfit id as well. On rAthena that means the job enum, the script constant, `AlternateOutfits`, **and a `Jobs:` entry of its own in `job_stats`**: without that last one, `@bodystyle` answers "Appearance changed." and changes nothing.
+
+### New patch: Quality of Life Changes (2026), experimental
+
+**In progress and experimental (still in beta):** more changes are added with each update. It brings kRO's own 2026 quality-of-life changes to this client, translated from kRO's 2026-10-21 client, and asks which ones to add when you apply it (all of them by default). Three so far:
+
+- **Render Scaling**: kRO's slider in **Game Settings > Graphics**. The game is drawn smaller and stretched back to the window, so the interface grows and is easier to read; it looks a little softer, as kRO's own tip says. Your window size and resolution stay as they are, 100% is the client as it was, and the higher your resolution, the further the slider goes. It takes effect after a client restart.
+- **Equipment Preview V2**: kRO's newer preview window, opened from an item's preview button. Previews **stack** (a hat, then sunglasses, then a mask, each in its own slot), with six poses (sit, walk, standby, attack, dead, pick up), rotate arrows and a reset to your own look.
+- **Garment layer order**: kRO's lists of which garments draw over the character, and of the ones that go on top when seen from the side. The preview's layer button flips a garment, in the preview and in the world, and your choices are kept in `SaveData\SpriteRobeTopLayer.lua`. The layer button needs this one, so choosing the preview brings it along.
+
+The preview's art and the garment lists come from kRO's own data, which WARPGATE's data.grf carries. Each change was checked against kRO's own code with the same random inputs, and in game.
+
+### New patch: Restart relaunches the client
+
+Some settings need a client restart: resolution, window mode, and now Render Scaling. When you pressed OK on "client restart is required", the client closed and opened a web page: the restart address in msgstringtable, which kRO points at its own site and ROenglishRE at its GitHub page. With this patch, OK starts the client again with the same arguments, and no browser opens. Checked in game: OK closed the client and the new one started by itself.
+
+### Custom Jobs (Reforged): attack motion follows weapon and gender ([#72](https://github.com/CrazyBebop/WARP0716/issues/72))
+
+Reported by andre9x. The client picks a character's attack animation set by job, sex and weapon only for the jobs it knows, so every custom job played the same one. New Lua table: `PCMotionInheritTbl[PCIds.YOUR_JOB] = <stock job>` makes a custom job attack the way that job does. The **[Custom Jobs guide](https://warp.legacygamers.net/warp0716/CustomJobs/)** has a new section on it.
+
+### Custom Jobs (Reforged): Korean folder names, weapons, a memory leak, and stock bodies
+
+Reported by stolao, who also suggested the last one and confirmed the folder names, the weapons and the leak fix in game.
+
+- **Korean folder names written the old way work again.** The JobInfo files have been UTF-8 since Custom Jobs (Reforged), so a folder name in the old Latin-1 look-alike form (`°Ë»ç` for 검사) no longer named a real folder and the sprite was not found. The patch now turns such names back into the bytes the client looks for, in PCPaths, PCImfs, PCPals and PCHands. Korean typed straight into a UTF-8 file still does not work: write it as Lua byte escapes (`"\176\203\187\231"` is 검사) or save the file as CP949.
+- **A broken `.lua` shows its own error.** When a `.lua` failed to load, the patch fell back to an old `.lub` beside it and showed that file's error, or quietly used the old file. Now the `.lub` is used only when the `.lua` is missing.
+- **Weapon sprites for custom jobs.** Weapon folders are written into the client when you apply WARP, and the patch read them only from WARP's own `Inputs` copy of `PCHands.lua`, and only as plain names, so a row in any other form was skipped and the job held no weapon. It now also reads the `PCHands.lua` of the client you patch into (`data\luafiles514\lua files\JobInfo\` beside the patched exe; its rows win), and takes `"folder\\prefix"` values and rows that copy another row (`PCHands[PCIds.X]`). Re-apply WARP after you change `PCHands.lua`.
+- **`costume_1` sprites are optional, and the memory leak that crashed the client is gone.** A custom job looks for its `costume_1` sprites first. When they were missing, the fallback to the job's own sprite leaked a copy of that sprite on every request, and with Equipment or Skill Tree open that is every frame: the client ran out of memory and crashed within minutes. The fallback sprite is kept now, and a custom job without `costume_1` files simply wears its own look. Measured with Equipment open: the old patch grew by 786 MB in 90 seconds, the fixed one stayed flat.
+- **PCPaths can name a stock job.** `PCPaths[PCIds.YOUR_JOB] = PCPaths[PCIds.LORD_KNIGHT]` used to read nothing and draw a Novice. Now it gives your job the Lord Knight body, with the right head: a stock body gets that job's own head file (Lord Knight's is Knight's). Keep `PCPaths = PCPaths or {}` at the top of `PCPaths.lua`, as the shipped one does; `PCPaths = {}` drops the stock names.
+
+The **[Custom Jobs guide](https://warp.legacygamers.net/warp0716/CustomJobs/)** is updated to match.
+
+### Custom Shields and Chris' Lua overrides together ([#59](https://github.com/CrazyBebop/WARP0716/issues/59), [#21](https://github.com/CrazyBebop/WARP0716/issues/21))
+
+Reported by Hspecz and YlenXWalker. **Custom Shields** and **Add Chris' lua overrides [Experimental]** both loaded their Lua files from the same spot in the client, and only one of two such hooks can survive a build, so either the shield table never loaded (the `ReqShieldName` error) or llchrisll's Custom Lua Support files did not (NPCs drawn as blank sprites). Custom Shields now loads its tables beside a different file. Both work together, and with Custom Jobs and Allow 65k Hair Styles as in #21.
+
+### Fixed: Customize Aura sprites ([#74](https://github.com/CrazyBebop/WARP0716/issues/74))
+
+Reported by robotrono. On this client the level 99 aura is drawn by an effect class the patch never touched, and in one case it wrote its new value one byte early, breaking the instruction beside it. It now redirects that class's own textures. Warp portals keep theirs.
+
+### Fixed: Allow party leader to leave ([#76](https://github.com/CrazyBebop/WARP0716/issues/76))
+
+Reported by gidzdlcrz. The patch applied and changed nothing: a slip in how it searched for its jump made it write over the instruction beside the one it meant to change. It changes the right one now. When the leader types `/leave` while the other members are online but none is on the leader's map, the client used to stop with "You can leave a party after delegation." It now asks what it already asks when nobody is online, whether to disband the party instead, and Yes leaves.
+
+On rAthena a leader who leaves always disbands the party. Making someone else leader first needs them on your map, unless the server sets `change_party_leader_samemap: no` in `conf/battle/party.conf`.
+
+### Allow spam skills by hotkey: switch it on and off in game ([#67](https://github.com/CrazyBebop/WARP0716/issues/67))
+
+Requested by zakeph. A new question: **Always on**, which builds exactly what the patch built before, or **Toggle with a slash command**, which adds `/skillspam` (you can rename it). Toggled, it starts off and prints its state in chat; the command is never sent as chat. It works alongside Load GRF via Slash Command. The server's own skill delays still apply either way.
+
+### New from the community: Play the sound placed on the first frame of an animation ([#68](https://github.com/CrazyBebop/WARP0716/pull/68))
+
+By Stingor. The client never played a sound placed on the first frame of an animation that has just replaced another one, so a death sound on that frame was never heard: Doppelganger and the twelve Bio Lab monsters die in silence, and so do Baphomet, Osiris, Pupa, Orc Warrior and others. The patch starts the animation at its first frame; nothing else changes. Checked in game: a Pupa's and a Doppelganger's death sounds play with it and not without. Off by default.
+
+### New from the community: Fix HD Job Sprite Previews ([#70](https://github.com/CrazyBebop/WARP0716/pull/70))
+
+By YlenXWalker. An HD job sprite (twice the pixels, drawn at half scale) keeps its size in the world, but the Equipment and Skill Tree previews ignored the scale and drew it twice as big. The patch applies the sprite's own scale, mirror and rotation there. Checked in game with a 2x Novice: its Equipment preview matches the stock one pixel for pixel, and stock sprites draw exactly as before. Patch id 365.
+
+### Four patches that work on this client now
+
+These were hidden from 2025-07-16 by checks written for older clients. Each was checked against this exe before anything changed.
+
+- **Disable Doram character creation UI**: 2025-07-16 keeps its own "Doram is available" switch. The patch turns it off everywhere it is read and blanks the button, so the Doram slot is empty and cannot be picked.
+- **Change Deletion time to relative**: a character waiting to be deleted shows a countdown on its card instead of a date.
+- **Skip Towninfo lub**: the check looked for `System/Towninfo.lub`, and this client spells it `System\Towninfo.lub`.
+- **Always show Register button in Login**: Sign Up always exists on this client, but at langtype 0 it first asks whether to visit Gravity's site. The patch makes it open your registration page straight away.
+
+### Removed: nine patches with nothing to patch here
+
+`RestoreLoginWindow`, `ShowCancelBtn`, `HideRoulette`, `EnableNoticeMails`, `EnableHttpEmblem`, `CustomMerchantURL`, `DefShopBrowser`, `IgnoreAccArg` and `CustomQuestLua`. Each was checked against this client first: the feature is either already there (its own login window, the Opening button, the Notice tab, the HTTP emblem queue, the default browser, a merchant address read from a Lua setting) or missing (no roulette icon to hide, no `/account:` argument, no quest Lua to load beside). WARP never offered them on 2025-07-16, so no profile loses anything.
+
+### An answered "No" now means No
+
+A profile or saved session hands WARP's yes/no answers back as text, and the text "false" counted as yes. So an answered No did the Yes thing in six patches: Custom Jobs wrote its template Lua files, Custom Shields copied its Lua, **Enable Official Custom Fonts (Reforged) copied its fonts and deleted your `.eot` files**, Increase char create Hair limits copied its thumbnails, Party HP/SP Bars copied its backgrounds, and Restore Skill Attack Animation applied anyway. All six read the answer properly now.
+
+Two choice questions had the opposite problem in WARP's own window, where accepting the default came back as "no answer": **Reduce expensive UI rendering** built Off instead of its 600 ms default (so the idle character preview froze), and **Show icon in MessageBox** cancelled itself. Both now treat it as the default.
+
+### Language packs: Filipino, and every patch translated
+
+- **New: Filipino** (`Languages/Filipino.yml`): WARP in Filipino, with the game terms kept in English the way players say them.
+- **Chinese, Spanish (LATAM), Portuguese (BR) and Thai** now translate every patch title and description, this update's seven new patches included. Portuguese had never translated the descriptions, and Thai only WARP's own menus. A few mistranslations and duplicate entries in the Portuguese and Thai packs are fixed too.
+- The new translations are machine-assisted; corrections from native speakers are welcome.
+- Fixed in English as well: WARP showed the **Walk Delay** and **Hide Buttons (New UI)** descriptions cut off, and **Customize App icon**'s description had broken tags.
+
+### New on the website: Docs, with the client's function catalogs
+
+warp.legacygamers.net has a **[Docs](https://warp.legacygamers.net/docs/)** section now. First in it: the **Ragexe RE** catalogs, every function of the 2025-07-16 client (43,836) and of the 2026-02-19 client (47,061) with our name for it and a line on what it does, by category and searchable. Writing a patch for this client? Look the address up there first. Each build is also one download (`functions.tsv`), and an `AGENTS.md` explains how to point an AI agent at it. The names come from our own analysis, not from Gravity's symbols, so check a detail against the code before you rely on it.
+
+### Housekeeping
+
+- **Enable Official Custom Fonts** no longer closes the client at langtype 0.
+- **No bogus "not your guildsman" whisper warning** is no longer marked recommended (it was never in the recommended profile, so Select Recommended is unchanged); tick it yourself if you want it.
+- **Custom Jobs**: baby custom jobs are drawn at 0.82 scale, as kRO's 2026 client draws its own babies (was 0.75). Its Lua error display question is now asked where it is used, so a first answer takes effect on the first build.
+- **Custom Jobs**' template Lua files: the comments in `PCPaths.lua` and `PCImfs.lua` show the Korean folder names again (the switch to UTF-8 had garbled them), and `PCPaths.lua` and `PCHands.lua` explain the forms above.
+- Patch ids: **Hair colour guard** 363, **Enable Druid classes** 366, **More Body Styles** 367, **Quality of Life Changes (2026)** 368 and **Restart relaunches the client** 369.
+
+---
+
 # CrazyBebop - 2025-07-16 build (September 4, 2026)
 
 > **Patch update - re-WARP to apply.** Two new patches, six fixes and a new `WARP.exe`. Re-apply WARP to use them.

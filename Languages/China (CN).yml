@@ -17,6 +17,8 @@
 ## Text orientation & other settings #
 ##===================================#
 #
+# 2026-10-27: newer patch titles and descriptions added by the WARP0716 maintainers (machine-assisted translation; corrections from native speakers welcome).
+
 RTL: no
 #
 ##============================#
@@ -566,14 +568,14 @@ translations:
     - find : "Allow party leader to leave"
       replace : "允许队长离开队伍"
 
-    - find : "Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists."
-      replace : "当同一地图中没有其他队员时，允许队长离开队伍。默认情况下，只要队伍仍然存在，客户端就会阻止队长离队。"
+    - find : "Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists. On rAthena, a leader who leaves disbands the party."
+      replace : "当同一地图中没有其他队员时，允许队长离开队伍。默认情况下，只要队伍仍然存在，客户端就会阻止队长离队。在 rAthena 上，队长离队会解散队伍。"
 
     - find : "Allow spam skills by hotkey"
       replace : "通过热键允许洗频技能"
 
-    - find : "Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations."
-      replace : "可以按住热键来快速施放技能，而不必重复按下。消除热键启动之间的客户端冷却时间。"
+    - find : Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations. Optionally switched on and off in game with a slash command (default /skillspam, starts off).
+      replace : 可以按住热键来快速施放技能，而不必重复按下。消除热键启动之间的客户端冷却时间。可选择在游戏中用斜线指令开启或关闭（默认指令为 /skillspam，初始为关闭）。
 
     - find : "Allow guild activities in clan"
       replace : "允许部落内进行公会活动"
@@ -692,11 +694,11 @@ translations:
     - find : "Removes the delay between walk-click inputs entirely, allowing immediate movement response. <b>Note:</b> May cause the client to send duplicate movement packets to the server."
       replace : "完全消除步行单击输入之间的延迟，从而实现即时的移动响应。  <b>注意：</b> 可能会导致客户端向服务器发送重复的移动数据包。"
 
-    - find : "Customize Walk Delay"
-      replace : "自定义步行延迟"
+    - find : Walk Delay (Reforged)
+      replace : 步行延迟 (Reforged)
 
-    - find : "Changes the delay between walk-click inputs to a custom value (in milliseconds). Lower values make movement more responsive. <b>Note:</b> Very low values may cause the client to send duplicate movement packets."
-      replace : "将步行单击输入之间的延迟变更为指定值 （单位：毫秒） 。较低的值使运动反应更加灵敏。  <b>注意：</b> 非常低的值可能会导致客户端发送重复的移动数据包。"
+    - find : "Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0."
+      replace : "设置步行单击输入之间的延迟（单位：毫秒）。客户端默认为 600，较低的值使移动反应更加灵敏。<b>请勿低于 10。</b>数值非常低时，若 NPC 的对话框或商店窗口仍开着，角色会走到该 NPC 所在的格子上（GitHub issue #39）；10 是已确认可正常运作的最低值。仍可输入 0，效果与旧的独立补丁<i>消除步行延迟</i>完全相同，包括该错误。此补丁同时取代<i>消除步行延迟</i>与<i>自定义步行延迟</i>，两者其实是同一个设置：消除延迟只是将此值设为 0。"
 
     - find : "RESURRECT BUTTON VISIBILITY"
       replace : "复活按钮可见性"
@@ -921,20 +923,20 @@ translations:
     - find : "Increase Zoom Out (to 50%)"
       replace : "增加缩小（至 50%）"
 
-    - find : "Extends the zoom-out range to about 50% of the maximum, letting you see more of the map around your character."
-      replace : "将缩小范围扩展到最大值的 50 % 左右，让您可以看到角色周围地图的更多部分。"
+    - find : Extends the zoom-out range by <b>50%</b> over the default (480 &rarr; 720), letting you see more of the map around your character. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace : 将缩小范围在默认值的基础上扩展 <b>50%</b>（480 &rarr; 720），让您可以看到角色周围地图的更多部分。&#9733; <b>请记得在游戏中使用 /zoom</b>，否则这些效果都不会出现。客户端有自己的缩小设置，若该设置关闭，镜头最远只能到 400，比原版还近。
 
     - find : "Increase Zoom Out (to 75%)"
       replace : "增加缩小（至 75%）"
 
-    - find : "Extends the zoom-out range to about 75% of the maximum. Provides a wide field of view useful for WoE, PvP, and large-scale fights."
-      replace : "将缩小范围扩展至最大值的约 75 %。提供广阔的视野，对于 WoE 、PvP 和大规模战斗很有用。"
+    - find : Extends the zoom-out range by <b>75%</b> over the default (480 &rarr; 840). A wide field of view, useful for WoE, PvP and large-scale fights. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace : 将缩小范围在默认值的基础上扩展 <b>75%</b>（480 &rarr; 840）。视野广阔，适合 WoE、PvP 和大规模战斗。&#9733; <b>请记得在游戏中使用 /zoom</b>，否则这些效果都不会出现。客户端有自己的缩小设置，若该设置关闭，镜头最远只能到 400，比原版还近。
 
     - find : "Increase Zoom Out (to Max)"
       replace : "增加缩小（至最大）"
 
-    - find : "Unlocks the full zoom-out range, allowing the camera to pull back as far as possible. Maximum visibility, but sprites may appear very small."
-      replace : "解除全部镜头缩放限制，使镜头可以尽可能拉远。视野范围最大，但角色图像可能会显得很小。"
+    - find : Pulls the camera back as far as this client can actually draw (480 &rarr; 1127). Maximum visibility, though sprites get small. &#9733; This was 1224 until 2026-08-25; that value is past the render limit and shows black at the screen edges. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace : 将镜头拉远到此客户端实际能绘制的最远距离（480 &rarr; 1127）。视野范围最大，但角色图像会变小。&#9733; 在 2026-08-25 之前此值为 1224；该值超出绘制极限，屏幕边缘会显示黑色。&#9733; <b>请记得在游戏中使用 /zoom</b>，否则这些效果都不会出现。客户端有自己的缩小设置，若该设置关闭，镜头最远只能到 400，比原版还近。
 
     - find : "LOGIN MODE"
       replace : "登录方式"
@@ -1514,7 +1516,7 @@ translations:
     - find : "Customize App icon"
       replace : "自定义应用程序图标"
 
-    - find : "Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</b><font>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include."
+    - find : "Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</font></b>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include."
       replace : "将应用程序图标替换为您选择的自定义.ico 文件 (any size and bit depth) 。对于 Win7 及更高版本，请使用 <b><font color='deepskyblue'> 256x256 32 比特以及 16x16 版本</b> <font> 。 <br> <br> 较旧的客户端有 3 图标大小的限制，因此您可能需要选择要包含的分辨率。"
 
     - find : "PRIORITY ALTERATION"
@@ -2161,14 +2163,14 @@ translations:
     - find : "Hide Buttons (New UI)"
       replace : "隐藏按钮（新 UI ）"
 
-    - find : "Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Useful for removing buttons for features your server does not support."
-      replace : "隐藏基本信息窗口 (new UI style) 中 HP /SP 栏下方的选择按钮。对于删除服务器不支持的功能按钮很有用。"
+    - find : "Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way."
+      replace : "隐藏基本信息窗口（新 UI 样式）中 HP/SP 条下方选定的按钮。列出此客户端拥有的<b>每一个</b>按钮，因此不论客户端是否已隐藏某个按钮，它都仍可选择；选择已隐藏的按钮不会有任何作用，提示中会说明是哪些。在 2025-07-16 客户端上，已隐藏的按钮为 <b>Battleground、Booking 和 Twitter</b>（GitHub #24）。请勿在此处与<i>显示按钮（新 UI）</i>中选择同一个按钮，否则会报错并指出该按钮，而不是默默以其中一方为准。"
 
     - find : "Show Buttons (New UI)"
       replace : "显示按钮（新 UI ）"
 
-    - find : "Restores selected hidden buttons below the HP/SP bars in the Basic Info Window (new UI style). Use to bring back buttons that were removed in newer client versions."
-      replace : "还原基本信息窗口 (new UI style) 中 HP /SP 条下方选定的隐藏按钮。用于还原在较新的客户端版本中删除的按钮。"
+    - find : Restores selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has; picking one that is already shown does nothing. Use it to bring back buttons the client hides by default, which on 2025-07-16 are <b>Battleground, Booking and Twitter</b>. Do not pick the same button here and in <i>Hide Buttons (New UI)</i> - that is rejected with an error naming it.
+      replace : 还原基本信息窗口（新 UI 样式）中 HP/SP 条下方选定的按钮。列出此客户端拥有的<b>每一个</b>按钮；选择已显示的按钮不会有任何作用。用于找回客户端默认隐藏的按钮，在 2025-07-16 上为 <b>Battleground、Booking 和 Twitter</b>。请勿在此处与<i>隐藏按钮（新 UI）</i>中选择同一个按钮，否则会报错并指出该按钮。
 
     - find : "CHARACTER CREATION"
       replace : "角色创建"
@@ -2179,11 +2181,11 @@ translations:
     - find : "Changes the height of the character name input field in the new character creation dialog. Adjust if the default size clips text or looks misaligned with custom fonts."
       replace : "变更新角色创建对话中角色名称输入字段的高度。如果默认大小会裁切文本或看起来与自定义字体不对齐，请进行调整。"
 
-    - find : "Increase char create Hair limits"
-      replace : "增加角色创建发型限制"
+    - find : "Increase char create Hair limits (Reforged)"
+      replace : "增加角色创建发型限制 (Reforged)"
 
-    - find : "Raises the maximum hairstyle and hair color options available during character creation to custom values. Required for servers with more hair options than the default client supports."
-      replace : "将角色创建期间可用的最大发型和发色选项提高到指定值。对于头发选项多于默认客户端支持的服务器来说是必需的。"
+    - find : Pages the character creation hair picker so it can offer more than the built-in 23 styles. Max 128. Needs one thumbnail per extra style in <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO ships 01 to 23 only). Pair with <i>Allow 65k Hair Styles</i>.
+      replace : 为角色创建的发型选择器加入分页，使其能提供超过内置 23 种的发型。最多 128 种。每种额外发型都需要在 <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> 中放一张缩略图（kRO 只提供 01 到 23）。请搭配<i>允许 65k 发型</i>使用。
 
     - find : "Customize job id in char create dialog"
       replace : "在角色创建窗口中自定义职业 ID"
@@ -2296,8 +2298,8 @@ translations:
     - find : "Always show Register button in Login"
       replace : "始终在登录中显示注册按钮"
 
-    - find : "Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page."
-      replace : "在登录画面上显示所有 langtypes 的注册按钮。单击它会打开 clientinfo.xml 的 <registrationweb> 中定义的注册 URL。标记并关闭客户端。对于引导新玩家到您的注册页面很有用。"
+    - find : Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page. On this client the Sign Up button is always there and opens that page, except at langtype 0, where it first asks whether to go to the official website (or, with a Gravity ID, opens Gravity's Korean signup); the patch makes langtype 0 open your page straight away.
+      replace : 在登录画面上为所有 langtype 显示注册按钮。单击后会打开 clientinfo.xml 的 &lt;registrationweb&gt; 标签中定义的注册 URL，并关闭客户端。可用于引导新玩家前往您的注册页面。在此客户端上，Sign Up 按钮始终存在并会打开该页面，但 langtype 0 例外：它会先询问是否前往官方网站（若使用 Gravity ID，则打开 Gravity 的韩国注册页面）；此补丁让 langtype 0 也直接打开您的页面。
 
     - find : "4/6 LETTER LIMIT REMOVAL"
       replace : "4/6 字母限制移除"
@@ -2349,3 +2351,175 @@ translations:
 
     - find : "Completely hides the Trait Status expansion button from the Status Window. Use on pre-4th job servers to remove the button entirely rather than just disabling it."
       replace : "从状态窗口中完全隐藏特性状态扩展按钮。适用于四转前服务器，可直接移除该按钮，而不仅是将其禁用。"
+
+    # --- Added 2026-10-27: patches and wording newer than this pack (machine-assisted; corrections welcome) ---
+
+    # ===== Character.yml =====
+
+    # RestoreGMWeaponTrail (title)
+    - find: Restore GM weapon trails
+      replace: 还原 GM 的武器残影
+
+    # RestoreGMWeaponTrail (desc)
+    - find: Gives back the weapon-trail sprites (the blade gleam drawn while attacking) to accounts listed under &lt;admin&gt; in clientinfo. The client stores 0 in that layer for GM accounts, leaving it without its sprite, so the renderer drops it entirely. <b>Disable GM sprite</b> only covers the two name-list functions and leaves these call sites untouched, so it is required here and gets selected automatically. Bug reported by Monsii.
+      replace: 为 clientinfo 中 &lt;admin&gt; 下列出的账号还原武器残影图像（攻击时绘制的刀光）。客户端会为 GM 账号在该图层写入 0，使其没有对应的图像，绘制时便完全略过。<b>隐藏 GM 专用外观</b>只处理两个名单函数，不会修改这些调用位置，因此本补丁需要它，并会自动勾选。此问题由 Monsii 回报。
+
+    # MoreBodyStyles (title)
+    - find: More Body Styles (alternate outfits)
+      replace: 更多身体样式（替代服装）
+
+    # MoreBodyStyles (desc)
+    - find: Lets a job have more alternate outfits than the one the client knows. List each extra outfit as outfit id = job id, costume; its sprites load from costume_<N>. The server must know the outfit id (job enum, script constant, AlternateOutfits, and on rAthena a Jobs entry of its own in job_stats, or @bodystyle answers Appearance changed and nothing changes). Stock outfits are unchanged.
+      replace: 让职业拥有比客户端已知的那一套更多的替代服装。每套额外服装写成 outfit id = job id, costume；其图像从 costume_<N> 加载。服务器必须认识该服装 ID（job enum、脚本常量、AlternateOutfits，在 rAthena 上还需要在 job_stats 中为它单独加一条 Jobs 条目，否则 @bodystyle 会回答 Appearance changed，但外观不会改变）。原版服装不受影响。
+
+    # ===== Client.yml =====
+
+    # ZoomIn25Percent (desc)
+    - find: Pulls the camera <b>closer</b> than default, to about a quarter of the stock distance (480 &rarr; 128). The odd one out in this group - every other entry here zooms out.
+      replace: 将镜头拉得比默认<b>更近</b>，约为原版距离的四分之一（480 &rarr; 128）。这是本组中唯一的例外，其他选项都是将镜头拉远。
+
+    # ZoomOut25Percent (title)
+    - find: Increase Zoom Out (to 25%)
+      replace: 增加缩小（至 25%）
+
+    # ZoomOut25Percent (desc)
+    - find: Extends the zoom-out range by <b>25%</b> over the default (480 &rarr; 600). The gentlest of the four increases - use it when Max feels too far out. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: 将缩小范围在默认值的基础上扩展 <b>25%</b>（480 &rarr; 600）。这是四档增加中最温和的一档，觉得最大档太远时可改用此项。&#9733; <b>请记得在游戏中使用 /zoom</b>，否则这些效果都不会出现。客户端有自己的缩小设置，若该设置关闭，镜头最远只能到 400，比原版还近。
+
+    # ZoomCustom (title)
+    - find: Increase Zoom Out (custom %)
+      replace: 增加缩小（自定义 %）
+
+    # ZoomCustom (desc)
+    - find: Asks you for the increase as a <b>percentage over the client default</b> and converts it for you, so typing <b>60</b> gives the camera 60% more range (480 &rarr; 768). The presets above are the common values; this one covers everything in between. Defaults to <b>134</b>, just under Max. Anything above 135 draws black at the screen edges, and is allowed here anyway so you can experiment. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: 以<b>相对客户端默认值的百分比</b>询问增加幅度，并自动为您换算，例如输入 <b>60</b> 会让镜头范围增加 60%（480 &rarr; 768）。上面的预设是常用数值，此选项涵盖它们之间的所有数值。默认为 <b>134</b>，略低于最大档。高于 135 时屏幕边缘会显示黑色，但此处仍然允许，方便您自行尝试。&#9733; <b>请记得在游戏中使用 /zoom</b>，否则这些效果都不会出现。客户端有自己的缩小设置，若该设置关闭，镜头最远只能到 400，比原版还近。
+
+    # ===== Data.yml =====
+
+    # SharedDoramPal (group title)
+    - find: SHARED PALETTES - DORAM
+      replace: 共享调色板 - Doram
+
+    # DoramHeadPalShared (title)
+    - find: Enable shared head palettes for Doram
+      replace: 为 Doram 启用共享头部调色板
+
+    # DoramHeadPalShared (desc)
+    - find: Applies the shared hair palette naming to the Doram races too, which the human patch ignores entirely -- without it a Doram needs one palette file per hairstyle AND per gender. Files stay in the Doram race folder (doram\hair\head_%d.pal) because Doram sprites do not share the human palette indexing -- pointing them at the human files leaves most of the character black. Follows whichever flavour (MF or Unisex) you enabled for the other races, which is required.
+      replace: 将共享头发调色板的命名方式也套用到 Doram 种族（人类用的补丁完全不处理 Doram）。若不启用，每种发型、每种性别的 Doram 都需要各自的调色板文件。文件仍放在 Doram 种族文件夹中（doram\hair\head_%d.pal），因为 Doram 图像与人类的调色板索引不同，若指向人类的文件，角色大部分会变成黑色。会沿用您为其他种族启用的方案（MF 或 Unisex），且必须先启用其中之一。
+
+    # ===== Special.yml =====
+
+    # EnableDruidClasses (title)
+    - find: Enable Druid classes (2026)
+      replace: 启用 Druid 系职业（2026）
+
+    # EnableDruidClasses (desc)
+    - find: Teaches this client Gravity's Druid line (Druid, Karnos, Alitea, their riding forms and the Werewolf/Wereraptor forms) the way the 2026 kRO clients know it, straight from data.grf with no Lua job files. Needs a server that has these jobs and a data.grf that carries their art. WARPGATE's English translation carries its five skill files, so a client that takes it answers No when the patch offers its own copies.
+      replace: 让此客户端以 2026 年 kRO 客户端的方式支持 Gravity 的 Druid 系职业（Druid、Karnos、Alitea、它们的骑乘形态，以及 Werewolf/Wereraptor 形态），直接读取 data.grf，无需 Lua 职业文件。需要拥有这些职业的服务器，以及包含其美术资源的 data.grf。WARPGATE 的英文翻译已包含这五个技能文件，因此使用该翻译的客户端，在补丁询问是否复制自带文件时请选「否」。
+
+    # QoL2026 (title)
+    - find: Quality of Life Changes (2026)
+      replace: 生活品质改进（2026）
+
+    # QoL2026 (desc)
+    - find: In progress and experimental (still in beta), more are added with each update. Adds kRO 2026's quality-of-life changes, translated from kRO's own 2026 client. When you apply it, you choose which ones to add (all by default).
+      replace: 仍在开发中，属实验性质（尚处于 beta 阶段），每次更新都会加入更多内容。加入 kRO 2026 年的生活品质改进，移植自 kRO 自己的 2026 客户端。应用时可选择要加入哪些改进（默认全部加入）。
+
+    # RelaunchOnRestart (title)
+    - find: Restart relaunches the client
+      replace: 重启时自动重新启动客户端
+
+    # RelaunchOnRestart (desc)
+    - find: When a setting needs a client restart (resolution, window mode, Render Scaling) and you press OK, the client starts itself again with the same arguments, instead of opening the restart web address from msgstringtable (kRO points it at its official site, ROenglishRE at its GitHub page).
+      replace: 当某项设置需要重启客户端（分辨率、窗口模式、Render Scaling）而您按下 OK 时，客户端会以相同的参数自行重新启动，而不是打开 msgstringtable 中的重启网址（kRO 指向其官方网站，ROenglishRE 指向其 GitHub 页面）。
+
+    # RestoreSkillAttackAnimation (title)
+    - find: Restore Skill Attack Animation
+      replace: 还原技能攻击动画
+
+    # RestoreSkillAttackAnimation (desc)
+    - find: "Gives Sonic Blow and Arrow Vulcan back the attacker's sprite animation -- pick either one or both. Gravity never removed the animations themselves, only the routing that selected them: the client still plays it for Chain Crush Combo, and this sends the chosen skills back through the same path. Sound and effects were never affected."
+      replace: 为 Sonic Blow 和 Arrow Vulcan 还原攻击者的角色动画，可选择其中一个或两个都选。Gravity 从未删除这些动画本身，只删除了选择它们的流程：客户端仍会为 Chain Crush Combo 播放该动画，此补丁让所选技能重新走同一条路径。音效与特效从未受到影响。
+
+    # ===== UI.yml =====
+
+    # NoLookalikeNameWarning (title)
+    - find: No bogus "not your guildsman" whisper warning
+      replace: 移除私聊时错误的「not your guildsman」警告
+
+    # NoLookalikeNameWarning (desc)
+    - find: Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They are meant to flag impostors who swap a capital I for a lowercase l, but the comparison is far too loose -- it calls two names alike as soon as min(lenA,lenB)-2 characters match by position. A guild with a member named "Test" therefore warns on every whisper from "Gettar". Firing constantly, the warning only teaches players to ignore the one line that would matter. Verified scope -- the comparison helper is used by nothing else in the client, so only those two messages disappear.
+      replace: 停止客户端在收到私聊时显示的「This character is not your guildsman」与「This name is not registered in your Friend List」提示。这些提示原本用来识别把大写 I 换成小写 l 的冒充者，但比对过于宽松：只要有 min(lenA,lenB)-2 个字符在相同位置相符，就会把两个名字视为相似。因此，公会中有名为「Test」的成员时，每次收到「Gettar」的私聊都会出现警告。警告频繁出现，只会让玩家习惯忽略真正重要的那一行。影响范围已验证：客户端中没有其他地方使用这个比对函数，因此只会移除这两条提示。
+
+    # PetTalkMarker (title)
+    - find: Mark pet chatter in chat
+      replace: 在聊天中标记宠物发言
+
+    # PetTalkMarker (desc)
+    - find: Tags every automated pet line with a marker, so players can tell it apart from something a person typed. Pet chatter carries no sender and the ordinary message type, so a pet named after a player currently reads exactly like that player talking. You choose the text (default <b>pet</b>), the brackets (round, square, angled or none) and whether it goes before or after the pet name -- e.g. <b>Poring (pet) -- I am hungry!</b>. The marker also appears in the speech bubble above the pet.
+      replace: 为每一条宠物自动发言加上标记，让玩家能分辨它与真人输入的内容。宠物发言没有发送者，且使用一般消息类型，因此以玩家名字命名的宠物，目前看起来与该玩家本人说话完全一样。您可以选择标记文字（默认为 <b>pet</b>）、括号样式（圆括号、方括号、尖括号或无），以及放在宠物名字之前或之后，例如 <b>Poring (pet) -- I am hungry!</b>。宠物头上的对话气泡中也会显示此标记。
+
+    # RestoreSkillInfoCheckbox (title)
+    - find: Restore the "View Skill Info." checkbox in the Skill Tree
+      replace: 还原技能树中的「View Skill Info.」复选框
+
+    # RestoreSkillInfoCheckbox (desc)
+    - find: Brings back the checkbox old Ragexe builds had in the top right corner of the ALT+S Skill Tree, and the behaviour it controlled -- while it is ticked, simply hovering a skill pops the skill detail window next to the cursor instead of having to right-click it. The client still owns the option (Show_SkillDescript, saved in OptionInfo.lua), its command handler and the whole display code, which was merely rebound to the right-click gesture -- this patch re-creates the missing checkbox control and the missing hover branch. Unticked, the client behaves exactly as before, right-click included.
+      replace: 还原旧版 Ragexe 在 ALT+S 技能树右上角的复选框，以及它所控制的行为：勾选时，只要将鼠标悬停在技能上，就会在光标旁弹出技能详细信息窗口，不必再按右键。客户端仍保留该选项（Show_SkillDescript，保存在 OptionInfo.lua 中）、其命令处理器与完整的显示代码，只是被改绑到右键操作；此补丁重新建立缺少的复选框控件与缺少的悬停分支。未勾选时，客户端的行为与之前完全相同，包括右键。
+
+    # ShowPartySP (title)
+    - find: Party HP/SP Bars (Reforged)
+      replace: 队伍 HP/SP 条 (Reforged)
+
+    # ShowPartySP (desc)
+    - find: Splits each party member's bar into an HP (top) and SP (bottom) half and draws the SP number beside it, in the party window and on the detached mini widgets. Optionally sets the HP and SP bar colours, with your own row separate from everyone else's, so you are easy to find in a full party. Requires the matching rAthena change (SHOW_PARTY_SP) so the server sends the 22-byte 0x0BAB party packet with sp/maxsp.
+      replace: 将每位队伍成员的血条分成上半 HP、下半 SP，并在旁边显示 SP 数值，适用于队伍窗口与分离出来的迷你小窗。可选择设置 HP 与 SP 条的颜色，并让您自己的那一行与其他人分开设置，在满员队伍中也能轻松找到自己。需要搭配对应的 rAthena 修改（SHOW_PARTY_SP），让服务器发送带有 sp/maxsp 的 22 字节 0x0BAB 队伍数据包。
+
+    # TighterClickArea (title)
+    - find: Tighter Entity Click Area
+      replace: 缩小实体点击范围
+
+    # TighterClickArea (desc)
+    - find: The client widens every entity's clickable rectangle (hitbox) up to a minimum computed from the window width -- <b>width / 640 x 40</b> pixels for actors, <b>x 34</b> for map NPCs and skill units, so 100 and 85 px at 1600x900. A small sprite therefore defends a box far larger than itself, so neighbouring entities overlap and fight over the same click, and the frontmost rectangle wins whoever owns it. This patch divides all three minimums by 2, 4, 8 or 16 while keeping the scaling with the window width. It cannot shrink a big sprite's rectangle, which comes from its artwork.
+      replace: 客户端会把每个实体的可点击矩形（hitbox）放大到依窗口宽度计算出的最小值：角色为 <b>宽度 / 640 x 40</b> 像素，地图 NPC 与技能单位为 <b>x 34</b>，因此在 1600x900 下分别为 100 与 85 px。小图像因此占据比自身大得多的范围，相邻的实体互相重叠、争抢同一次点击，而最前面的矩形会胜出，不论它属于谁。此补丁将这三个最小值除以 2、4、8 或 16，同时保留随窗口宽度缩放的行为。它无法缩小大型图像的矩形，因为那来自其美术资源本身。
+
+    # ===== Window.yml =====
+
+    # CustomBtns (group title)
+    - find: CUSTOM BUTTONS
+      replace: 自定义按钮
+
+    # CustomButtons (title)
+    - find: Add your own buttons
+      replace: 添加自定义按钮
+
+    # CustomButtons (desc)
+    - find: Adds extra buttons of your own to the row below the HP/SP bars in the Basic Info Window, beyond the 25 the client ships with. Each one is written as <b>iconName = behaves like</b>, where the icon name is also the file name - the client loads <b>bt_&lt;iconName&gt;.bmp</b> and <b>bt_&lt;iconName&gt;_press.bmp</b> from <b>data\texture\&lt;UI folder&gt;\menu_icon\</b> as 32x34 24-bit BMPs with magenta (FF00FF) transparent, so without those files the button draws blank. <b>behaves like</b> names one of the stock buttons and the new one does whatever that one does.
+      replace: 在基本信息窗口 HP/SP 条下方的按钮列中加入您自己的额外按钮，不受客户端自带 25 个按钮的限制。每个按钮写成 <b>iconName = behaves like</b>，其中图标名称（iconName）同时也是文件名：客户端会从 <b>data\texture\&lt;UI folder&gt;\menu_icon\</b> 加载 <b>bt_&lt;iconName&gt;.bmp</b> 与 <b>bt_&lt;iconName&gt;_press.bmp</b>，格式为 32x34 的 24 位 BMP，以洋红色（FF00FF）为透明色，缺少这些文件时按钮会显示为空白。<b>behaves like</b> 填写原版按钮之一的名称，新按钮的作用与该按钮相同。
+
+    # HairColorGuard (title)
+    - find: Hair colour guard, and extra hair colours
+      replace: 发色防护与额外发色
+
+    # HairColorGuard (desc)
+    - find: Ignores a hair colour in character creation when that style ships no matching <b>.pal</b> file. Without this the client shows a <i>Cannot find File</i> palette error and then <b>crashes</b> with an access violation, because it dereferences the palette it failed to load. Only affects hair colour in the creation window; nothing else is suppressed.<br><br>It also repaints the swatch row when a style change forces the colour back to <b>none</b>, so the lit swatch stops disagreeing with the character.<br><br>Then it asks <b>how many hair colours</b> the picker should offer. <b>9</b> is the client default and changes no layout at all. Above 9 the row keeps its size and gains a <b>tenth cell that pages to the next nine</b>, the way the hair style grid does; it wraps round to the first page at the end. The buttons move to a relocated array because a tenth would otherwise land on the gender button. Each added colour needs its own <b>.pal</b> files, or the guard above will refuse it, and its own <b>color&lt;NN&gt;_off/_over/_on.bmp</b> art under <b>data\texture\...\make_character_ver2\</b>, or the swatch falls back to the first face. Your server's <b>max hair colour</b> has to allow the range too.
+      replace: 在角色创建中，当某发型没有对应的 <b>.pal</b> 文件时，忽略该发色。若不使用此补丁，客户端会显示 <i>Cannot find File</i> 调色板错误，接着因访问违规而<b>崩溃</b>，因为它会读取加载失败的调色板。只影响创建窗口中的发色，不会屏蔽其他任何内容。<br><br>当更换发型迫使发色回到<b>无</b>时，它也会重绘色块列，让亮起的色块不再与角色不符。<br><br>接着它会询问选择器要提供<b>多少种发色</b>。<b>9</b> 是客户端默认值，完全不改变布局。超过 9 时，色块列保持原尺寸，并多出<b>第十格，用来翻到下九种</b>，与发型网格的做法相同；到最后一页后会回到第一页。按钮会移到重新配置的数组中，否则第十个按钮会落在性别按钮上。每种新增的发色都需要自己的 <b>.pal</b> 文件，否则上述防护会拒绝它；也需要在 <b>data\texture\...\make_character_ver2\</b> 下有自己的 <b>color&lt;NN&gt;_off/_over/_on.bmp</b> 图片，否则色块会退回第一张图片。您服务器的<b>最大发色</b>设置也必须允许该范围。
+
+    # ===== Part 2 pull requests: #68 (Sound.yml) and #70 (UI.yml) =====
+
+    # PlayFirstFrameSounds (title)
+    - find: "Play the sound placed on the first frame of an animation"
+      replace: "播放放在动画第一帧上的音效"
+
+    # PlayFirstFrameSounds (desc)
+    - find: "The client never plays a sound event placed on frame 0 of an animation that has just REPLACED another one. On an action change it rewinds its \"last sounded frame\" cursor to 0 and then plays the frames after it, so frame 0 is skipped. Looping animations and actions replayed as-is are unaffected -- which is why hurt and attack sounds are already heard from the second blow onwards, only the first one missing. Death animations always follow another action and are never replayed, so their frame-0 sound is never heard at all: over the 2103 monster sprites of a 2025 kRO data.grf that is 47 silent death sounds, among them Doppelganger and the twelve Bio Lab clones, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune and Elder Willow. This patch rewinds the cursor to -1 instead, so the loop starts at frame 0 and those sounds are heard. (Warning: doppleganger_die.wav is a bit annoying :D)"
+      replace: "当一个动画刚刚替换了另一个动画时，客户端从不播放放在其第 0 帧上的音效事件。切换动作时，它会把“最后发声帧”游标重置为 0，然后播放之后的帧，因此第 0 帧被跳过。循环动画和原样重播的动作不受影响 -- 这就是为什么受伤和攻击音效从第二击开始就能听到，只缺第一击。死亡动画总是跟在另一个动作之后且从不重播，所以它们第 0 帧的音效永远听不到：在 2025 年 kRO data.grf 的 2103 个怪物精灵中，有 47 个死亡音效是无声的，其中包括 Doppelganger 和十二个 Bio Lab 复制体、Baphomet、Osiris、Thanatos、Pupa、Orc Warrior、Obeaune 和 Elder Willow。本补丁改为把游标重置为 -1，因此循环从第 0 帧开始，这些音效就能听到了。（警告：doppleganger_die.wav 有点烦人 :D）"
+
+    # NativeActJobPreviews (title)
+    - find: "Fix HD Job Sprite Previews (Alt+Q / Alt+S)"
+      replace: "修复 HD 职业精灵预览 (Alt+Q / Alt+S)"
+
+    # NativeActJobPreviews (desc)
+    - find: "Applies ACT layer scale, mirror and rotation to the existing Equipment and Skill Tree sprite resources on 2025-07-16. HD sprites render at their intended size in the native window surfaces. No generated preview pack or runtime DLL is required. Uses the client's existing resource names and GRF priority; install complete matching SPR/ACT pairs."
+      replace: "在 2025-07-16 上，将 ACT 图层的缩放、镜像和旋转应用到现有的装备与技能树精灵资源。HD 精灵在原生窗口中以预期尺寸显示。无需生成预览包，也无需运行时 DLL。使用客户端现有的资源名称和 GRF 优先级；请安装完整且匹配的 SPR/ACT 文件对。"

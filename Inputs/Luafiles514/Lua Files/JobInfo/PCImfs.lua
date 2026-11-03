@@ -13,8 +13,8 @@
 -- IMPORTANT: Custom jobs REQUIRE actual .imf files in data/imf/
 -- Without them, the character will render without a head.
 -- Copy an existing job's .imf files and rename them:
---   data/imf/my_job_��.imf  (male)
---   data/imf/my_job_��.imf  (female)
+--   data/imf/my_job_남.imf  (male)
+--   data/imf/my_job_여.imf  (female)
 --
 -- Inherit from an existing job:
 --   PCImfs[PCIds.MY_JOB] = PCImfs[PCIds.NOVICE]

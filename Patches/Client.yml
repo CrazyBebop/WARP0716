@@ -159,12 +159,6 @@ RouletteVis:
     color : darkorange
     
     patches:
-        - HideRoulette:
-            title : Hide Roulette icon
-            recommend : no
-            author : Neo-Mind
-            desc : Hides the Roulette icon from the game interface. Useful for servers that do not use Gravity's Roulette system.
-        
         - ShowRoulette:
             title : Show Roulette icon
             recommend : no
@@ -187,12 +181,6 @@ CashShop:
             recommend : no
             author : Andrei Karas (4144)
             desc : Forces the <b>C</b> (cash point) field to display 0 instead of random garbage values in the Cash Shop. Fixes a display bug on servers that do not use Gravity's cash point system.
-        
-        - DefShopBrowser:
-            title : Use default web browser in Cash Shop
-            recommend : no
-            author : CH.C (jchcc)
-            desc : Opens Cash Shop URLs in your default web browser instead of the hardcoded Internet Explorer. Essential since IE is deprecated on modern Windows.
 
 EquipPreview:
     title : SHOP EQ PREVIEW
@@ -286,12 +274,6 @@ LoginMode:
     mutex : true
     
     patches:
-        - RestoreLoginWindow:
-            title : Restore Login Window
-            recommend : no
-            author : Shinryo , Neo-Mind
-            desc : Bypasses Gravity's token-based login system and restores the classic username/password login window. Required for most servers that do not use a web-based launcher.
-        
         - UseSSOLogin:
             title : Use SSO Login Packet
             recommend : no

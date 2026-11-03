@@ -16,6 +16,8 @@
 ## Text orientation & other settings #
 ##===================================#
 
+# 2026-10-27: newer patch titles and descriptions added by the WARP0716 maintainers (machine-assisted translation; corrections from native speakers welcome).
+
 RTL: no
 
 ##============================#
@@ -533,14 +535,14 @@ translations:
     - find : Allow party leader to leave
       replace : Permitir que el party leader salga
 
-    - find : Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists.
-      replace : Permite al party leader abandonar el party cuando no hay otros miembros en el mismo mapa. Por defecto, el cliente impide que el líder salga mientras el party siga existiendo.
+    - find : Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists. On rAthena, a leader who leaves disbands the party.
+      replace : Permite al party leader abandonar el party cuando no hay otros miembros en el mismo mapa. Por defecto, el cliente impide que el líder salga mientras el party siga existiendo. En rAthena, si el líder sale, el party se disuelve.
 
     - find : Allow spam skills by hotkey
       replace : Permitir spam de skills por hotkey
 
-    - find : Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations.
-      replace : Permite lanzar skills rápidamente manteniendo presionada una hotkey en vez de pulsarla repetidamente. Elimina el cooldown del lado del cliente entre activaciones de hotkey.
+    - find : Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations. Optionally switched on and off in game with a slash command (default /skillspam, starts off).
+      replace : Permite lanzar skills rápidamente manteniendo presionada una hotkey en vez de pulsarla repetidamente. Elimina el cooldown del lado del cliente entre activaciones de hotkey. Opcionalmente se activa y desactiva en el juego con un slash command (por defecto /skillspam, empieza desactivado).
 
     - find : Allow guild activities in clan
       replace : Permitir actividades de guild estando en clan
@@ -661,11 +663,11 @@ translations:
     - find : "Removes the delay between walk-click inputs entirely, allowing immediate movement response. <b>Note:</b> May cause the client to send duplicate movement packets to the server."
       replace : "Elimina por completo el delay entre clicks de movimiento, permitiendo respuesta inmediata al caminar. <b>Nota:</b> Puede provocar que el cliente envíe paquetes de movimiento duplicados al servidor."
 
-    - find : Customize Walk Delay
-      replace : Personalizar Walk Delay
+    - find : Walk Delay (Reforged)
+      replace : Walk Delay (Reforged)
 
-    - find : "Changes the delay between walk-click inputs to a custom value (in milliseconds). Lower values make movement more responsive. <b>Note:</b> Very low values may cause the client to send duplicate movement packets."
-      replace : "Cambia el delay entre clicks de movimiento a un valor personalizado (en milisegundos). Valores más bajos hacen el movimiento más responsivo. <b>Nota:</b> Valores muy bajos pueden hacer que el cliente envíe paquetes de movimiento duplicados."
+    - find : "Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0."
+      replace : "Define el delay entre clicks de movimiento, en milisegundos. El valor por defecto del cliente es 600, y valores más bajos hacen el movimiento más responsivo. <b>No bajes de 10.</b> Con valores muy bajos el personaje camina hasta la celda de un NPC mientras su ventana de mensaje o de tienda está abierta (GitHub issue #39); 10 es el valor más bajo confirmado que funciona. 0 todavía se acepta y reproduce exactamente el antiguo parche separado <i>Remove Walk Delay</i>, incluyendo ese bug. Este parche reemplaza tanto <i>Remove Walk Delay</i> como <i>Customize Walk Delay</i>, que eran el mismo ajuste: eliminar el delay era simplemente este valor en 0."
 
     # ResButtonVis
     - find : RESURRECT BUTTON VISIBILITY
@@ -899,20 +901,20 @@ translations:
     - find : Increase Zoom Out (to 50%)
       replace : Aumentar Zoom Out (al 50%)
 
-    - find : Extends the zoom-out range to about 50% of the maximum, letting you see more of the map around your character.
-      replace : Extiende el rango de zoom-out a aproximadamente 50% del máximo, permitiendo ver más mapa alrededor del personaje.
+    - find : Extends the zoom-out range by <b>50%</b> over the default (480 &rarr; 720), letting you see more of the map around your character. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace : Extiende el rango de zoom-out un <b>50%</b> sobre el valor por defecto (480 &rarr; 720), permitiendo ver más mapa alrededor del personaje. &#9733; <b>Recuerda usar /zoom en el juego</b>, o nada de esto se va a ver. El cliente tiene su propia opción de zoom-out, y con ella desactivada la cámara queda limitada a 400, que es más cerca que el original.
 
     - find : Increase Zoom Out (to 75%)
       replace : Aumentar Zoom Out (al 75%)
 
-    - find : Extends the zoom-out range to about 75% of the maximum. Provides a wide field of view useful for WoE, PvP, and large-scale fights.
-      replace : Extiende el rango de zoom-out a aproximadamente 75% del máximo. Da un campo de visión amplio, útil para WoE, PvP y peleas a gran escala.
+    - find : Extends the zoom-out range by <b>75%</b> over the default (480 &rarr; 840). A wide field of view, useful for WoE, PvP and large-scale fights. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace : Extiende el rango de zoom-out un <b>75%</b> sobre el valor por defecto (480 &rarr; 840). Da un campo de visión amplio, útil para WoE, PvP y peleas a gran escala. &#9733; <b>Recuerda usar /zoom en el juego</b>, o nada de esto se va a ver. El cliente tiene su propia opción de zoom-out, y con ella desactivada la cámara queda limitada a 400, que es más cerca que el original.
 
     - find : Increase Zoom Out (to Max)
       replace : Aumentar Zoom Out (al Máximo)
 
-    - find : Unlocks the full zoom-out range, allowing the camera to pull back as far as possible. Maximum visibility, but sprites may appear very small.
-      replace : Desbloquea el rango completo de zoom-out, permitiendo alejar la cámara lo máximo posible. Máxima visibilidad, pero los sprites pueden verse muy pequeños.
+    - find : Pulls the camera back as far as this client can actually draw (480 &rarr; 1127). Maximum visibility, though sprites get small. &#9733; This was 1224 until 2026-08-25; that value is past the render limit and shows black at the screen edges. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace : Aleja la cámara lo máximo que este cliente puede dibujar realmente (480 &rarr; 1127). Máxima visibilidad, aunque los sprites se ven pequeños. &#9733; Hasta el 2026-08-25 este valor era 1224; ese valor supera el límite de renderizado y muestra negro en los bordes de la pantalla. &#9733; <b>Recuerda usar /zoom en el juego</b>, o nada de esto se va a ver. El cliente tiene su propia opción de zoom-out, y con ella desactivada la cámara queda limitada a 400, que es más cerca que el original.
 
     - find : LOGIN MODE
       replace : MODO DE LOGIN
@@ -1500,8 +1502,8 @@ translations:
     - find : Customize App icon
       replace : Personalizar ícono de la app
 
-    - find : "Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</b><font>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include."
-      replace : "Reemplaza el ícono de la aplicación con un archivo .ico personalizado (cualquier tamaño y profundidad de bits). Para Win7 en adelante, usa <b><font color='deepskyblue'>256x256 de 32-bit junto con una versión 16x16</b><font>.<br><br>Los clientes antiguos tienen límite de 3 tamaños de ícono, así que puede que necesites elegir qué resoluciones incluir."
+    - find : "Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</font></b>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include."
+      replace : "Reemplaza el ícono de la aplicación con un archivo .ico personalizado (cualquier tamaño y profundidad de bits). Para Win7 en adelante, usa <b><font color='deepskyblue'>256x256 de 32-bit junto con una versión 16x16</font></b>.<br><br>Los clientes antiguos tienen límite de 3 tamaños de ícono, así que puede que necesites elegir qué resoluciones incluir."
 
     - find : PRIORITY ALTERATION
       replace : ALTERACIÓN DE PRIORIDAD
@@ -2113,14 +2115,14 @@ translations:
     - find : Hide Buttons (New UI)
       replace : Ocultar botones (New UI)
 
-    - find : Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Useful for removing buttons for features your server does not support.
-      replace : Oculta botones seleccionados debajo de las barras de HP/SP en la Basic Info Window (UI estilo nuevo). Útil para remover botones de funcionalidades que tu servidor no soporta.
+    - find : "Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way."
+      replace : "Oculta botones seleccionados debajo de las barras de HP/SP en la Basic Info Window (UI estilo nuevo). Lista <b>todos</b> los botones que tiene este cliente, así que un botón sigue siendo seleccionable lo oculte o no el cliente; elegir uno que ya está oculto simplemente no hace nada, y el prompt indica cuáles son. En el cliente 2025-07-16 los que ya están ocultos son <b>Battleground, Booking y Twitter</b> (GitHub #24). No elijas el mismo botón aquí y en <i>Show Buttons (New UI)</i>: eso se rechaza con un error que lo nombra, en vez de resolverse en silencio hacia un lado."
 
     - find : Show Buttons (New UI)
       replace : Mostrar botones (New UI)
 
-    - find : Restores selected hidden buttons below the HP/SP bars in the Basic Info Window (new UI style). Use to bring back buttons that were removed in newer client versions.
-      replace : Restaura botones ocultos seleccionados debajo de las barras de HP/SP en la Basic Info Window (UI estilo nuevo). Úsalo para traer de vuelta botones que fueron eliminados en versiones nuevas del cliente.
+    - find : Restores selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has; picking one that is already shown does nothing. Use it to bring back buttons the client hides by default, which on 2025-07-16 are <b>Battleground, Booking and Twitter</b>. Do not pick the same button here and in <i>Hide Buttons (New UI)</i> - that is rejected with an error naming it.
+      replace : "Restaura botones seleccionados debajo de las barras de HP/SP en la Basic Info Window (UI estilo nuevo). Lista <b>todos</b> los botones que tiene este cliente; elegir uno que ya se muestra no hace nada. Úsalo para traer de vuelta botones que el cliente oculta por defecto, que en 2025-07-16 son <b>Battleground, Booking y Twitter</b>. No elijas el mismo botón aquí y en <i>Hide Buttons (New UI)</i>: eso se rechaza con un error que lo nombra."
 
     - find : CHARACTER CREATION
       replace : CREACIÓN DE PERSONAJES
@@ -2131,11 +2133,11 @@ translations:
     - find : Changes the height of the character name input field in the new character creation dialog. Adjust if the default size clips text or looks misaligned with custom fonts.
       replace : Cambia la altura del campo de input de nombre de personaje en el diálogo nuevo de creación. Ajústalo si el tamaño por defecto recorta texto o se ve desalineado con fuentes personalizadas.
 
-    - find : Increase char create Hair limits
-      replace : Aumentar límites de pelo en creación de char
+    - find : Increase char create Hair limits (Reforged)
+      replace : Aumentar límites de pelo en creación de char (Reforged)
 
-    - find : Raises the maximum hairstyle and hair color options available during character creation to custom values. Required for servers with more hair options than the default client supports.
-      replace : Sube los máximos de estilos y colores de pelo disponibles durante la creación de personaje a valores personalizados. Requerido para servidores con más opciones de pelo de las que soporta el cliente por defecto.
+    - find : Pages the character creation hair picker so it can offer more than the built-in 23 styles. Max 128. Needs one thumbnail per extra style in <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO ships 01 to 23 only). Pair with <i>Allow 65k Hair Styles</i>.
+      replace : Pagina el selector de pelo de la creación de personaje para que pueda ofrecer más de los 23 estilos incluidos. Máximo 128. Necesita una miniatura por cada estilo extra en <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO solo trae del 01 al 23). Combínalo con <i>Allow 65k Hair Styles</i>.
 
     - find : Customize job id in char create dialog
       replace : Personalizar job id en el diálogo de creación de char
@@ -2248,8 +2250,8 @@ translations:
     - find : Always show Register button in Login
       replace : Mostrar siempre el botón Register en Login
 
-    - find : "Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page."
-      replace : "Muestra un botón Register en la pantalla de login en todos los langtypes. Al hacer click abre la URL de registro definida en la tag &lt;registrationweb&gt; del clientinfo.xml y cierra el cliente. Útil para dirigir nuevos jugadores a tu página de registro."
+    - find : Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page. On this client the Sign Up button is always there and opens that page, except at langtype 0, where it first asks whether to go to the official website (or, with a Gravity ID, opens Gravity's Korean signup); the patch makes langtype 0 open your page straight away.
+      replace : Muestra un botón Register en la pantalla de login en todos los langtypes. Al hacer click abre la URL de registro definida en la tag &lt;registrationweb&gt; del clientinfo.xml y cierra el cliente. Útil para dirigir nuevos jugadores a tu página de registro. En este cliente el botón Sign Up siempre está y abre esa página, excepto en langtype 0, donde primero pregunta si quieres ir al sitio oficial (o, con un Gravity ID, abre el registro coreano de Gravity); el parche hace que langtype 0 abra tu página directamente.
 
     - find : 4/6 LETTER LIMIT REMOVAL
       replace : ELIMINACIÓN DEL LÍMITE 4/6 LETRAS
@@ -2301,3 +2303,259 @@ translations:
 
     - find : Completely hides the Trait Status expansion button from the Status Window. Use on pre-4th job servers to remove the button entirely rather than just disabling it.
       replace : Oculta completamente el botón de expansión Trait Status de la Status Window. Úsalo en servidores pre-4th job para eliminar el botón por completo en vez de solo desactivarlo.
+
+    # --- Added 2026-10-27: patches and wording newer than this pack (machine-assisted; corrections welcome) ---
+
+    # ===== Character.yml =====
+
+    # RestoreGMWeaponTrail (title)
+    - find: Restore GM weapon trails
+      replace: Restaurar las estelas de arma de los GM
+
+    # RestoreGMWeaponTrail (desc)
+    - find: Gives back the weapon-trail sprites (the blade gleam drawn while attacking) to accounts listed under &lt;admin&gt; in clientinfo. The client stores 0 in that layer for GM accounts, leaving it without its sprite, so the renderer drops it entirely. <b>Disable GM sprite</b> only covers the two name-list functions and leaves these call sites untouched, so it is required here and gets selected automatically. Bug reported by Monsii.
+      replace: Devuelve los sprites de estela de arma (el destello de la hoja que se dibuja al atacar) a las cuentas listadas bajo &lt;admin&gt; en clientinfo. El cliente guarda 0 en esa capa para las cuentas GM, dejándola sin sprite, así que el renderizado la descarta por completo. <b>Disable GM sprite</b> solo cubre las dos funciones de listas de nombres y no toca estos puntos de llamada, así que es requerido aquí y se selecciona automáticamente. Bug reportado por Monsii.
+
+    # MoreBodyStyles (title)
+    - find: More Body Styles (alternate outfits)
+      replace: Más Body Styles (trajes alternativos)
+
+    # MoreBodyStyles (desc)
+    - find: Lets a job have more alternate outfits than the one the client knows. List each extra outfit as outfit id = job id, costume; its sprites load from costume_<N>. The server must know the outfit id (job enum, script constant, AlternateOutfits, and on rAthena a Jobs entry of its own in job_stats, or @bodystyle answers Appearance changed and nothing changes). Stock outfits are unchanged.
+      replace: Permite que un job tenga más trajes alternativos que el único que conoce el cliente. Lista cada traje extra como outfit id = job id, costume; sus sprites se cargan desde costume_<N>. El servidor debe conocer el outfit id (job enum, constante de script, AlternateOutfits y, en rAthena, una entrada Jobs propia en job_stats; si no, @bodystyle responde Appearance changed y nada cambia). Los trajes originales no cambian.
+
+    # CustomAuraSprites (desc)
+    - find: Separates aura sprites from warp portal effects by using dedicated files (aurafloat.tga and auraring.bmp in 'data\\texture\\effect'). Prevents high-level character auras from visually interfering with warp portals.
+      replace: Separa los sprites de aura de los efectos de warp portal usando archivos dedicados (aurafloat.tga y auraring.bmp en 'data\\texture\\effect'). Evita que las auras de personajes de alto nivel interfieran visualmente con los warp portals.
+
+    # ===== Client.yml =====
+
+    # ZoomIn25Percent (desc)
+    - find: Pulls the camera <b>closer</b> than default, to about a quarter of the stock distance (480 &rarr; 128). The odd one out in this group - every other entry here zooms out.
+      replace: "Acerca la cámara <b>más</b> que por defecto, a aproximadamente un cuarto de la distancia original (480 &rarr; 128). Es la excepción de este grupo: todas las demás opciones alejan la cámara."
+
+    # ZoomOut25Percent (title)
+    - find: Increase Zoom Out (to 25%)
+      replace: Aumentar Zoom Out (al 25%)
+
+    # ZoomOut25Percent (desc)
+    - find: Extends the zoom-out range by <b>25%</b> over the default (480 &rarr; 600). The gentlest of the four increases - use it when Max feels too far out. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: "Extiende el rango de zoom-out un <b>25%</b> sobre el valor por defecto (480 &rarr; 600). El más suave de los cuatro aumentos: úsalo cuando el Máximo se sienta demasiado lejos. &#9733; <b>Recuerda usar /zoom en el juego</b>, o nada de esto se va a ver. El cliente tiene su propia opción de zoom-out, y con ella desactivada la cámara queda limitada a 400, que es más cerca que el original."
+
+    # ZoomCustom (title)
+    - find: Increase Zoom Out (custom %)
+      replace: Aumentar Zoom Out (% personalizado)
+
+    # ZoomCustom (desc)
+    - find: Asks you for the increase as a <b>percentage over the client default</b> and converts it for you, so typing <b>60</b> gives the camera 60% more range (480 &rarr; 768). The presets above are the common values; this one covers everything in between. Defaults to <b>134</b>, just under Max. Anything above 135 draws black at the screen edges, and is allowed here anyway so you can experiment. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: Te pide el aumento como un <b>porcentaje sobre el valor por defecto del cliente</b> y lo convierte por ti, así que escribir <b>60</b> le da a la cámara un 60% más de rango (480 &rarr; 768). Los presets de arriba son los valores comunes; este cubre todo lo que hay entre ellos. Por defecto es <b>134</b>, justo por debajo del Máximo. Cualquier valor sobre 135 dibuja negro en los bordes de la pantalla, y aun así se permite aquí para que puedas experimentar. &#9733; <b>Recuerda usar /zoom en el juego</b>, o nada de esto se va a ver. El cliente tiene su propia opción de zoom-out, y con ella desactivada la cámara queda limitada a 400, que es más cerca que el original.
+
+    # ===== Data.yml =====
+
+    # SharedDoramPal (group title)
+    - find: SHARED PALETTES - DORAM
+      replace: PALETAS COMPARTIDAS - DORAM
+
+    # DoramHeadPalShared (title)
+    - find: Enable shared head palettes for Doram
+      replace: Habilitar paletas de cabeza compartidas para Doram
+
+    # DoramHeadPalShared (desc)
+    - find: Applies the shared hair palette naming to the Doram races too, which the human patch ignores entirely -- without it a Doram needs one palette file per hairstyle AND per gender. Files stay in the Doram race folder (doram\hair\head_%d.pal) because Doram sprites do not share the human palette indexing -- pointing them at the human files leaves most of the character black. Follows whichever flavour (MF or Unisex) you enabled for the other races, which is required.
+      replace: "Aplica también a las razas Doram el nombrado de paletas de pelo compartidas, que el parche humano ignora por completo; sin esto, un Doram necesita un archivo de paleta por cada estilo de pelo Y por cada género. Los archivos se quedan en la carpeta de la raza Doram (doram\\hair\\head_%d.pal) porque los sprites Doram no comparten la indexación de paletas de los humanos: apuntarlos a los archivos humanos deja la mayor parte del personaje en negro. Sigue la variante (MF o Unisex) que hayas habilitado para las otras razas, la cual es requerida."
+
+    # ===== Special.yml =====
+
+    # EnableDruidClasses (title)
+    - find: Enable Druid classes (2026)
+      replace: Habilitar clases Druid (2026)
+
+    # EnableDruidClasses (desc)
+    - find: Teaches this client Gravity's Druid line (Druid, Karnos, Alitea, their riding forms and the Werewolf/Wereraptor forms) the way the 2026 kRO clients know it, straight from data.grf with no Lua job files. Needs a server that has these jobs and a data.grf that carries their art. WARPGATE's English translation carries its five skill files, so a client that takes it answers No when the patch offers its own copies.
+      replace: Le enseña a este cliente la línea Druid de Gravity (Druid, Karnos, Alitea, sus formas montadas y las formas Werewolf/Wereraptor) tal como la conocen los clientes kRO 2026, directamente desde data.grf y sin archivos lua de jobs. Requiere un servidor que tenga estos jobs y un data.grf que incluya su arte. La traducción al inglés de WARPGATE ya incluye sus cinco archivos de skills, así que un cliente que la use debe responder No cuando el parche ofrezca sus propias copias.
+
+    # QoL2026 (title)
+    - find: Quality of Life Changes (2026)
+      replace: Mejoras de Quality of Life (2026)
+
+    # QoL2026 (desc)
+    - find: In progress and experimental (still in beta), more are added with each update. Adds kRO 2026's quality-of-life changes, translated from kRO's own 2026 client. When you apply it, you choose which ones to add (all by default).
+      replace: En desarrollo y experimental (todavía en beta); se agregan más con cada update. Agrega los cambios de quality-of-life de kRO 2026, portados desde el propio cliente 2026 de kRO. Al aplicarlo eliges cuáles agregar (todos por defecto).
+
+    # RelaunchOnRestart (title)
+    - find: Restart relaunches the client
+      replace: Reiniciar vuelve a abrir el cliente
+
+    # RelaunchOnRestart (desc)
+    - find: When a setting needs a client restart (resolution, window mode, Render Scaling) and you press OK, the client starts itself again with the same arguments, instead of opening the restart web address from msgstringtable (kRO points it at its official site, ROenglishRE at its GitHub page).
+      replace: Cuando un ajuste requiere reiniciar el cliente (resolución, modo ventana, Render Scaling) y presionas OK, el cliente se vuelve a iniciar solo con los mismos argumentos, en vez de abrir la dirección web de reinicio del msgstringtable (kRO la apunta a su sitio oficial, ROenglishRE a su página de GitHub).
+
+    # AllHatEffectsWorldDepthOracle (title)
+    - find: All HatEffects Screen-Size World Depth [QJS]
+      replace: Profundidad de mundo a tamaño de pantalla para todos los HatEffects [QJS]
+
+    # AllHatEffectsWorldDepthOracle (desc)
+    - find: 2025-07-16 build-specific global HatEffect depth patch, live validated on 2026-07-14. It preserves every original HatEffect STR resource, animation, actor attachment, metadata, teardown, screen-space position, apparent scale, and RHW. During only the two generic HatEffect render methods, vertices at/below actor-anchor Y retain a floor-safe four-quantum contact-biased depth; upper vertices reconstruct Y-up reciprocal depth using projection-matrix +0x10/+0x14 and convert it through 0x00554040. Native world STR NPCs remain unchanged.
+      replace: Parche global de profundidad de HatEffect específico del build 2025-07-16, validado en vivo el 2026-07-14. Conserva cada recurso STR original de HatEffect, la animación, el anclaje al actor, la metadata, el teardown, la posición en espacio de pantalla, la escala aparente y el RHW. Solo durante los dos métodos genéricos de render de HatEffect, los vértices en o por debajo de la Y del ancla del actor conservan una profundidad segura para el suelo con sesgo de contacto de cuatro cuantos; los vértices superiores reconstruyen la profundidad recíproca con Y hacia arriba usando +0x10/+0x14 de la matriz de proyección y la convierten a través de 0x00554040. Los NPCs STR nativos del mundo no cambian.
+
+    # AllowDualWeaponSprites (title)
+    - find: Dual-Wield Original Weapon Sprites [QJS]
+      replace: Sprites de arma originales para Dual-Wield [QJS]
+
+    # AllowDualWeaponSprites (desc)
+    - find: Self-contained QJS/EXE patch; no weapon DLL is required. The D403A0 equipment hook drives the stock single-item loader for each equipped item and installs the original parallel SPR/ACT resources in native weapon slots 5 and 6 instead of generic combined types 25..30. A live-slot renderer bridge direction-preservingly maps blank item ACT actions 88..95 to populated actions 80..87. Off-hand-only equipment also receives its real item pair in slot 6. Applies to every valid item resource without an item-ID allowlist.
+      replace: Parche QJS/EXE autónomo; no requiere ninguna DLL de armas. El hook de equipo D403A0 usa el loader original de un solo ítem para cada ítem equipado e instala los recursos SPR/ACT paralelos originales en los slots de arma nativos 5 y 6, en vez de los tipos combinados genéricos 25..30. Un puente del renderer de slots en vivo mapea, conservando la dirección, las acciones ACT vacías 88..95 del ítem a las acciones con contenido 80..87. El equipo que va solo en la mano secundaria también recibe su par de ítem real en el slot 6. Se aplica a todo recurso de ítem válido, sin una allowlist de IDs de ítem.
+
+    # AllowChatWhileBerserk (title)
+    - find: Allow Chatting While Berserk
+      replace: Permitir chatear durante Berserk
+
+    # AllowChatWhileBerserk (desc)
+    - find: "Self-contained QJS/EXE patch. The client helper Status_IsBerserkActive (0x00D8E6C0) scans the local status-icon list for EFST_BERSERK (0x6B) and returns 1 while Berserk is up; every chat-channel handler in CModeMgr::SendMsg drops the outgoing CZ_REQUEST_CHAT (opcode 0xF3) on that 1, so the input clears but nothing is sent. Emotes use another command and stay usable. This forces the helper to always return 0, unblocking chat on every channel while Berserk without touching the item/skill Berserk restrictions. NOTE: removes ONLY the client gate; any server-side chat gate for SC_BERSERK must also be removed for chat to go through."
+      replace: "Parche QJS/EXE autónomo. La función auxiliar del cliente Status_IsBerserkActive (0x00D8E6C0) revisa la lista local de íconos de status buscando EFST_BERSERK (0x6B) y devuelve 1 mientras Berserk está activo; cada handler de canal de chat en CModeMgr::SendMsg descarta el CZ_REQUEST_CHAT saliente (opcode 0xF3) ante ese 1, así que el input se borra pero no se envía nada. Los emotes usan otro comando y siguen disponibles. Esto fuerza a la función a devolver siempre 0, desbloqueando el chat en todos los canales durante Berserk sin tocar las restricciones de ítems/skills de Berserk. NOTA: elimina SOLO el bloqueo del cliente; cualquier bloqueo de chat del lado del servidor para SC_BERSERK también debe eliminarse para que el chat pase."
+
+    # RestoreSkillAttackAnimation (title)
+    - find: Restore Skill Attack Animation
+      replace: Restaurar animación de ataque de skills
+
+    # RestoreSkillAttackAnimation (desc)
+    - find: "Gives Sonic Blow and Arrow Vulcan back the attacker's sprite animation -- pick either one or both. Gravity never removed the animations themselves, only the routing that selected them: the client still plays it for Chain Crush Combo, and this sends the chosen skills back through the same path. Sound and effects were never affected."
+      replace: "Devuelve a Sonic Blow y Arrow Vulcan la animación del sprite del atacante; elige uno o ambos. Gravity nunca eliminó las animaciones en sí, solo la ruta que las seleccionaba: el cliente todavía la reproduce para Chain Crush Combo, y esto envía los skills elegidos de vuelta por esa misma ruta. El sonido y los efectos nunca se vieron afectados."
+
+    # ===== UI.yml =====
+
+    # NoLookalikeNameWarning (title)
+    - find: No bogus "not your guildsman" whisper warning
+      replace: Sin el aviso falso de "not your guildsman" en whispers
+
+    # NoLookalikeNameWarning (desc)
+    - find: Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They are meant to flag impostors who swap a capital I for a lowercase l, but the comparison is far too loose -- it calls two names alike as soon as min(lenA,lenB)-2 characters match by position. A guild with a member named "Test" therefore warns on every whisper from "Gettar". Firing constantly, the warning only teaches players to ignore the one line that would matter. Verified scope -- the comparison helper is used by nothing else in the client, so only those two messages disappear.
+      replace: "Elimina las líneas \"This character is not your guildsman\" y \"This name is not registered in your Friend List\" que el cliente muestra al recibir whispers. Buscan señalar impostores que cambian una I mayúscula por una l minúscula, pero la comparación es demasiado laxa: considera parecidos dos nombres en cuanto coinciden por posición min(lenA,lenB)-2 caracteres. Por eso, una guild con un miembro llamado \"Test\" avisa en cada whisper de \"Gettar\". Al dispararse todo el tiempo, el aviso solo enseña a los jugadores a ignorar la única línea que importaría. Alcance verificado: ninguna otra parte del cliente usa la función de comparación, así que solo desaparecen esos dos mensajes."
+
+    # FixChatAt (title)
+    - find: "@ Bug fix"
+      replace: Arreglo del bug del @
+
+    # PetTalkMarker (title)
+    - find: Mark pet chatter in chat
+      replace: Marcar el chatter de pets en el chat
+
+    # PetTalkMarker (desc)
+    - find: Tags every automated pet line with a marker, so players can tell it apart from something a person typed. Pet chatter carries no sender and the ordinary message type, so a pet named after a player currently reads exactly like that player talking. You choose the text (default <b>pet</b>), the brackets (round, square, angled or none) and whether it goes before or after the pet name -- e.g. <b>Poring (pet) -- I am hungry!</b>. The marker also appears in the speech bubble above the pet.
+      replace: Agrega un marcador a cada línea automática de pet, para que los jugadores puedan distinguirla de algo que escribió una persona. El chatter de pets no tiene remitente y usa el tipo de mensaje normal, así que hoy un pet con el nombre de un jugador se lee exactamente como si ese jugador hablara. Tú eliges el texto (por defecto <b>pet</b>), los paréntesis (redondos, cuadrados, angulares o ninguno) y si va antes o después del nombre del pet, ej. <b>Poring (pet) -- I am hungry!</b>. El marcador también aparece en el globo de diálogo sobre el pet.
+
+    # BiggerInventoryWindow (title)
+    - find: Bigger inventory window
+      replace: Ventana de inventario más grande
+
+    # BiggerInventoryWindow (desc)
+    - find: Raises the maximum size the inventory window can be resized to. The stock client clamps the drag-resize to 320x240; this lets you set a larger maximum (default 1280x1024) so you can drag the inventory much bigger and see many more item slots at once. The window background is tiled, so it renders correctly at any size. This changes only the window SIZE, not the item CAPACITY (use 'Custom inventory limit' for that).
+      replace: Sube el tamaño máximo al que se puede redimensionar la ventana de inventario. El cliente original limita el redimensionado por arrastre a 320x240; esto te permite definir un máximo mayor (por defecto 1280x1024) para arrastrar el inventario mucho más grande y ver muchos más slots de ítems a la vez. El fondo de la ventana es en mosaico, así que se ve bien a cualquier tamaño. Esto cambia solo el TAMAÑO de la ventana, no la CAPACIDAD de ítems (para eso usa 'Custom inventory limit').
+
+    # RelativeDelay4CharDel (title)
+    - find: Change Deletion time to relative
+      replace: Cambiar tiempo de eliminación a relativo
+
+    # ChatBgMainPanel (title)
+    - find: Customize main chat panel background color and opacity
+      replace: Personalizar color y opacidad del fondo del panel de chat principal
+
+    # ChatBgMainPanel (desc)
+    - find: Sets the color and opacity of the MAIN chat panel - its background and its active tab. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Default is black at 40% opacity (0x66).
+      replace: "Define el color y la opacidad del panel de chat PRINCIPAL: su fondo y su pestaña activa. Abre un selector de color RGB y un valor de opacidad (0 = transparente, 255 = opaco). Por defecto es negro al 40% de opacidad (0x66)."
+
+    # ChatBgDetached (title)
+    - find: Customize detached chat windows background color and opacity
+      replace: Personalizar color y opacidad del fondo de las ventanas de chat separadas
+
+    # ChatBgDetached (desc)
+    - find: Sets the color and opacity of the DETACHED chat windows - their outer border/frame and background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Default is black at 40% opacity (0x66).
+      replace: "Define el color y la opacidad de las ventanas de chat SEPARADAS: su borde/marco exterior y su fondo. Abre un selector de color RGB y un valor de opacidad (0 = transparente, 255 = opaco). Por defecto es negro al 40% de opacidad (0x66)."
+
+    # ChatBgWhisper (title)
+    - find: Customize whisper (1:1) chat window background color and opacity
+      replace: Personalizar color y opacidad del fondo de la ventana de whisper (1:1)
+
+    # ChatBgWhisper (desc)
+    - find: Sets the color and opacity of the 1:1 whisper (private message) chat window background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Leave a field unchanged to keep its default. Default is black at 40% opacity (0x66).
+      replace: Define el color y la opacidad del fondo de la ventana de chat whisper 1:1 (mensaje privado). Abre un selector de color RGB y un valor de opacidad (0 = transparente, 255 = opaco). Deja un campo sin cambios para mantener su valor por defecto. Por defecto es negro al 40% de opacidad (0x66).
+
+    # ReduceExpensiveUIRender (title)
+    - find: Reduce expensive UI rendering
+      replace: Reducir el renderizado costoso de la UI
+
+    # ReduceExpensiveUIRender (desc)
+    - find: Skips the ALT+S Skill Tree repaint when nothing changed, instead of rebuilding the grid every frame. Prompts for a minimum idle repaint interval so the character preview keeps animating.
+      replace: Omite el repintado del Skill Tree (ALT+S) cuando nada cambió, en vez de reconstruir la grilla en cada frame. Pide un intervalo mínimo de repintado en reposo para que el preview del personaje siga animado.
+
+    # RestoreSkillInfoCheckbox (title)
+    - find: Restore the "View Skill Info." checkbox in the Skill Tree
+      replace: Restaurar el checkbox "View Skill Info." en el Skill Tree
+
+    # RestoreSkillInfoCheckbox (desc)
+    - find: Brings back the checkbox old Ragexe builds had in the top right corner of the ALT+S Skill Tree, and the behaviour it controlled -- while it is ticked, simply hovering a skill pops the skill detail window next to the cursor instead of having to right-click it. The client still owns the option (Show_SkillDescript, saved in OptionInfo.lua), its command handler and the whole display code, which was merely rebound to the right-click gesture -- this patch re-creates the missing checkbox control and the missing hover branch. Unticked, the client behaves exactly as before, right-click included.
+      replace: "Trae de vuelta el checkbox que tenían los builds viejos de Ragexe en la esquina superior derecha del Skill Tree (ALT+S), y el comportamiento que controlaba: mientras está marcado, basta con pasar el cursor sobre un skill para que aparezca la ventana de detalle del skill junto al cursor, en vez de tener que hacer click derecho. El cliente todavía tiene la opción (Show_SkillDescript, guardada en OptionInfo.lua), su handler de comando y todo el código de visualización, que solo se reasignó al gesto de click derecho; este parche recrea el control de checkbox y la rama de hover que faltaban. Desmarcado, el cliente se comporta exactamente como antes, click derecho incluido."
+
+    # ShowPartySP (title)
+    - find: Party HP/SP Bars (Reforged)
+      replace: Barras de HP/SP del Party (Reforged)
+
+    # ShowPartySP (desc)
+    - find: Splits each party member's bar into an HP (top) and SP (bottom) half and draws the SP number beside it, in the party window and on the detached mini widgets. Optionally sets the HP and SP bar colours, with your own row separate from everyone else's, so you are easy to find in a full party. Requires the matching rAthena change (SHOW_PARTY_SP) so the server sends the 22-byte 0x0BAB party packet with sp/maxsp.
+      replace: Divide la barra de cada miembro del party en una mitad de HP (arriba) y otra de SP (abajo) y dibuja el número de SP a su lado, en la ventana de party y en los mini widgets separados. Opcionalmente define los colores de las barras de HP y SP, con tu propia fila separada de la de los demás, para que te encuentres fácil en un party lleno. Requiere el cambio correspondiente en rAthena (SHOW_PARTY_SP) para que el servidor envíe el paquete de party 0x0BAB de 22 bytes con sp/maxsp.
+
+    # TighterClickArea (title)
+    - find: Tighter Entity Click Area
+      replace: Área de click de entidades más ajustada
+
+    # TighterClickArea (desc)
+    - find: The client widens every entity's clickable rectangle (hitbox) up to a minimum computed from the window width -- <b>width / 640 x 40</b> pixels for actors, <b>x 34</b> for map NPCs and skill units, so 100 and 85 px at 1600x900. A small sprite therefore defends a box far larger than itself, so neighbouring entities overlap and fight over the same click, and the frontmost rectangle wins whoever owns it. This patch divides all three minimums by 2, 4, 8 or 16 while keeping the scaling with the window width. It cannot shrink a big sprite's rectangle, which comes from its artwork.
+      replace: "El cliente agranda el rectángulo clickeable (hitbox) de cada entidad hasta un mínimo calculado a partir del ancho de la ventana: <b>ancho / 640 x 40</b> píxeles para actores, <b>x 34</b> para NPCs del mapa y unidades de skill, o sea 100 y 85 px en 1600x900. Por eso un sprite pequeño defiende una caja mucho más grande que él mismo, las entidades vecinas se superponen y se pelean por el mismo click, y gana el rectángulo de más adelante, sea de quien sea. Este parche divide los tres mínimos por 2, 4, 8 o 16 manteniendo el escalado con el ancho de la ventana. No puede achicar el rectángulo de un sprite grande, que viene de su arte."
+
+    # CustomCodePage (title)
+    - find: Override client codepage
+      replace: Forzar el codepage del cliente
+
+    # CustomCodePage (desc)
+    - find: Forces the 2025-07-16 client's multibyte codepage with a QJS-only static patch. Use 65001 for UTF-8; this patch does not add DLL imports or runtime hooks.
+      replace: Fuerza el codepage multibyte del cliente 2025-07-16 con un parche estático solo de QJS. Usa 65001 para UTF-8; este parche no agrega imports de DLL ni hooks en runtime.
+
+    # ===== Window.yml =====
+
+    # CustomBtns (group title)
+    - find: CUSTOM BUTTONS
+      replace: BOTONES PERSONALIZADOS
+
+    # CustomButtons (title)
+    - find: Add your own buttons
+      replace: Agregar tus propios botones
+
+    # CustomButtons (desc)
+    - find: Adds extra buttons of your own to the row below the HP/SP bars in the Basic Info Window, beyond the 25 the client ships with. Each one is written as <b>iconName = behaves like</b>, where the icon name is also the file name - the client loads <b>bt_&lt;iconName&gt;.bmp</b> and <b>bt_&lt;iconName&gt;_press.bmp</b> from <b>data\texture\&lt;UI folder&gt;\menu_icon\</b> as 32x34 24-bit BMPs with magenta (FF00FF) transparent, so without those files the button draws blank. <b>behaves like</b> names one of the stock buttons and the new one does whatever that one does.
+      replace: "Agrega botones extra propios a la fila debajo de las barras de HP/SP en la Basic Info Window, además de los 25 que trae el cliente. Cada uno se escribe como <b>iconName = behaves like</b>, donde el nombre del ícono es también el nombre del archivo: el cliente carga <b>bt_&lt;iconName&gt;.bmp</b> y <b>bt_&lt;iconName&gt;_press.bmp</b> desde <b>data\\texture\\&lt;UI folder&gt;\\menu_icon\\</b> como BMPs de 32x34 y 24 bits con magenta (FF00FF) como color transparente, así que sin esos archivos el botón se dibuja vacío. <b>behaves like</b> nombra uno de los botones originales, y el nuevo hace lo mismo que ese."
+
+    # HairColorGuard (title)
+    - find: Hair colour guard, and extra hair colours
+      replace: Protección de color de pelo y colores de pelo extra
+
+    # HairColorGuard (desc)
+    - find: Ignores a hair colour in character creation when that style ships no matching <b>.pal</b> file. Without this the client shows a <i>Cannot find File</i> palette error and then <b>crashes</b> with an access violation, because it dereferences the palette it failed to load. Only affects hair colour in the creation window; nothing else is suppressed.<br><br>It also repaints the swatch row when a style change forces the colour back to <b>none</b>, so the lit swatch stops disagreeing with the character.<br><br>Then it asks <b>how many hair colours</b> the picker should offer. <b>9</b> is the client default and changes no layout at all. Above 9 the row keeps its size and gains a <b>tenth cell that pages to the next nine</b>, the way the hair style grid does; it wraps round to the first page at the end. The buttons move to a relocated array because a tenth would otherwise land on the gender button. Each added colour needs its own <b>.pal</b> files, or the guard above will refuse it, and its own <b>color&lt;NN&gt;_off/_over/_on.bmp</b> art under <b>data\texture\...\make_character_ver2\</b>, or the swatch falls back to the first face. Your server's <b>max hair colour</b> has to allow the range too.
+      replace: Ignora un color de pelo en la creación de personaje cuando ese estilo no trae un archivo <b>.pal</b> correspondiente. Sin esto el cliente muestra un error de paleta <i>Cannot find File</i> y luego <b>crashea</b> con un access violation, porque usa la paleta que no pudo cargar. Solo afecta al color de pelo en la ventana de creación; no se suprime nada más.<br><br>También repinta la fila de muestras de color cuando un cambio de estilo fuerza el color de vuelta a <b>ninguno</b>, para que la muestra iluminada deje de contradecir al personaje.<br><br>Después pregunta <b>cuántos colores de pelo</b> debe ofrecer el selector. <b>9</b> es el valor por defecto del cliente y no cambia el layout en absoluto. Por encima de 9 la fila mantiene su tamaño y gana una <b>décima celda que pasa a los siguientes nueve</b>, igual que la grilla de estilos de pelo; al final vuelve a la primera página. Los botones se mueven a un array reubicado porque, si no, el décimo caería sobre el botón de género. Cada color agregado necesita sus propios archivos <b>.pal</b>, o la protección de arriba lo va a rechazar, y su propio arte <b>color&lt;NN&gt;_off/_over/_on.bmp</b> en <b>data\texture\...\make_character_ver2\</b>, o la muestra vuelve a la primera imagen. El <b>máximo de color de pelo</b> de tu servidor también tiene que permitir ese rango.
+
+    # ===== Part 2 pull requests: #68 (Sound.yml) and #70 (UI.yml) =====
+
+    # PlayFirstFrameSounds (title)
+    - find: "Play the sound placed on the first frame of an animation"
+      replace: "Reproducir el sonido colocado en el primer cuadro de una animación"
+
+    # PlayFirstFrameSounds (desc)
+    - find: "The client never plays a sound event placed on frame 0 of an animation that has just REPLACED another one. On an action change it rewinds its \"last sounded frame\" cursor to 0 and then plays the frames after it, so frame 0 is skipped. Looping animations and actions replayed as-is are unaffected -- which is why hurt and attack sounds are already heard from the second blow onwards, only the first one missing. Death animations always follow another action and are never replayed, so their frame-0 sound is never heard at all: over the 2103 monster sprites of a 2025 kRO data.grf that is 47 silent death sounds, among them Doppelganger and the twelve Bio Lab clones, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune and Elder Willow. This patch rewinds the cursor to -1 instead, so the loop starts at frame 0 and those sounds are heard. (Warning: doppleganger_die.wav is a bit annoying :D)"
+      replace: "El cliente nunca reproduce un evento de sonido colocado en el cuadro 0 de una animación que acaba de REEMPLAZAR a otra. Al cambiar de acción, regresa su cursor de \"último cuadro con sonido\" a 0 y luego reproduce los cuadros siguientes, así que el cuadro 0 se salta. Las animaciones en bucle y las acciones que se repiten tal cual no se ven afectadas -- por eso los sonidos de daño y de ataque ya se oyen desde el segundo golpe y solo falta el primero. Las animaciones de muerte siempre siguen a otra acción y nunca se repiten, así que el sonido de su cuadro 0 nunca se oye: en los 2103 sprites de monstruos de un data.grf de kRO 2025 hay 47 sonidos de muerte mudos, entre ellos Doppelganger y los doce clones de Bio Lab, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune y Elder Willow. Este parche regresa el cursor a -1, así que el bucle empieza en el cuadro 0 y esos sonidos se oyen. (Aviso: doppleganger_die.wav es un poco molesto :D)"
+
+    # NativeActJobPreviews (title)
+    - find: "Fix HD Job Sprite Previews (Alt+Q / Alt+S)"
+      replace: "Corregir vistas previas de sprites HD de clase (Alt+Q / Alt+S)"
+
+    # NativeActJobPreviews (desc)
+    - find: "Applies ACT layer scale, mirror and rotation to the existing Equipment and Skill Tree sprite resources on 2025-07-16. HD sprites render at their intended size in the native window surfaces. No generated preview pack or runtime DLL is required. Uses the client's existing resource names and GRF priority; install complete matching SPR/ACT pairs."
+      replace: "Aplica la escala, el reflejo y la rotación de las capas ACT a los recursos de sprite existentes de Equipo y Árbol de Habilidades en 2025-07-16. Los sprites HD se muestran a su tamaño previsto en las ventanas nativas. No requiere un paquete de vistas previas generado ni una DLL en tiempo de ejecución. Usa los nombres de recursos existentes del cliente y la prioridad de GRF; instala pares SPR/ACT completos y coincidentes."

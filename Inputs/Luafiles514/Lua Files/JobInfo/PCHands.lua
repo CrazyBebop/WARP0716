@@ -1,17 +1,21 @@
 --[[
   CustomJobs Lua Data
   Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
-  Last Modified: 2026-09-02
+  Last Modified: 2026-10-30
 ]]--
 
 -- ============================================================
--- NOTE (2026-09-02): this table is read when you APPLY the patch, not by the client.
--- WARP bakes every literal row here into the patched exe (through PCIds.lua for
--- the id), after the five official 2025 jobs (Druid, Karnos, Alitea), so re-apply
--- WARP after editing this file. Only a quoted string is a row: inheritance forms
--- such as (PCHands[PCIds.NOVICE] or "") mean "stock hands" and add nothing.
--- The runtime Lua lookup crashes the 2025-07-16 client (2026-08-27), which is
--- why the table is baked at all. See docs/PATCH_HISTORY.md 2026-09-02.
+-- NOTE (2026-10-30): this table is read when you APPLY the patch, not by the client.
+-- WARP bakes its rows into the patched exe (through PCIds.lua for the id), after the
+-- five official 2025 rows (Druid, Karnos, Alitea), so re-apply WARP after editing it.
+-- WARP reads two copies: this one in its Inputs folder and the one in the client
+-- folder of the exe you patch (data/luafiles514/lua files/JobInfo/PCHands.lua), and
+-- the client's rows win. A row is a quoted folder name, a quoted "folder\\prefix",
+-- or a row naming another row, such as PCHands[PCIds.MY_JOB], which takes that
+-- row's value. A row naming a stock job, such as (PCHands[PCIds.NOVICE] or ""),
+-- means "stock hands" and adds nothing. The runtime Lua lookup crashes the
+-- 2025-07-16 client (2026-08-27), which is why the table is baked at all.
+-- Guide: https://warp.legacygamers.net/warp0716/CustomJobs/
 -- ============================================================
 -- ============================================================
 -- Custom Job Hand/Weapon Sprite Paths

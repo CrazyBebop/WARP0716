@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CrazyBebop                                             *
 *   Created Date  : 2026-03-10                                             *
-*   Last Modified : 2026-09-02                                             *
+*   Last Modified : 2026-10-30                                             *
 *                                                                          *
 *   07-16 build: Full rewrite (apply0716). Original patch by Neo-Mind.     *
 *   Generic codepath for older clients stripped (07-16 WARP only).         *
@@ -63,72 +63,136 @@ CustomJobs.validate = function()
 ///        Stock hardcoded sprite entries preserved (CLua broken at init).
 ///
 ///
-/// \brief The rows baked into the Phase 11c hands table.
+/// \brief The rows baked into the Phase 11c hands table (the weapon sprite folder of each custom job).
 ///
 ///        Gravity's five official 2025 jobs come first: ids 4351..4355 and the folder names
 ///        are theirs, so they are right on any server that has Druid, Karnos and Alitea.
-///        Then every LITERAL row in Inputs' PCHands.lua, resolved through PCIds.lua, so an
-///        operator's own jobs get their hands without editing this file. Inheritance forms
-///        such as (PCHands[PCIds.NOVICE] or "") mean "stock hands" and add no row; they are
-///        logged as skipped. Read at APPLY time, not at runtime: the runtime Lua lookup
-///        crashes this client (2026-08-27), which is why the table is baked at all.
-///        A literal row for one of the five official ids overrides the default.
+///        Then the operator's own rows, from TWO copies of PCIds.lua + PCHands.lua: WARP's
+///        Inputs, then the copy beside the exe being patched (data\luafiles514\lua files\JobInfo,
+///        the one the client reads for everything else), whose rows win. So editing either copy
+///        works. Read at APPLY time, not at runtime: the runtime Lua lookup crashes this client
+///        (2026-08-27), which is why the table is baked at all.
+///
+///        A value may be a string literal, "folder" (baked as folder\folder) or "folder\\prefix"
+///        as older packs write it, with Lua escapes (\\, \ddd). A Korean name written as its
+///        Latin-1 look-alike in a UTF-8 file is folded back to its CP949 bytes, the same rule the
+///        runtime applies to PCPaths. A value naming another row, PCHands[PCIds.X] (optionally
+///        "or" a literal), takes that row's value. Anything else, such as (PCHands[PCIds.NOVICE]
+///        or ""), means "stock hands" and adds no row, as before. A row for one of the five
+///        official ids overrides the default.
 ///
 CustomJobs.handsRows = function(_)
 {
-	const rows = [
-		{id: 4351, name: "druid"},  {id: 4352, name: "druid"},
-		{id: 4353, name: "karnos"}, {id: 4354, name: "karnos"},
-		{id: 4355, name: "alitea"}
-	];
-	const dir = Warp.Path + "Inputs/Luafiles514/Lua Files/JobInfo/";
-	const readAll = function(name)
+	const rows = new Map([[4351, "druid"], [4352, "druid"], [4353, "karnos"], [4354, "karnos"], [4355, "alitea"]]);
+
+	// ASCII: one character per byte, the byte's own value (measured 2026-10-30), so a name's
+	// bytes reach the exe unchanged. A compiled .lub cannot be read here and is ignored.
+	const readAll = function(path)
 	{
-		const fp = new TextFile(dir + name, ASCII, "r");
+		const fp = new TextFile(path, ASCII, "r");
 		if (!fp.Valid)
 			return null;
 		const text = fp.Read(fp.Size);
 		fp.Close();
-		return text;
+		return text.startsWith("\x1BLua") ? null : text;
 	};
-	const ids = readAll("PCIds.lua"), hands = readAll("PCHands.lua");
-	let added = 0;
-	const skipped = [];
-	if (ids !== null && hands !== null)
+	// A Lua string literal's body -> its bytes (\ddd decimal, \\, \", \', \n ...)
+	const unescape = function(body)
 	{
-		// RegExp.exec loops: WARP's QuickJS build has no String.prototype.matchAll.
-		const idOf = {};
-		const reId  = /^\s*PCIds\.([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(0[xX][0-9A-Fa-f]+|\d+)\b/gm;
-		const reRow = /^\s*PCHands\[\s*(?:PCIds\.([A-Za-z_][A-Za-z0-9_]*)|(\d+))\s*\]\s*=\s*(.*?)\s*$/gm;
-		let m;
-		while ((m = reId.exec(ids)) !== null)
-			idOf[m[1]] = parseInt(m[2]);
-		while ((m = reRow.exec(hands)) !== null)
+		const named = {n: "\n", t: "\t", r: "\r", a: "\x07", b: "\b", f: "\f", v: "\v"};
+		return body.replace(/\\(\d{1,3}|[\s\S])/g, (m, e) =>
+			/^\d/.test(e) ? String.fromCharCode(parseInt(e, 10) & 0xFF) : (named[e] !== undefined ? named[e] : e));
+	};
+	// The Latin-1 look-alike of CP949 saved as UTF-8: two or more C2/C3 pairs and no other high byte
+	const pair = /[\xC2\xC3][\x80-\xBF]/g;
+	const fold = function(s)
+	{
+		const n = (s.match(pair) || []).length;
+		if (n < 2 || /[\x80-\xFF]/.test(s.replace(pair, "")))
+			return s;
+		return s.replace(pair, p => String.fromCharCode((p.charCodeAt(0) - 0xC0) * 64 + p.charCodeAt(1) - 0x80));
+	};
+	const LIT = '"((?:[^"\\\\]|\\\\.)*)"|\'((?:[^\'\\\\]|\\\\.)*)\'';
+	const reLit = new RegExp("^(?:" + LIT + ")\\s*(?:--.*)?$");
+	const reRef = new RegExp("^\\(?\\s*PCHands\\s*\\[\\s*(?:PCIds\\.([A-Za-z_]\\w*)|(\\d+))\\s*\\]\\s*"
+	                         + "(?:or\\s*(?:" + LIT + "))?\\s*\\)?\\s*(?:--.*)?$");
+	const literal = (m, a) => fold(unescape(m[a] !== undefined ? m[a] : m[a + 1]));
+
+	const dirs = [["Inputs", Warp.Path + "Inputs/Luafiles514/Lua Files/JobInfo/"]];
+	if (Warp.TgtExe)
+		dirs.push(["client", System.DirPath(Warp.TgtExe) + "/data/luafiles514/lua files/JobInfo/"]);
+
+	const idOf = {}, refs = new Map(), skipped = [], from = {};
+	for (const [label, dir] of dirs)
+	{
+		const ids = readAll(dir + "PCIds.lua"), hands = readAll(dir + "PCHands.lua");
+		if (ids !== null)
+			for (const line of ids.split(/\r?\n/))
+			{
+				const m = /^\s*PCIds\.([A-Za-z_]\w*)\s*=\s*(0[xX][0-9A-Fa-f]+|\d+)\b/.exec(line);
+				if (m)
+					idOf[m[1]] = parseInt(m[2]);
+			}
+		if (hands === null)
+			continue;
+		from[label] = 0;
+		for (const line of hands.split(/\r?\n/))
 		{
+			const m = /^\s*PCHands\s*\[\s*(?:PCIds\.([A-Za-z_]\w*)|(\d+))\s*\]\s*=\s*(.*?)\s*$/.exec(line);
+			if (!m)
+				continue;
 			const key = (m[1] !== undefined) ? m[1] : m[2];
-			const id  = (m[1] !== undefined) ? idOf[m[1]] : parseInt(m[2]);
-			const lit = m[3].match(/^"([^"\\]+)"$/) || m[3].match(/^'([^'\\]+)'$/);
+			const id = (m[1] !== undefined) ? idOf[m[1]] : parseInt(m[2]);
 			if (id === undefined || isNaN(id))
 			{
 				skipped.push(key + " (no PCIds value)");
 				continue;
 			}
-			if (!lit)
+			let v;
+			if ((v = reLit.exec(m[3])) !== null)
 			{
-				skipped.push(key + " (not a literal: stock hands)");
+				const name = literal(v, 1);
+				if (name === "")
+				{
+					skipped.push(key + " (empty: stock hands)");
+					continue;
+				}
+				rows.set(id, name);
+				refs.delete(id);
+			}
+			else if ((v = reRef.exec(m[3])) !== null)
+				refs.set(id, {key: key, to: (v[1] !== undefined) ? v[1] : v[2], isId: v[1] === undefined,
+				              or: (v[3] !== undefined || v[4] !== undefined) ? literal(v, 3) : ""});
+			else
+			{
+				skipped.push(key + " (not a literal or a row: stock hands)");
 				continue;
 			}
-			const at = rows.findIndex(r => r.id === id);
-			if (at >= 0)
-				rows[at] = {id: id, name: lit[1]};
-			else
-				rows.push({id: id, name: lit[1]});
-			added++;
+			from[label]++;
 		}
 	}
-	$$(_, '0716.P11c.2b', `PCHands rows baked: ${rows.length} (${added} from Inputs' PCHands.lua`
+	// a row naming another row takes its value (chains too); with no such row, its "or" literal
+	for (let pass = 0; pass < 8 && refs.size; pass++)
+		for (const [id, r] of [...refs])
+		{
+			const to = r.isId ? parseInt(r.to) : idOf[r.to];
+			if (to !== undefined && rows.has(to))
+				rows.set(id, rows.get(to));
+			else if (to !== undefined && refs.has(to))
+				continue;
+			else if (r.or !== "")
+				rows.set(id, r.or);
+			else
+				skipped.push(r.key + " (names " + r.to + ", which has no row: stock hands)");
+			refs.delete(id);
+		}
+	for (const [id, r] of refs)
+		skipped.push(r.key + " (a loop of rows)");
+
+	const out = [...rows].map(([id, name]) => ({id: id, name: name}));
+	$$(_, '0716.P11c.2b', `PCHands rows baked: ${out.length} (` + Object.keys(from).map(k => `${from[k]} from ${k}`).join(", ")
 	                     + (skipped.length ? `; skipped ${skipped.join(", ")}` : "") + `)`);
-	return rows;
+	return out;
 };
 
 CustomJobs.apply0716 = function(_)
@@ -443,12 +507,14 @@ CustomJobs.apply0716 = function(_)
 
 	// Find the baby scale FLD target: scan forward for FLD pattern
 	// Pattern: D9 05 xx xx xx xx 5E 5D C2 04 00 (FLD [addr]; POP ESI; POP EBP; RETN 4)
-	// There are two FLD+RETNs: first is default, second is baby scale
+	// There are two FLD+RETNs: the first is the scale of the babies outside the first-job
+	// ranges (0.82), the second that of the first-job babies (0.75). The kRO 2026 clients give
+	// DRUID_B and KARNOS_B the first, so the trampoline below jumps there.
 	const fldPattern = " D9 05 ?? ?? ?? ?? 5E 5D C2 04 00 D9 05";
 	const fldPhys = Exe.FindHex(fldPattern, sprScaleCmpPhys, sprScaleCmpPhys + 0x40);
 	if (fldPhys < 0)
 		throw Error("Phase 5c: FLD baby scale pattern not found");
-	const babyScaleVir = Exe.Phy2Vir(fldPhys + 11, CODE); // second FLD = baby path
+	const babyScaleVir = Exe.Phy2Vir(fldPhys, CODE); // first FLD = the other babies' scale
 
 	$$(_, '0716.P5c.2', `Build baby scale trampoline for custom jobs`)
 	// Trampoline: check if ESI (job ID) is a custom baby job
@@ -1374,10 +1440,12 @@ CustomJobs.apply0716 = function(_)
 	const p11NoErrOff = p11Main.byteCount();
 	p11Main += " A1" + g_luaState.toHex(4);     // reload for next section
 
-	// --- Call helper for PCPaths → 0x5274 (male) + 0xF64 (female) ---
+	// --- Call helper for PCPaths → 0x5274 (body folder) ---
+	// The client's 0xF64 is the head position (IMF) name, not a female copy: Lord Knight's body is its own and its
+	// IMF is Knight's. Until 2026-10-30 PCPaths went into both; 0xF64 now comes from _CJ_IMF (third call below).
 	const p11Call1Off = p11Main.byteCount();
-	p11Main += " 68" + (0xF64).toHex(4);        // PUSH 0xF64 (offset2 = female)
-	p11Main += " 68" + (0x5274).toHex(4);       // PUSH 0x5274 (offset1 = male)
+	p11Main += " 68 FF FF FF FF";               // PUSH -1 (no second table)
+	p11Main += " 68" + (0x5274).toHex(4);       // PUSH 0x5274 (offset1 = body folder)
 	p11Main += " 53";                           // PUSH EBX (CGameMode*)
 	p11Main += " 68 00 00 00 00";               // PUSH &"PCPaths" (fixup later)
 	p11Main += " 50";                           // PUSH EAX (lua_State*)
@@ -1394,6 +1462,16 @@ CustomJobs.apply0716 = function(_)
 	p11Main += " 68 00 00 00 00";               // PUSH &"PCPals" (fixup later)
 	p11Main += " 50";                           // PUSH EAX
 	p11Main += CALL(Filler(62));                // CALL populate_table
+
+	// --- Call helper for _CJ_IMF → 0xF64 (head position name) ---
+	p11Main += " A1" + g_luaState.toHex(4);     // MOV EAX, [g_luaState]
+	const p11Call3Off = p11Main.byteCount();
+	p11Main += " 68 FF FF FF FF";               // PUSH -1 (no second table)
+	p11Main += " 68" + (0xF64).toHex(4);        // PUSH 0xF64 (offset1 = head position name)
+	p11Main += " 53";                           // PUSH EBX
+	p11Main += " 68 00 00 00 00";               // PUSH &"_CJ_IMF" (fixup later)
+	p11Main += " 50";                           // PUSH EAX
+	p11Main += CALL(Filler(68));                // CALL populate_table
 
 	// NOTE: PCNames (0xF88) NOT populated here - that table is allocated later
 	// in InitLuaResourceTables, not InitJobSpriteNameTables. Phase 9 handles
@@ -1415,16 +1493,192 @@ CustomJobs.apply0716 = function(_)
 	p11Main += " 50 43 50 61 74 68 73 00";      // "PCPaths\0"
 	const p11StrPCPals = p11Main.byteCount();
 	p11Main += " 50 43 50 61 6C 73 00";         // "PCPals\0"
+	const p11StrCjImf = p11Main.byteCount();
+	p11Main += " 5F 43 4A 5F 49 4D 46 00";      // "_CJ_IMF\0"
 
 	// Lua code to load all JobInfo files
 	const p11StrLuaCode = p11Main.byteCount();
-	// Error handling based on user choice ($showFailures)
-	const showFailures = Exe.GetSavedInput('$showFailures');
+	// Error handling based on user choice ($showFailures). Asked here, where the answer is used: read
+	// back with GetSavedInput before the question was asked, a first choice only took effect on the
+	// next build. An accepted default comes back false, which is Popup.
+	const showFailures = Warp.TestMode ? false : Exe.GetUserInput('$showFailures', D_Choice, "Lua Error Display",
+		"How should custom Lua file loading errors be shown?",
+		'Popup',
+		{choices: ['Silent', 'Log File', 'Popup']});
 	const failMode = (showFailures === 'Silent') ? 0 : (showFailures === 'Log File') ? 1 : 2; // default: Popup
 
 	// Base loader: tries .lua first, .lub fallback. cj_loadfile uses CFile::Open
 	// which checks disk + GRF, so custom files work from loose data or GRF archives.
-	let luaCode = 'local p="luafiles514\\\\lua files\\\\JobInfo\\\\PC" local errs={} for _,f in pairs({"Ids","Paths","Pals","Hands","Imfs","Names","Funcs"}) do local ok,e=pcall(cj_loadfile,p..f..".lua") if not ok then local ok2,e2=pcall(cj_loadfile,p..f..".lub") if not ok2 then errs[#errs+1]="PC"..f..": "..tostring(e2) end end end';
+	// The .lub is tried ONLY when the .lua is missing (cj_loadfile raises exactly "file not found"):
+	// a .lua that fails to load reports its own error. Falling back on any failure used to load a
+	// stale .lub over the file the user had just edited and show that .lub's error instead.
+	let luaCode = 'local p="luafiles514\\\\lua files\\\\JobInfo\\\\PC" local errs={} for _,f in pairs({"Ids","Paths","Pals","Hands","Imfs","Names","Funcs"}) do local ok,e=pcall(cj_loadfile,p..f..".lua") if not ok then if e=="file not found" then local ok2,e2=pcall(cj_loadfile,p..f..".lub") if not ok2 then errs[#errs+1]="PC"..f..": "..tostring(e2) end else errs[#errs+1]="PC"..f..": "..tostring(e) end end end';
+	// A stock job's body folder by name: PCPaths[PCIds.SWORDMAN] reads Swordman's folder, so a custom job can write
+	// PCPaths[PCIds.MY_JOB] = PCPaths[PCIds.SWORDMAN]. Stock jobs are never in PCPaths (the client keeps their folders
+	// in its own table), so until 2026-10-30 that read nil and the job drew the Novice body. The names sit behind
+	// PCPaths' metatable (__index): the fold below walks pairs() and the write-back reads lua_rawgeti from 4351 up, so
+	// neither sees them and no stock job is ever written. A file that keeps PCPaths = PCPaths or {} gets them; one that
+	// starts with PCPaths = {} has none, as before. PCPals, PCImfs and PCHands are unchanged. The head: the client takes
+	// its position (IMF) file from a second table, and a stock body can use another job's (Lord Knight's is Knight's),
+	// so _CJ_IMF below maps such a body to its IMF name for that table; any other value goes there as written.
+	// Stock body folders, job id:CP949 name in hex, 321 jobs. Read out of this client's own table
+	// ([CGameMode+0x5274], filled by InitJobSpriteNameTables 0x00D662C0) by tools/stock_body_paths_0716.py.
+	const stockBodyPaths =
+		"0:c3cabab8c0da 1:b0cbbbe7 2:b8b6b9fdbbe7 3:b1c3bcf6 4:bcbac1f7c0da 5:bbf3c0ce 6:b5b5b5cf 7:b1e2bbe7 " +
+		"8:c7c1b8aebdbac6ae 9:c0a7c0fab5e5 10:c1a6c3b6b0f8 11:c7e5c5cd 12:beeebcbcbdc5 " +
+		"13:c6e4c4dac6e4c4da5fb1e2bbe7 14:c5a9b7e7bcbcc0ccb4f5 15:b8f9c5a9 16:bcbcc0ccc1f6 17:b7ceb1d7 " +
+		"18:bfacb1ddbcfabbe7 19:b9d9b5e5 20:b9abc8f1 21:bdc5c6e4c4dac5a9b7e7bcbcc0ccb4f5 22:b0e1c8a5 " +
+		"23:bdb4c6dbb3ebbaf1bdba 24:b0c7b3ca 25:b4d1c0da 26:bbeac5b8 27:bfa9b8a7 28:c7d1bab9 " +
+		"29:bfc1c5e4b9f6c6d0bdbac6ae 30:bfa9b8a732 4001:c3cabab8c0da 4002:b0cbbbe7 4003:b8b6b9fdbbe7 " +
+		"4004:b1c3bcf6 4005:bcbac1f7c0da 4006:bbf3c0ce 4007:b5b5b5cf 4008:b7ceb5e5b3aac0ccc6ae " +
+		"4009:c7cfc0ccc7c1b8ae 4010:c7cfc0ccc0a7c0fab5e5 4011:c8adc0ccc6aebdbab9ccbdba 4012:bdbab3aac0ccc6db " +
+		"4013:beeebdd8bdc5c5a9b7cebdba 4014:b7ceb5e5c6e4c4da 4015:c6c8b6f3b5f2 4016:c3a8c7c7bfc2 " +
+		"4017:c7c1b7cec6e4bcad 4018:bdbac5e4c4bf 4019:c5a9b8aebfa1c0ccc5cd 4020:c5acb6f3bfee 4021:c1fdbdc3 " +
+		"4022:c6e4c4dac6c8b6f3b5f2 4023:c3cabab8c0da 4024:b0cbbbe7 4025:b8b6b9fdbbe7 4026:b1c3bcf6 " +
+		"4027:bcbac1f7c0da 4028:bbf3c0ce 4029:b5b5b5cf 4030:b1e2bbe7 4031:c7c1b8aebdbac6ae 4032:c0a7c0fab5e5 " +
+		"4033:c1a6c3b6b0f8 4034:c7e5c5cd 4035:beeebcbcbdc5 4036:c6e4c4dac6e4c4da5fb1e2bbe7 " +
+		"4037:c5a9b7e7bcbcc0ccb4f5 4038:b8f9c5a9 4039:bcbcc0ccc1f6 4040:b7ceb1d7 4041:bfacb1ddbcfabbe7 " +
+		"4042:b9d9b5e5 4043:b9abc8f1b9d9c1f6 4044:b1b8c6e4c4dac5a9b7e7bcbcc0ccb4f5 4045:bdb4c6dbb3ebbaf1bdba " +
+		"4046:c5c2b1c7bcd2b3e2 4047:b1c7bcba 4048:b1c7bcbac0b6c7d5 4049:bcd2bfefb8b5c4bf 4050:bcbac1f7c0da " +
+		"4051:b1e2bbe7 4052:bcbcc0ccc1f6 4054:b7e9b3aac0ccc6ae 4055:bff6b7cf 4056:b7b9c0cec1ae " +
+		"4057:bec6c5a9baf1bcf3 4058:b9ccc4c9b4d0 4059:b1e6b7cec6bec5a9b7cebdba 4060:b7e9b3aac0ccc6ae " +
+		"4061:bff6b7cf 4062:b7b9c0cec1ae 4063:bec6c5a9baf1bcf3 4064:b9ccc4c9b4d0 4065:b1e6b7cec6bec5a9b7cebdba " +
+		"4066:b0a1b5e5 4067:bcd2bcadb7af 4068:b9cebdbac6aeb7b2 4069:bff8b4f5b7af 4070:bdb4b6f3 4071:c1a6b3d7b8af " +
+		"4072:bda6b5b5bfecc3bcc0ccbcad 4073:b0a1b5e5 4074:bcd2bcadb7af 4075:b9cebdbac6aeb7b2 4076:bff8b4f5b7af " +
+		"4077:bdb4b6f3 4078:c1a6b3d7b8af 4079:bda6b5b5bfecc3bcc0ccbcad 4080:b7e9b3aac0ccc6aebbdab6ec " +
+		"4081:b7e9b3aac0ccc6aebbdab6ec 4082:b1d7b8aec6f9b0a1b5e5 4083:b1d7b8aec6f9b0a1b5e5 " +
+		"4084:b7b9c0cec1aeb4c1b4eb 4085:b7b9c0cec1aeb4c1b4eb 4086:b8b6b5b5b1e2beee 4087:b8b6b5b5b1e2beee " +
+		"4088:b7e9b3aac0ccc6aebbdab6ec32 4089:b7e9b3aac0ccc6aebbdab6ec32 4090:b7e9b3aac0ccc6aebbdab6ec33 " +
+		"4091:b7e9b3aac0ccc6aebbdab6ec33 4092:b7e9b3aac0ccc6aebbdab6ec34 4093:b7e9b3aac0ccc6aebbdab6ec34 " +
+		"4094:b7e9b3aac0ccc6aebbdab6ec35 4095:b7e9b3aac0ccc6aebbdab6ec35 4096:b7e9b3aac0ccc6ae 4097:bff6b7cf " +
+		"4098:b7b9c0cec1ae 4099:bec6c5a9baf1bcf3 4100:b9ccc4c9b4d0 4101:b1e6b7cec6bec5a9b7cebdba 4102:b0a1b5e5 " +
+		"4103:bcd2bcadb7af 4104:b9cebdbac6aeb7b2 4105:bff8b4f5b7af 4106:bdb4b6f3 4107:c1a6b3d7b8af " +
+		"4108:bda6b5b5bfecc3bcc0ccbcad 4109:b7e9b3aac0ccc6aebbdab6ec 4110:b1d7b8aec6f9b0a1b5e5 " +
+		"4111:b7b9c0cec1aeb4c1b4eb 4112:b8b6b5b5b1e2beee 4114:b5ceb2a8baf1b4d1c0da 4115:c6e4c4dab0c7b3ca " +
+		"4116:c6e4c4dab0cbbbe7 4117:b5ceb2a8baf1bcd2bfefb8b5c4bf 4118:c8adc0ccc6aebdbab9ccbdbab8e4b5c5c1f6 " +
+		"4119:bbf3c0ceb8e4b5c5c1f6 4120:c1a6b3d7b8afb8e4b5c5c1f6 4121:c5a9b8aebfa1c0ccc5cdb8e4b5c5c1f6 " +
+		"4122:c5b8c1b6b1c3bcf6 4123:b1c7bcbac6f7b8b5 4124:b3ebbaf1bdbac6f7b8b5 4125:b8f9c5a9becbc6c4c4ab " +
+		"4126:bab9bbe7becbc6c4c4ab 4127:bdb4b6f3becbc6c4c4ab 4128:bdb4c6dbb3ebbaf1bdbac6f7b8b5 " +
+		"4129:bec6c5a9baf1bcf3becbc6c4c4ab 4130:bfa9bfecb8b6b9fdbbe7 4131:bfa9bfecbcbcc0ccc1f6 " +
+		"4132:bfa9bfecbcd2bcadb7af 4133:bfa9bfecbff6b7cf 4134:bfa9bfecc0a7c0fab5e5 4135:bfa9bfecc7c1b7cec6e4bcad " +
+		"4136:bfa9bfecc7cfc0ccc0a7c0fab5e5 4137:bfacb1ddbcfabbe7b8e4b5c5c1f6 4138:c1a6c3b6b0f8b8e4b5c5c1f6 " +
+		"4139:c3a8c7c7bfc2becbc6c4c4ab 4140:c4ccbaa3b7cebdbab1e6b7cec6bec5a9b7cebdba " +
+		"4141:c4ccbaa3b7cebdbab5b5b5cf 4142:c4ccbaa3b7cebdbab7ceb1d7 " +
+		"4143:c4ccbaa3b7cebdbabda6b5b5bfecc3bcc0ccbcad 4144:c4ccbaa3b7cebdbabdbac5e4c4bf " +
+		"4145:c4ccbaa3b7cebdbabeeebdeabdc5 4146:c4ccbaa3b7cebdbabeeebdeabdc5c5a9b7cebdba 4147:c5b8c1b6b9abc8f1 " +
+		"4148:c5b8c1b6b9cebdbac6aeb7b2 4149:c5b8c1b6b9d9b5e5 4150:c5b8c1b6bdbab3aac0ccc6db " +
+		"4151:c5b8c1b6bff8b4f5b7af 4152:c5b8c1b6c2a4bdc3 4153:c5b8c1b6c5a9b6f3bfee 4154:c5b8c1b6c7e5c5cd " +
+		"4155:c5c2b1c7bcd2b3e2c6f7b8b5 4156:c7c1b8aebdbac6aebecbc6c4c4ab " +
+		"4157:c7cfc0ccc7c1b8aebdbac6aebecbc6c4c4ab 4158:b3ebbaf1bdbac6f7b8b5 4159:c6e4c4dab0cbbbe7 " +
+		"4160:bfa9bfecb8b6b9fdbbe7 4161:c5b8c1b6b1c3bcf6 4162:bab9bbe7becbc6c4c4ab 4163:bbf3c0ceb8e4b5c5c1f6 " +
+		"4164:c5b8c1b6c7e5c5cd 4165:c4ccbaa3b7cebdbabeeebdeabdc5 4166:b8f9c5a9becbc6c4c4ab " +
+		"4167:bfa9bfecbcbcc0ccc1f6 4168:c4ccbaa3b7cebdbab7ceb1d7 4169:bfacb1ddbcfabbe7b8e4b5c5c1f6 " +
+		"4170:c5b8c1b6b9d9b5e5 4171:64616e6365725f625f726964696e67 4172:bdb4c6dbb3ebbaf1bdbac6f7b8b5 " +
+		"4173:bfa9bfecbff6b7cf 4174:bec6c5a9baf1bcf3becbc6c4c4ab 4175:c4ccbaa3b7cebdbab1e6b7cec6bec5a9b7cebdba " +
+		"4176:bfa9bfecbcd2bcadb7af 4177:c5b8c1b6b9cebdbac6aeb7b2 4178:c5b8c1b6bff8b4f5b7af " +
+		"4179:bdb4b6f3becbc6c4c4ab 4180:c1a6b3d7b8afb8e4b5c5c1f6 4181:c4ccbaa3b7cebdbab5b5b5cf " +
+		"4182:c4ccbaa3b7cebdbabda6b5b5bfecc3bcc0ccbcad 4183:b3ebbaf1bdbac6f7b8b5 4184:c6e4c4dab0cbbbe7 " +
+		"4185:bfa9bfecb8b6b9fdbbe7 4186:c5b8c1b6b1c3bcf6 4187:bab9bbe7becbc6c4c4ab 4188:bbf3c0ceb8e4b5c5c1f6 " +
+		"4189:c4ccbaa3b7cebdbab5b5b5cf 4190:bdb4c6dbb3ebbaf1bdba 4191:bdb4c6dbb3ebbaf1bdba " +
+		"4192:bdb4c6dbb3ebbaf1bdbac6f7b8b5 4193:bdb4c6dbb3ebbaf1bdbac6f7b8b5 4194:c7c1b8aebdbac6aebecbc6c4c4ab " +
+		"4195:bfa9bfecc0a7c0fab5e5 4196:c1a6c3b6b0f8b8e4b5c5c1f6 4197:b9ccc4c9b4d0b8e4b5c5c1f6 " +
+		"4198:c5b8c1b6b7b9c0cec1ae 4199:bbe7c0dab1e2bbe7 4200:bbe7c0dab7ceb5e5b3aac0ccc6ae " +
+		"4201:bbe7c0dab7cebee2b0a1b5e5 4202:bbe7c0dab7e9b3aac0ccc6ae 4203:bbe7c0dac5a9b7e7bcbcc0ccb4f5 " +
+		"4204:bbe7c0dac6c8b6f3b5f2 4205:b9ccc4c9b4d0b8e4b5c5c1f6 4206:c5b8c1b6b7b9c0cec1ae 4207:bbe7c0dab1e2bbe7 " +
+		"4208:bbe7c0dab7cebee2b0a1b5e5 4209:bbe7c0dab7e9b3aac0ccc6ae 4210:bbe7c0dac5a9b7e7bcbcc0ccb4f5 " +
+		"4211:6b616765726f75 4212:6f626f726f 4213:66726f675f6b616765726f75 4214:66726f675f6f626f726f " +
+		"4215:726562656c6c696f6e 4216:7065636f5f726562656c6c696f6e 4218:73756d6d6f6e6572 " +
+		"4219:636172745f73756d6d6f6e6572 4220:73756d6d6f6e6572 4221:636172745f73756d6d6f6e6572 4222:b4d1c0da " +
+		"4223:6b616765726f75 4224:6f626f726f 4225:c5c2b1c7bcd2b3e2 4226:b1c7bcba 4227:bcd2bfefb8b5c4bf " +
+		"4228:b0c7b3ca 4229:726562656c6c696f6e 4230:b5ceb2a8baf1b4d1c0da 4231:66726f675f6b616765726f75 " +
+		"4232:66726f675f6f626f726f 4233:c5c2b1c7bcd2b3e2c6f7b8b5 4234:b1c7bcbac6f7b8b5 " +
+		"4235:b5ceb2a8baf1bcd2bfefb8b5c4bf 4236:c6e4c4dab0c7b3ca 4237:7065636f5f726562656c6c696f6e " +
+		"4238:b1c7bcbac0b6c7d5 4239:bcbac1a6 4240:bcd2bfefb8aec6db 4241:bcbac1a6 4242:bcd2bfefb8aec6db " +
+		"4243:bcbac1a6c0b6c7d5 4244:bcbac1a6c0b6c7d5 4245:c7d8c5c2bcbac1a6 4246:c7d8c5c2bcd2bfefb8aec6db " +
+		"4247:c7d8c5c2bcbac1a6 4248:c7d8c5c2bcd2bfefb8aec6db 4252:445241474f4e5f4b4e49474854 4253:4d454953544552 " +
+		"4254:534841444f575f43524f5353 4255:415243485f4d414745 4256:43415244494e414c 4257:57494e444841574b " +
+		"4258:494d50455249414c5f4755415244 4259:42494f4c4f 4260:41425953535f434841534552 " +
+		"4261:454c454d4554414c5f4d4153544552 4262:494e5155495349544f52 4263:54524f554241444f5552 " +
+		"4264:54524f5556455245 4265:445241474f4e5f4b4e494748545f524944494e47 4266:4d4549535445525f524944494e47 " +
+		"4267:534841444f575f43524f53535f524944494e47 4268:415243485f4d4147455f524944494e47 " +
+		"4269:43415244494e414c5f524944494e47 4270:57494e444841574b5f524944494e47 " +
+		"4271:494d50455249414c5f47554152445f524944494e47 4272:42494f4c4f5f524944494e47 " +
+		"4273:41425953535f4348415345525f524944494e47 4274:454c454d4554414c5f4d41535445525f524944494e47 " +
+		"4275:494e5155495349544f525f524944494e47 4276:54524f554241444f55525f524944494e47 " +
+		"4277:54524f55564552455f524944494e47 4278:574f4c465f57494e444841574b " +
+		"4279:4d4549535445525f4d41444f4745415231 4280:445241474f4e5f4b4e494748545f434849434b454e " +
+		"4281:494d50455249414c5f47554152445f434849434b454e 4302:534b595f454d5045524f52 " +
+		"4303:534f554c5f41534345544943 4304:5348494e4b49524f 4305:53484952414e5549 4306:4e494748545f5741544348 " +
+		"4307:48595045525f4e4f56494345 4308:5350495249545f48414e444c4552 " +
+		"4309:534b595f454d5045524f525f524944494e47 4310:534f554c5f415343455449435f524944494e47 " +
+		"4311:5348494e4b49524f5f524944494e47 4312:53484952414e55495f524944494e47 " +
+		"4313:4e494748545f57415443485f524944494e47 4314:48595045525f4e4f564943455f524944494e47 " +
+		"4315:5350495249545f48414e444c45525f524944494e47 4316:534b595f454d5045524f5232 ";
+	// Stock head position (IMF) names that differ from the body folder, body:IMF in hex, 56 of them
+	// ([CGameMode+0xF64]; Lord Knight's body is its own, its head file is Knight's). Same tool.
+	const stockImfNames =
+		"415243485f4d414745:bff6b7cf 415243485f4d4147455f524944494e47:bff6b7cf " +
+		"454c454d4554414c5f4d4153544552:c7c1b7cec6e4bcad " +
+		"454c454d4554414c5f4d41535445525f524944494e47:c7c1b7cec6e4bcad " +
+		"64616e6365725f625f726964696e67:c5b8c1b6b9abc8f1 6b616765726f75:b4d1c0da 6f626f726f:b4d1c0da " +
+		"b1b8c6e4c4dac5a9b7e7bcbcc0ccb4f5:bdc5c6e4c4dac5a9b7e7bcbcc0ccb4f5 b1c7bcba:c5c2b1c7bcd2b3e2 " +
+		"b1c7bcbac0b6c7d5:c5c2b1c7bcd2b3e2 b1d7b8aec6f9b0a1b5e5:bdc5c6e4c4dac5a9b7e7bcbcc0ccb4f5 " +
+		"b1e6b7cec6bec5a9b7cebdba:beeebcbcbdc5c5a9b7cebdba b7b9c0cec1ae:c7e5c5cd b7ceb5e5b3aac0ccc6ae:b1e2bbe7 " +
+		"b7ceb5e5c6e4c4da:c6e4c4dac6e4c4da5fb1e2bbe7 b7e9b3aac0ccc6ae:b1e2bbe7 " +
+		"b7e9b3aac0ccc6aebbdab6ec:c6e4c4dac6e4c4da5fb1e2bbe7 " +
+		"b7e9b3aac0ccc6aebbdab6ec32:c6e4c4dac6e4c4da5fb1e2bbe7 " +
+		"b7e9b3aac0ccc6aebbdab6ec33:c6e4c4dac6e4c4da5fb1e2bbe7 " +
+		"b7e9b3aac0ccc6aebbdab6ec34:c6e4c4dac6e4c4da5fb1e2bbe7 " +
+		"b7e9b3aac0ccc6aebbdab6ec35:c6e4c4dac6e4c4da5fb1e2bbe7 b9abc8f1b9d9c1f6:b9abc8f1 " +
+		"b9ccc4c9b4d0:b8b6b5b5b1e2beee b9ccc4c9b4d0b8e4b5c5c1f6:b8b6b5b5b1e2beee b9cebdbac6aeb7b2:b9d9b5e5 " +
+		"bbeac5b8:b0e1c8a5 bcbac1a6:c5c2b1c7bcd2b3e2 bcbac1a6c0b6c7d5:c5c2b1c7bcd2b3e2 " +
+		"bcd2bcadb7af:c7c1b7cec6e4bcad bcd2bfefb8aec6db:c0a7c0fab5e5 bcd2bfefb8b5c4bf:c0a7c0fab5e5 " +
+		"bda6b5b5bfecc3bcc0ccbcad:b7ceb1d7 bdb4b6f3:b8f9c5a9 bdb4c6dbb3ebbaf1bdba:c3cabab8c0da " +
+		"bdbab3aac0ccc6db:c7e5c5cd bdbac5e4c4bf:b7ceb1d7 bec6c5a9baf1bcf3:c7c1b8aebdbac6ae " +
+		"beeebdd8bdc5c5a9b7cebdba:beeebcbcbdc5c5a9b7cebdba bfa9b8a7:b0e1c8a5 bfa9b8a732:b0e1c8a5 " +
+		"bfc1c5e4b9f6c6d0bdbac6ae:b0e1c8a5 bff8b4f5b7af:b9abc8f1 c1a6b3d7b8af:bfacb1ddbcfabbe7 c1fdbdc3:b9abc8f1 " +
+		"c3a8c7c7bfc2:b8f9c5a9 c5a9b8aebfa1c0ccc5cd:bfacb1ddbcfabbe7 c5acb6f3bfee:b9d9b5e5 " +
+		"c6c8b6f3b5f2:c5a9b7e7bcbcc0ccb4f5 c6e4c4dab0cbbbe7:c6e4c4dac6e4c4da5fb1e2bbe7 " +
+		"c6e4c4dac6c8b6f3b5f2:bdc5c6e4c4dac5a9b7e7bcbcc0ccb4f5 c7c1b7cec6e4bcad:bcbcc0ccc1f6 " +
+		"c7cfc0ccc7c1b8ae:c7c1b8aebdbac6ae c7d1bab9:b0e1c8a5 c7d8c5c2bcbac1a6:c5c2b1c7bcd2b3e2 " +
+		"c7d8c5c2bcd2bfefb8aec6db:c5c2b1c7bcd2b3e2 c8adc0ccc6aebdbab9ccbdba:c1a6c3b6b0f8 ";
+	const luaStr = function(hex)
+	{
+		let s = "";
+		for (let i = 0; i < hex.length; i += 2)
+		{
+			const c = parseInt(hex.substr(i, 2), 16);
+			s += (c >= 0x20 && c < 0x7F && c !== 0x22 && c !== 0x5C) ? String.fromCharCode(c) : "\\" + c;
+		}
+		return "\"" + s + "\"";
+	};
+	let stockLua = "";
+	for (const pair of stockBodyPaths.trim().split(" "))
+	{
+		const [id, hex] = pair.split(":");
+		stockLua += "[" + id + "]=" + luaStr(hex) + ",";
+	}
+	let imfLua = "";
+	for (const pair of stockImfNames.trim().split(" "))
+	{
+		const [body, imf] = pair.split(":");
+		imfLua += "[" + luaStr(body) + "]=" + luaStr(imf) + ",";
+	}
+	luaCode = 'local cjim={' + imfLua + '} if type(PCPaths)~="table" then PCPaths={} end'
+		+ ' setmetatable(PCPaths,{__index={' + stockLua + '}}) ' + luaCode;
+	// The client finds sprite folders by their Korean CP949 bytes; written as their Latin-1 look-alike
+	// ("°Ë»ç" for 검사) in a UTF-8 file, each byte arrives as a two-byte pair. Fold those pairs back in
+	// the four path tables, but only for a value made entirely of such pairs plus ASCII: real CP949 bytes
+	// and any other UTF-8 text are left alone. At least two pairs: four real Korean syllables (창 책 철 청)
+	// are each exactly one such pair in CP949, and the shortest look-alike name (one syllable) is two.
+	// Every client Lua state opens the string library
+	// (CLuaState__Constructor 0x005190f0 calls luaL_openlibs 0x00525360).
+	luaCode += ' local function cjfx(s) if type(s)~="string" then return s end local u="[\\194\\195][\\128-\\191]" local r,n=string.gsub(s,u,function(c) local a,b=string.byte(c,1,2) return string.char((a-192)*64+b-128) end) if n>1 and not string.find(string.gsub(s,u,""),"[\\128-\\255]") then return r end return s end'
+		+ ' for _,t in pairs({PCPaths,PCImfs,PCPals,PCHands}) do if type(t)=="table" then for k,v in pairs(t) do if type(v)=="table" then for k2,v2 in pairs(v) do v[k2]=cjfx(v2) end else t[k]=cjfx(v) end end end end';
+	// The head position (IMF) table gets each PCPaths value, except a stock body whose IMF name differs gets that
+	// name (Phase 11's third populate call reads _CJ_IMF). After the fold, so a look-alike name maps too.
+	luaCode += ' _CJ_IMF={} if type(PCPaths)=="table" then for k,v in pairs(PCPaths) do if type(k)=="number" then'
+		+ ' _CJ_IMF[k]=(type(v)=="string" and cjim[v]) or v end end end';
 
 	if (failMode === 1) {
 		// Log File: write errors to customjobs_error.log
@@ -1481,6 +1735,7 @@ CustomJobs.apply0716 = function(_)
 		60: p11MainVir + p11SkipAllOff,         // skip_all
 		61: p11HelperVir,                       // CALL populate_table (PCPaths)
 		62: p11HelperVir,                       // CALL populate_table (PCPals)
+		68: p11HelperVir,                       // CALL populate_table (_CJ_IMF)
 		63: p11_lua_dostring,                   // CALL lua_dostring
 		64: p11ReturnVir,                       // JMP back after stolen instructions
 		65: p11_lua_tolstring,                  // CALL lua_tolstring (error check)
@@ -1500,6 +1755,8 @@ CustomJobs.apply0716 = function(_)
 	Exe.SetInt32(p11MainPhys + p11Call1Off + 12, p11MainVir + p11StrPCPaths);
 	// PCPals string
 	Exe.SetInt32(p11MainPhys + p11Call2Off + 12, p11MainVir + p11StrPCPals);
+	// _CJ_IMF string
+	Exe.SetInt32(p11MainPhys + p11Call3Off + 12, p11MainVir + p11StrCjImf);
 	// lua_dostring code string + name string
 	Exe.SetInt32(p11MainPhys + p11DoCodeOff + 1, p11MainVir + p11StrLuaCode);
 	Exe.SetInt32(p11MainPhys + p11DoStrOff + 1, p11MainVir + p11StrCjName);
@@ -1677,7 +1934,8 @@ CustomJobs.apply0716 = function(_)
 	for (const r of handsRows)
 	{
 		p11cStrOffs.push(p11c.byteCount());
-		const str = r.name + "\\" + r.name;
+		// "folder" is baked as folder\folder; a "folder\\prefix" value is used as given
+		const str = r.name.includes("\\") ? r.name : r.name + "\\" + r.name;
 		for (let i = 0; i < str.length; i++)
 			p11c += str.charCodeAt(i).toHex(1);
 		p11c += " 00";
@@ -1783,151 +2041,134 @@ CustomJobs.apply0716 = function(_)
 	const errorVir = jneVir + 6;   // fall-through to error path (0x72839e)
 	const cfileOpenVir = 0x573750;
 
-	let p11bFb = "";
+	// The costume fallback shared by the SPR, ACT and PAL loaders. At the hook AL = CFile_Open's result and
+	// ESI = the filename, which is the resource manager's own cache key: CResourceMgr__LoadResourceNoLock
+	// passes its key string's buffer to the loader and names the new resource from that buffer afterwards.
+	// So the base path is built in a copy on the stack and ESI is never written; the loaded sprite is cached
+	// under its costume name and the next lookup finds it. Until 2026-10-30 the path was stripped in place:
+	// the resource was filed under the base name, every costume lookup missed and loaded a fresh copy, and
+	// the client ran out of memory after a few minutes (std::bad_alloc, exception 0xe06d7363).
+	const costumeFallback = function(leaCFile)
+	{
+		const at = {};
+		let c = "";
+		c += " 84 C0";                            // TEST AL, AL
+		c += JNZ(Filler(1));                      // JNZ success (file found)
+		c += " 57";                               // PUSH EDI
+		c += " 8B FE";                            // MOV EDI, ESI
+		// scan the name for "costum", stepping over CP949 double-byte characters
+		at.scan = c.byteCount();
+		c += " 8A 07";                            // MOV AL, [EDI]
+		c += " 84 C0";                            // TEST AL, AL
+		c += JZ(Filler(3));                       // JZ not_costume
+		c += " 3C 81";                            // CMP AL, 0x81
+		c += JB(Filler(4));                       // JB ascii
+		c += " 47 47";                            // INC EDI; INC EDI (lead + trail byte)
+		c += JMP(Filler(2));                      // JMP scan
+		at.ascii = c.byteCount();
+		c += " 3C 63";                            // CMP AL, 'c'
+		c += JNE(Filler(5));                      // JNE next
+		c += " 80 7F 01 6F";                      // CMP BYTE [EDI+1], 'o'
+		c += JNE(Filler(5));
+		c += " 80 7F 02 73";                      // CMP BYTE [EDI+2], 's'
+		c += JNE(Filler(5));
+		c += " 80 7F 03 74";                      // CMP BYTE [EDI+3], 't'
+		c += JNE(Filler(5));
+		c += " 80 7F 04 75";                      // CMP BYTE [EDI+4], 'u'
+		c += JNE(Filler(5));
+		c += " 80 7F 05 6D";                      // CMP BYTE [EDI+5], 'm'
+		c += JE(Filler(6));                       // JE found
+		at.next = c.byteCount();
+		c += " 47";                               // INC EDI
+		c += JMP(Filler(2));                      // JMP scan
+		at.notCostume = c.byteCount();
+		c += " 5F";                               // POP EDI
+		c += " 33 C0";                            // XOR EAX, EAX (AL = 0, as the stock failure path has it)
+		c += JMP(Filler(7));                      // JMP error
+		// found: EDI = the 'c' of "costume_N\" inside the name; a name that would not fit takes the error path
+		at.found = c.byteCount();
+		c += " 8B CE";                            // MOV ECX, ESI
+		at.len = c.byteCount();
+		c += " 80 39 00";                         // CMP BYTE [ECX], 0
+		c += JE(Filler(9));                       // JE len_done
+		c += " 41";                               // INC ECX
+		c += JMP(Filler(8));                      // JMP len
+		at.lenDone = c.byteCount();
+		c += " 2B CE";                            // SUB ECX, ESI
+		c += " 81 F9 00 01 00 00";                // CMP ECX, 0x100
+		c += JAE(Filler(3));                      // JAE not_costume
+		// copy the name into a 0x104-byte stack buffer without "costume_N\" ...
+		c += " 81 EC 04 01 00 00";                // SUB ESP, 0x104
+		c += " 8B D4";                            // MOV EDX, ESP (copy)
+		c += " 8B CE";                            // MOV ECX, ESI (name)
+		at.pre = c.byteCount();
+		c += " 3B CF";                            // CMP ECX, EDI
+		c += JAE(Filler(11));                     // JAE skip
+		c += " 8A 01";                            // MOV AL, [ECX]
+		c += " 88 02";                            // MOV [EDX], AL
+		c += " 41 42";                            // INC ECX; INC EDX
+		c += JMP(Filler(10));                     // JMP pre
+		at.skip = c.byteCount();                  // skip: step past the '\' that ends "costume_N"
+		c += " 8A 01";                            // MOV AL, [ECX]
+		c += " 84 C0";                            // TEST AL, AL
+		c += JZ(Filler(12));                      // JZ rest
+		c += " 41";                               // INC ECX
+		c += " 3C 5C";                            // CMP AL, '\'
+		c += JNE(Filler(11));                     // JNE skip
+		at.rest = c.byteCount();
+		c += " 8A 01";                            // MOV AL, [ECX]
+		c += " 88 02";                            // MOV [EDX], AL
+		c += " 84 C0";                            // TEST AL, AL
+		c += JZ(Filler(14));                      // JZ dot (EDX = the copy's terminator)
+		c += " 41 42";                            // INC ECX; INC EDX
+		c += JMP(Filler(12));                     // JMP rest
+		// ... and without the "_N" before the extension
+		at.dot = c.byteCount();
+		c += " 3B D4";                            // CMP EDX, ESP
+		c += JBE(Filler(16));                     // JBE retry (no '.')
+		c += " 4A";                               // DEC EDX
+		c += " 80 3A 2E";                         // CMP BYTE [EDX], '.'
+		c += JNE(Filler(14));                     // JNE dot
+		c += " 8D 4A FE";                         // LEA ECX, [EDX-2]
+		c += " 3B CC";                            // CMP ECX, ESP
+		c += JB(Filler(16));                      // JB retry
+		c += " 80 39 5F";                         // CMP BYTE [ECX], '_'
+		c += JNE(Filler(16));                     // JNE retry
+		at.strip = c.byteCount();
+		c += " 8A 02";                            // MOV AL, [EDX]
+		c += " 88 01";                            // MOV [ECX], AL
+		c += " 84 C0";                            // TEST AL, AL
+		c += JZ(Filler(16));                      // JZ retry
+		c += " 42 41";                            // INC EDX; INC ECX
+		c += JMP(Filler(15));                     // JMP strip
+		// retry: CFile_Open(copy, 0, 1, 0) on the loader's own CFile, which keeps its own copy of the name
+		at.retry = c.byteCount();
+		c += " 8B C4";                            // MOV EAX, ESP
+		c += leaCFile;                            // LEA ECX, [EBP-x]
+		c += " 6A 00 6A 01 6A 00";                // PUSH 0; PUSH 1; PUSH 0
+		c += " 50";                               // PUSH EAX
+		c += CALL(Filler(17));                    // CALL CFile_Open (pops its 4 arguments)
+		c += " 81 C4 04 01 00 00";                // ADD ESP, 0x104 (AL kept)
+		c += " 5F";                               // POP EDI
+		c += " 84 C0";                            // TEST AL, AL
+		c += JNZ(Filler(1));                      // JNZ success (the base file opened)
+		c += JMP(Filler(7));                      // JMP error (AL = 0)
+		return {
+			code: c,
+			fills: (vir, success, error) => ({
+				start: vir, 1: success, 7: error, 17: cfileOpenVir,
+				2: vir + at.scan, 3: vir + at.notCostume, 4: vir + at.ascii, 5: vir + at.next, 6: vir + at.found,
+				8: vir + at.len, 9: vir + at.lenDone, 10: vir + at.pre, 11: vir + at.skip, 12: vir + at.rest,
+				14: vir + at.dot, 15: vir + at.strip, 16: vir + at.retry
+			})
+		};
+	};
 
-	// Entry: AL = CFile_Open result, ESI = filename
-	p11bFb += " 84 C0";                       // TEST AL, AL
-	p11bFb += JNZ(Filler(95));                // JNZ success (file found)
-
-	// File not found. Check if ESI contains "costume" (CP949-aware)
-	p11bFb += " 57";                          // PUSH EDI (save)
-	p11bFb += " 8B FE";                       // MOV EDI, ESI (work copy)
-
-	const p11bFbScan = p11bFb.byteCount();
-	p11bFb += " 8A 07";                       // MOV AL, [EDI]
-	p11bFb += " 84 C0";                       // TEST AL, AL
-	p11bFb += JZ(Filler(96));                 // JZ not_costume (end of string)
-	p11bFb += " 3C 81";                       // CMP AL, 0x81
-	p11bFb += " 72 07";                       // JB +7 (ASCII)
-	p11bFb += " 47";                          // INC EDI (CP949 skip 2)
-	p11bFb += " 47";                          // INC EDI
-	p11bFb += JMP(Filler(99));                // JMP scan
-	// ASCII: check 'c','o','s','t','u','m' (6 chars)
-	p11bFb += " 3C 63";                       // CMP AL, 'c'
-	p11bFb += " 75 24";                       // JNE +36
-	p11bFb += " 80 7F 01 6F";                // CMP [EDI+1], 'o'
-	p11bFb += " 75 1E";                       // JNE +30
-	p11bFb += " 80 7F 02 73";                // CMP [EDI+2], 's'
-	p11bFb += " 75 18";                       // JNE +24
-	p11bFb += " 80 7F 03 74";                // CMP [EDI+3], 't'
-	p11bFb += " 75 12";                       // JNE +18
-	p11bFb += " 80 7F 04 75";                // CMP [EDI+4], 'u'
-	p11bFb += " 75 0C";                       // JNE +12
-	p11bFb += " 80 7F 05 6D";                // CMP [EDI+5], 'm'
-	p11bFb += " 75 06";                       // JNE +6
-	p11bFb += JE(Filler(97));                 // JE found_costume
-
-	// next char
-	p11bFb += " 47";                          // INC EDI
-	p11bFb += JMP(Filler(99));                // JMP scan
-
-	// not_costume: restore EDI, go to original error path (popup)
-	const p11bFbNotCostOff = p11bFb.byteCount();
-	p11bFb += " 5F";                          // POP EDI
-	p11bFb += JMP(Filler(98));                // JMP error path
-
-	// found_costume: EDI points to 'c' in "costume_N\..."
-	// We need to find the '\' before "costume" and the '\' after "costume_N"
-	// Then build base path by removing costume_N\ directory and _N suffix
-	const p11bFbFoundOff = p11bFb.byteCount();
-
-	// EDI = ptr to "costume_N\filename_N.ext" within the full path
-	// Find '\' after "costume_N": scan forward from EDI for '\'
-	p11bFb += " 56";                          // PUSH ESI (save original filename)
-
-	// ESI = EDI (start of "costume...")
-	// We need to copy everything AFTER the '\' following "costume_N"
-	// back to where "costume_N\" starts, overwriting it.
-
-	// First: find end of "costume_N\" - scan for '\' or end
-	p11bFb += " 8B F7";                       // MOV ESI, EDI (start of "costume...")
-
-	// Scan forward for '\' after costume_N
-	const p11bFbScan2 = p11bFb.byteCount();
-	p11bFb += " 8A 06";                       // MOV AL, [ESI]
-	p11bFb += " 84 C0";                       // TEST AL, AL
-	p11bFb += JZ(Filler(100));                // JZ no_backslash (shouldn't happen)
-	p11bFb += " 3C 5C";                       // CMP AL, '\' (0x5C)
-	p11bFb += " 74 06";                       // JE +6 (found backslash) - skip INC(1)+JMP(5)=6
-	p11bFb += " 46";                          // INC ESI
-	p11bFb += JMP(Filler(101));               // JMP scan2
-	// ESI now points to '\' after "costume_N"
-	p11bFb += " 46";                          // INC ESI (skip the '\', now points to filename)
-
-	// Now copy from ESI (filename after costume dir) to EDI (where costume started)
-	// This overwrites "costume_N\filename" with just "filename"
-	const p11bFbCopy = p11bFb.byteCount();
-	p11bFb += " 8A 06";                       // MOV AL, [ESI]
-	p11bFb += " 88 07";                       // MOV [EDI], AL
-	p11bFb += " 84 C0";                       // TEST AL, AL
-	p11bFb += JZ(Filler(102));                // JZ copy_done
-	p11bFb += " 46";                          // INC ESI
-	p11bFb += " 47";                          // INC EDI
-	p11bFb += JMP(Filler(103));               // JMP copy_loop
-
-	// copy_done: path is now "sprite\...\女\filename_N.ext"
-	// Now strip "_N" from before the extension
-	// Walk back from EDI (null terminator) to find '.'
-	const p11bFbCopyDone = p11bFb.byteCount();
-	p11bFb += " 4F";                          // DEC EDI (back from null)
-	// Find '.' scanning backwards
-	const p11bFbDotScan = p11bFb.byteCount();
-	p11bFb += " 80 3F 2E";                   // CMP BYTE [EDI], '.'
-	p11bFb += " 74 06";                       // JE +6 (found dot) - skip DEC(1)+JMP(5)=6
-	p11bFb += " 4F";                          // DEC EDI
-	p11bFb += JMP(Filler(104));               // JMP dot_scan
-	// EDI points to '.'. Path ends like: ..._1.spr or ..._2.spr
-	// [EDI-1] = digit ('1'), [EDI-2] = '_'
-	p11bFb += " 80 7F FE 5F";                // CMP BYTE [EDI-2], '_'
-	p11bFb += JNE(Filler(105));               // JNE skip_strip (not "_N" pattern)
-	// Strip "_N": copy from EDI (.) over [EDI-2]
-	p11bFb += " 8D 4F FE";                   // LEA ECX, [EDI-2] (destination: where '_' is)
-	const p11bFbStripCopy = p11bFb.byteCount();
-	p11bFb += " 8A 07";                       // MOV AL, [EDI]
-	p11bFb += " 88 01";                       // MOV [ECX], AL
-	p11bFb += " 84 C0";                       // TEST AL, AL
-	p11bFb += JZ(Filler(105));                // JZ strip_done
-	p11bFb += " 47";                          // INC EDI
-	p11bFb += " 41";                          // INC ECX
-	p11bFb += JMP(Filler(106));               // JMP strip_copy
-
-	// skip_strip / strip_done / no_backslash: retry CFile_Open with modified path
-	const p11bFbRetry = p11bFb.byteCount();
-	p11bFb += " 5E";                          // POP ESI (restore original filename - now modified in place!)
-	// Retry CFile_Open: LEA ECX,[EBP-0x43c]; PUSH 0; PUSH 1; PUSH 0; PUSH ESI; CALL CFile_Open
-	p11bFb += " 8D 8D C4 FB FF FF";          // LEA ECX, [EBP-0x43c]
-	p11bFb += " 6A 00";                       // PUSH 0
-	p11bFb += " 6A 01";                       // PUSH 1
-	p11bFb += " 6A 00";                       // PUSH 0
-	p11bFb += " 56";                          // PUSH ESI
-	p11bFb += CALL(Filler(107));              // CALL CFile_Open
-	p11bFb += " 84 C0";                       // TEST AL, AL
-	p11bFb += " 5F";                          // POP EDI (restore from earlier save)
-	p11bFb += JNZ(Filler(95));                // JNZ success (fallback file found!)
-
-	// Fallback also failed → original error path
-	p11bFb += JMP(Filler(98));                // JMP error path
+	const p11bFb = costumeFallback(" 8D 8D C4 FB FF FF");    // LEA ECX, [EBP-0x43c] (the loader's CFile)
 
 	$$(_, '0716.P11b.3', `Allocate and write costume fallback trampoline`)
-	const [p11bFbPhys, p11bFbVir] = Exe.Allocate(p11bFb.byteCount(), 0x10);
-
-	const p11bFbFills = {
-		start: p11bFbVir,
-		95: successVir,                        // success path
-		96: p11bFbVir + p11bFbNotCostOff,      // not_costume
-		97: p11bFbVir + p11bFbFoundOff,        // found_costume
-		98: errorVir,                          // error path
-		99: p11bFbVir + p11bFbScan,            // scan loop
-		100: p11bFbVir + p11bFbRetry,          // no_backslash → retry anyway
-		101: p11bFbVir + p11bFbScan2,          // scan2 loop
-		102: p11bFbVir + p11bFbCopyDone,       // copy_done → dot scan + strip
-		103: p11bFbVir + p11bFbCopy,           // copy loop
-		104: p11bFbVir + p11bFbDotScan,        // dot scan loop
-		105: p11bFbVir + p11bFbRetry,          // skip_strip / strip_done
-		106: p11bFbVir + p11bFbStripCopy,      // strip copy loop
-		107: cfileOpenVir                      // CFile_Open
-	};
-	Exe.SetHex(p11bFbPhys, SetFillTargets(p11bFb, p11bFbFills));
+	const [p11bFbPhys, p11bFbVir] = Exe.Allocate(p11bFb.code.byteCount(), 0x10);
+	Exe.SetHex(p11bFbPhys, SetFillTargets(p11bFb.code, p11bFb.fills(p11bFbVir, successVir, errorVir)));
 
 	$$(_, '0716.P11b.4', `Redirect JNE to costume fallback trampoline`)
 	// Replace 6-byte JNE with 5-byte JMP + 1 NOP
@@ -1949,126 +2190,9 @@ CustomJobs.apply0716 = function(_)
 	const actSuccessVir = 0x70bd69;
 	const actErrorVir = actJneVir + 6;  // 0x70bb74
 
-	// Clone the SPR fallback trampoline but with ACT-specific addresses
-	let p11bAct = "";
-	p11bAct += " 84 C0";                      // TEST AL, AL
-	p11bAct += JNZ(Filler(195));              // JNZ success
-
-	p11bAct += " 57";                         // PUSH EDI
-	p11bAct += " 8B FE";                      // MOV EDI, ESI
-
-	const p11bActScan = p11bAct.byteCount();
-	p11bAct += " 8A 07";                      // MOV AL, [EDI]
-	p11bAct += " 84 C0";                      // TEST AL, AL
-	p11bAct += JZ(Filler(196));               // JZ not_costume
-	p11bAct += " 3C 81";                      // CMP AL, 0x81
-	p11bAct += " 72 07";                      // JB +7 (ASCII)
-	p11bAct += " 47";                         // INC EDI (CP949 skip)
-	p11bAct += " 47";                         // INC EDI
-	p11bAct += JMP(Filler(199));              // JMP scan
-	p11bAct += " 3C 63";                      // CMP AL, 'c'
-	p11bAct += " 75 24";                      // JNE +36
-	p11bAct += " 80 7F 01 6F";               // CMP [EDI+1], 'o'
-	p11bAct += " 75 1E";                      // JNE +30
-	p11bAct += " 80 7F 02 73";               // CMP [EDI+2], 's'
-	p11bAct += " 75 18";                      // JNE +24
-	p11bAct += " 80 7F 03 74";               // CMP [EDI+3], 't'
-	p11bAct += " 75 12";                      // JNE +18
-	p11bAct += " 80 7F 04 75";               // CMP [EDI+4], 'u'
-	p11bAct += " 75 0C";                      // JNE +12
-	p11bAct += " 80 7F 05 6D";               // CMP [EDI+5], 'm'
-	p11bAct += " 75 06";                      // JNE +6
-	p11bAct += JE(Filler(197));               // JE found_costume
-
-	p11bAct += " 47";                         // INC EDI
-	p11bAct += JMP(Filler(199));              // JMP scan
-
-	// not_costume
-	const p11bActNotCostOff = p11bAct.byteCount();
-	p11bAct += " 5F";                         // POP EDI
-	p11bAct += JMP(Filler(198));              // JMP error
-
-	// found_costume: strip costume_N\ and _N, retry
-	const p11bActFoundOff = p11bAct.byteCount();
-	p11bAct += " 56";                         // PUSH ESI
-	p11bAct += " 8B F7";                      // MOV ESI, EDI
-
-	// Scan for '\' after costume_N
-	const p11bActScan2 = p11bAct.byteCount();
-	p11bAct += " 8A 06";                      // MOV AL, [ESI]
-	p11bAct += " 84 C0";                      // TEST AL, AL
-	p11bAct += JZ(Filler(200));               // JZ retry
-	p11bAct += " 3C 5C";                      // CMP AL, '\'
-	p11bAct += " 74 06";                      // JE +6
-	p11bAct += " 46";                         // INC ESI
-	p11bAct += JMP(Filler(201));              // JMP scan2
-	p11bAct += " 46";                         // INC ESI (skip '\')
-
-	// Copy filename over costume dir
-	const p11bActCopy = p11bAct.byteCount();
-	p11bAct += " 8A 06";                      // MOV AL, [ESI]
-	p11bAct += " 88 07";                      // MOV [EDI], AL
-	p11bAct += " 84 C0";                      // TEST AL, AL
-	p11bAct += JZ(Filler(202));               // JZ copy_done
-	p11bAct += " 46";                         // INC ESI
-	p11bAct += " 47";                         // INC EDI
-	p11bAct += JMP(Filler(203));              // JMP copy
-
-	// copy_done: strip _N before extension
-	const p11bActCopyDone = p11bAct.byteCount();
-	p11bAct += " 4F";                         // DEC EDI
-
-	const p11bActDotScan = p11bAct.byteCount();
-	p11bAct += " 80 3F 2E";                  // CMP BYTE [EDI], '.'
-	p11bAct += " 74 06";                      // JE +6
-	p11bAct += " 4F";                         // DEC EDI
-	p11bAct += JMP(Filler(204));              // JMP dot_scan
-
-	p11bAct += " 80 7F FE 5F";               // CMP BYTE [EDI-2], '_'
-	p11bAct += JNE(Filler(205));              // JNE skip_strip
-	p11bAct += " 8D 4F FE";                  // LEA ECX, [EDI-2]
-
-	const p11bActStripCopy = p11bAct.byteCount();
-	p11bAct += " 8A 07";                      // MOV AL, [EDI]
-	p11bAct += " 88 01";                      // MOV [ECX], AL
-	p11bAct += " 84 C0";                      // TEST AL, AL
-	p11bAct += JZ(Filler(205));               // JZ done
-	p11bAct += " 47";                         // INC EDI
-	p11bAct += " 41";                         // INC ECX
-	p11bAct += JMP(Filler(206));              // JMP strip_copy
-
-	// retry CFile_Open with [EBP-0x8c]
-	const p11bActRetry = p11bAct.byteCount();
-	p11bAct += " 5E";                         // POP ESI
-	p11bAct += " 8D 8D 74 FF FF FF";         // LEA ECX, [EBP-0x8c]
-	p11bAct += " 6A 00";                      // PUSH 0
-	p11bAct += " 6A 01";                      // PUSH 1
-	p11bAct += " 6A 00";                      // PUSH 0
-	p11bAct += " 56";                         // PUSH ESI
-	p11bAct += CALL(Filler(207));             // CALL CFile_Open
-	p11bAct += " 84 C0";                      // TEST AL, AL
-	p11bAct += " 5F";                         // POP EDI
-	p11bAct += JNZ(Filler(195));              // JNZ success
-	p11bAct += JMP(Filler(198));              // JMP error
-
-	const [p11bActPhys, p11bActVir] = Exe.Allocate(p11bAct.byteCount(), 0x10);
-	const p11bActFills = {
-		start: p11bActVir,
-		195: actSuccessVir,
-		196: p11bActVir + p11bActNotCostOff,
-		197: p11bActVir + p11bActFoundOff,
-		198: actErrorVir,
-		199: p11bActVir + p11bActScan,
-		200: p11bActVir + p11bActRetry,
-		201: p11bActVir + p11bActScan2,
-		202: p11bActVir + p11bActCopyDone,
-		203: p11bActVir + p11bActCopy,
-		204: p11bActVir + p11bActDotScan,
-		205: p11bActVir + p11bActRetry,
-		206: p11bActVir + p11bActStripCopy,
-		207: cfileOpenVir
-	};
-	Exe.SetHex(p11bActPhys, SetFillTargets(p11bAct, p11bActFills));
+	const p11bAct = costumeFallback(" 8D 8D 74 FF FF FF");   // LEA ECX, [EBP-0x8c]
+	const [p11bActPhys, p11bActVir] = Exe.Allocate(p11bAct.code.byteCount(), 0x10);
+	Exe.SetHex(p11bActPhys, SetFillTargets(p11bAct.code, p11bAct.fills(p11bActVir, actSuccessVir, actErrorVir)));
 
 	const actRedirect = SetFillTargets(JMP(Filler(1)), {
 		start: actJneVir,
@@ -2088,100 +2212,9 @@ CustomJobs.apply0716 = function(_)
 	const palSuccessVir = 0x725dae;
 	const palErrorVir = palJneVir + 6;
 
-	let p11bPal = "";
-	p11bPal += " 84 C0";                      // TEST AL, AL
-	p11bPal += JNZ(Filler(210));              // JNZ success
-	p11bPal += " 57";                         // PUSH EDI
-	p11bPal += " 8B FE";                      // MOV EDI, ESI
-	const p11bPalScan = p11bPal.byteCount();
-	p11bPal += " 8A 07";                      // MOV AL, [EDI]
-	p11bPal += " 84 C0";                      // TEST AL, AL
-	p11bPal += JZ(Filler(211));               // JZ not_costume
-	p11bPal += " 3C 81";                      // CMP AL, 0x81
-	p11bPal += " 72 07";                      // JB +7
-	p11bPal += " 47";                         // INC EDI
-	p11bPal += " 47";                         // INC EDI
-	p11bPal += JMP(Filler(212));              // JMP scan
-	p11bPal += " 3C 63";                      // CMP AL, 'c'
-	p11bPal += " 75 24";                      // JNE +36
-	p11bPal += " 80 7F 01 6F";               // CMP [EDI+1], 'o'
-	p11bPal += " 75 1E";                      // JNE +30
-	p11bPal += " 80 7F 02 73";               // CMP [EDI+2], 's'
-	p11bPal += " 75 18";                      // JNE +24
-	p11bPal += " 80 7F 03 74";               // CMP [EDI+3], 't'
-	p11bPal += " 75 12";                      // JNE +18
-	p11bPal += " 80 7F 04 75";               // CMP [EDI+4], 'u'
-	p11bPal += " 75 0C";                      // JNE +12
-	p11bPal += " 80 7F 05 6D";               // CMP [EDI+5], 'm'
-	p11bPal += " 75 06";                      // JNE +6
-	p11bPal += JE(Filler(213));               // JE found_costume
-	p11bPal += " 47";                         // INC EDI
-	p11bPal += JMP(Filler(212));              // JMP scan
-	const p11bPalNotCostOff = p11bPal.byteCount();
-	p11bPal += " 5F";                         // POP EDI
-	p11bPal += JMP(Filler(214));              // JMP error
-	const p11bPalFoundOff = p11bPal.byteCount();
-	p11bPal += " 56";                         // PUSH ESI
-	p11bPal += " 8B F7";                      // MOV ESI, EDI
-	const p11bPalScan2 = p11bPal.byteCount();
-	p11bPal += " 8A 06";                      // MOV AL, [ESI]
-	p11bPal += " 84 C0";                      // TEST AL, AL
-	p11bPal += JZ(Filler(215));               // JZ retry
-	p11bPal += " 3C 5C";                      // CMP AL, '\'
-	p11bPal += " 74 06";                      // JE +6
-	p11bPal += " 46";                         // INC ESI
-	p11bPal += JMP(Filler(216));              // JMP scan2
-	p11bPal += " 46";                         // INC ESI
-	const p11bPalCopy = p11bPal.byteCount();
-	p11bPal += " 8A 06";                      // MOV AL, [ESI]
-	p11bPal += " 88 07";                      // MOV [EDI], AL
-	p11bPal += " 84 C0";                      // TEST AL, AL
-	p11bPal += JZ(Filler(217));               // JZ copy_done
-	p11bPal += " 46";                         // INC ESI
-	p11bPal += " 47";                         // INC EDI
-	p11bPal += JMP(Filler(218));              // JMP copy
-	const p11bPalCopyDone = p11bPal.byteCount();
-	p11bPal += " 4F";                         // DEC EDI
-	const p11bPalDotScan = p11bPal.byteCount();
-	p11bPal += " 80 3F 2E";                  // CMP BYTE [EDI], '.'
-	p11bPal += " 74 06";                      // JE +6
-	p11bPal += " 4F";                         // DEC EDI
-	p11bPal += JMP(Filler(219));              // JMP dot_scan
-	p11bPal += " 80 7F FE 5F";               // CMP BYTE [EDI-2], '_'
-	p11bPal += JNE(Filler(220));              // JNE skip_strip
-	p11bPal += " 8D 4F FE";                  // LEA ECX, [EDI-2]
-	const p11bPalStripCopy = p11bPal.byteCount();
-	p11bPal += " 8A 07";                      // MOV AL, [EDI]
-	p11bPal += " 88 01";                      // MOV [ECX], AL
-	p11bPal += " 84 C0";                      // TEST AL, AL
-	p11bPal += JZ(Filler(220));               // JZ done
-	p11bPal += " 47";                         // INC EDI
-	p11bPal += " 41";                         // INC ECX
-	p11bPal += JMP(Filler(221));              // JMP strip_copy
-	const p11bPalRetry = p11bPal.byteCount();
-	p11bPal += " 5E";                         // POP ESI
-	p11bPal += " 8D 4D 94";                  // LEA ECX, [EBP-0x6c]
-	p11bPal += " 6A 00";                      // PUSH 0
-	p11bPal += " 6A 01";                      // PUSH 1
-	p11bPal += " 6A 00";                      // PUSH 0
-	p11bPal += " 56";                         // PUSH ESI
-	p11bPal += CALL(Filler(222));             // CALL CFile_Open
-	p11bPal += " 84 C0";                      // TEST AL, AL
-	p11bPal += " 5F";                         // POP EDI
-	p11bPal += JNZ(Filler(210));              // JNZ success
-	p11bPal += JMP(Filler(214));              // JMP error
-
-	const [p11bPalPhys, p11bPalVir] = Exe.Allocate(p11bPal.byteCount(), 0x10);
-	Exe.SetHex(p11bPalPhys, SetFillTargets(p11bPal, {
-		start: p11bPalVir,
-		210: palSuccessVir, 211: p11bPalVir + p11bPalNotCostOff,
-		213: p11bPalVir + p11bPalFoundOff, 214: palErrorVir,
-		212: p11bPalVir + p11bPalScan, 215: p11bPalVir + p11bPalRetry,
-		216: p11bPalVir + p11bPalScan2, 217: p11bPalVir + p11bPalCopyDone,
-		218: p11bPalVir + p11bPalCopy, 219: p11bPalVir + p11bPalDotScan,
-		220: p11bPalVir + p11bPalRetry, 221: p11bPalVir + p11bPalStripCopy,
-		222: cfileOpenVir
-	}));
+	const p11bPal = costumeFallback(" 8D 4D 94");            // LEA ECX, [EBP-0x6c]
+	const [p11bPalPhys, p11bPalVir] = Exe.Allocate(p11bPal.code.byteCount(), 0x10);
+	Exe.SetHex(p11bPalPhys, SetFillTargets(p11bPal.code, p11bPal.fills(p11bPalVir, palSuccessVir, palErrorVir)));
 	Exe.SetHex(palJnePhys, SetFillTargets(JMP(Filler(1)), {
 		start: palJneVir, 1: p11bPalVir
 	}) + " 90");
@@ -2343,12 +2376,139 @@ CustomJobs.apply0716 = function(_)
 	}) + " 90");
 
 
-	$$(_, '0716.14', `Ask about copying Lua files and error display`)
+	// ==========================================================
+	// Phase 14: PCMotionInheritTbl - attack motion like a stock job
+	// ==========================================================
+	// The attack picks its action group (10 = actions 80..87, 11 = 88..95) through a thiscall
+	// (job, sex, weapon lo, weapon hi) at 0x00d72d30 that resolves the weapon type and switches on
+	// the job, with per-sex weapon lists, up to 4307. Any later job (every custom job) falls to the
+	// default and always plays group 10, whatever the weapon or sex.
+	//
+	// The entry is hooked: for a job past the stock switch, PCMotionInheritTbl[job] (any JobInfo
+	// .lua loaded by Phase 11) names a stock job and the decision is made as that job, dual-wield
+	// branch included. No entry keeps the stock behaviour.
+	//
+	// Lua API:
+	//   PCMotionInheritTbl = PCMotionInheritTbl or {}
+	//   PCMotionInheritTbl[PCIds.MY_CUSTOM] = 4307   -- attack like Hyper Novice
+	//
+	// GitHub: CrazyBebop/WARP0716#72
+
+	$$(_, '0716.P14.1', `Locate the attack action-group decision`)
+	const p14Pattern = " 55 8B EC 83 EC 08 8B 45 14 53 8B D9 56 8B 75 08 57 8B 7D 10 89 7D F8";
+	const p14Phys = Exe.FindHex(p14Pattern);
+	if (p14Phys < 0 || Exe.FindHex(p14Pattern, p14Phys + 1) >= 0)
+		throw Error("Phase 14: attack action-group decision missing or not unique");
+	const p14Vir = Exe.Phy2Vir(p14Phys, CODE);
+
+	$$(_, '0716.P14.2', `Build PCMotionInheritTbl trampoline`)
+	const p14_lua_tointeger = 0x51AC50;
+
+	let p14 = "";
+	p14 += " 55 8B EC 83 EC 08";               // stolen: PUSH EBP; MOV EBP,ESP; SUB ESP,8
+	p14 += " 81 7D 08 D4 10 00 00";            // CMP DWORD PTR [EBP+8], 4308 (past the stock switch)
+	p14 += JB(Filler(70));                      // JB .back
+	p14 += " A1" + g_luaState.toHex(4);         // MOV EAX, [g_luaState]
+	p14 += " 85 C0";                            // TEST EAX, EAX
+	p14 += JZ(Filler(70));                      // JZ .back
+	p14 += " 51";                               // PUSH ECX (this)
+
+	// lua_getfield(L, LUA_GLOBALSINDEX, "PCMotionInheritTbl")
+	const p14PushStrOff = p14.byteCount();
+	p14 += " 68 00 00 00 00";                   // PUSH &"PCMotionInheritTbl" (fixup below)
+	p14 += " 68 EE D8 FF FF";                   // PUSH -10002 (LUA_GLOBALSINDEX)
+	p14 += " 50";                               // PUSH EAX (L)
+	p14 += CALL(Filler(91));                    // CALL lua_getfield
+	p14 += " 83 C4 0C";                         // ADD ESP, 12
+
+	// lua_type(L,-1) must be LUA_TTABLE (5)
+	p14 += " 6A FF";                            // PUSH -1
+	p14 += " FF 35" + g_luaState.toHex(4);      // PUSH [g_luaState]
+	p14 += CALL(Filler(94));                    // CALL lua_type
+	p14 += " 83 C4 08";                         // ADD ESP, 8
+	p14 += " 83 F8 05";                         // CMP EAX, 5
+	p14 += JNE(Filler(71));                     // JNE .pop1
+
+	// lua_rawgeti(L, -1, job); only a number counts (Novice is job 0, so 0 is a real answer)
+	p14 += " FF 75 08";                         // PUSH [EBP+8] (job)
+	p14 += " 6A FF";                            // PUSH -1
+	p14 += " FF 35" + g_luaState.toHex(4);      // PUSH [g_luaState]
+	p14 += CALL(Filler(92));                    // CALL lua_rawgeti
+	p14 += " 83 C4 0C";                         // ADD ESP, 12
+	p14 += " 6A FF";                            // PUSH -1
+	p14 += " FF 35" + g_luaState.toHex(4);      // PUSH [g_luaState]
+	p14 += CALL(Filler(94));                    // CALL lua_type
+	p14 += " 83 C4 08";                         // ADD ESP, 8
+	p14 += " 83 F8 03";                         // CMP EAX, 3 (LUA_TNUMBER)
+	p14 += " B8 FF FF FF FF";                   // MOV EAX, -1 (no answer; MOV keeps the flags)
+	p14 += JNE(Filler(74));                     // JNE .pop2
+	p14 += " 6A FF";                            // PUSH -1
+	p14 += " FF 35" + g_luaState.toHex(4);      // PUSH [g_luaState]
+	p14 += CALL(Filler(95));                    // CALL lua_tointeger
+	p14 += " 83 C4 08";                         // ADD ESP, 8
+
+	// .pop2: lua_settop(L, -3) pops the value and the table; EAX = the stock job or -1
+	const p14Pop2Off = p14.byteCount();
+	p14 += " 50";                               // PUSH EAX
+	p14 += " 6A FD";                            // PUSH -3
+	p14 += " FF 35" + g_luaState.toHex(4);      // PUSH [g_luaState]
+	p14 += CALL(Filler(93));                    // CALL lua_settop
+	p14 += " 83 C4 08";                         // ADD ESP, 8
+	p14 += " 58";                               // POP EAX
+	p14 += " 85 C0";                            // TEST EAX, EAX
+	p14 += JL(Filler(72));                      // JL .restore
+	p14 += " 89 45 08";                         // MOV [EBP+8], EAX (decide as the stock job)
+
+	// .restore
+	const p14RestoreOff = p14.byteCount();
+	p14 += " 59";                               // POP ECX
+	// .back
+	const p14BackOff = p14.byteCount();
+	p14 += JMP(Filler(73));                     // JMP after the stolen bytes
+
+	// .pop1: only the non-table global is on the stack
+	const p14Pop1Off = p14.byteCount();
+	p14 += " 6A FE";                            // PUSH -2
+	p14 += " FF 35" + g_luaState.toHex(4);      // PUSH [g_luaState]
+	p14 += CALL(Filler(93));                    // CALL lua_settop
+	p14 += " 83 C4 08";                         // ADD ESP, 8
+	p14 += JMP(Filler(72));                     // JMP .restore
+
+	// Data: "PCMotionInheritTbl\0"
+	const p14StrOff = p14.byteCount();
+	p14 += " 50 43 4D 6F 74 69 6F 6E 49 6E 68 65 72 69 74 54 62 6C 00";
+
+	$$(_, '0716.P14.3', `Allocate the trampoline and hook the entry`)
+	const [p14TrPhys, p14TrVir] = Exe.Allocate(p14.byteCount(), 0x10);
+	Exe.SetHex(p14TrPhys, SetFillTargets(p14, {
+		start: p14TrVir,
+		70: p14TrVir + p14BackOff,
+		71: p14TrVir + p14Pop1Off,
+		72: p14TrVir + p14RestoreOff,
+		73: p14Vir + 6,
+		74: p14TrVir + p14Pop2Off,
+		91: p13_lua_getfield,
+		92: p13_lua_rawgeti,
+		93: p13_lua_settop,
+		94: p13_lua_type,
+		95: p14_lua_tointeger
+	}));
+	Exe.SetInt32(p14TrPhys + p14PushStrOff + 1, p14TrVir + p14StrOff);
+
+	// Replace the 6-byte prologue with JMP rel32 -> trampoline + 1 NOP
+	Exe.SetHex(p14Phys, SetFillTargets(JMP(Filler(1)), {
+		start: p14Vir, 1: p14TrVir
+	}) + " 90");
+
+
+	$$(_, '0716.14', `Ask about copying Lua files (the error display is asked in Phase 11, where it is used)`)
 	if (!Warp.TestMode)
 	{
-		if (Exe.GetUserInput('$copyCJLub', D_Bool, "Copy Custom Job Lua",
+		// A profile or session hands a D_Bool back as the text "true" / "false", and "false" is truthy:
+		// test the value, never its truthiness (an answered No used to copy all seven).
+		if (["true", "1"].includes(String(Exe.GetUserInput('$copyCJLub', D_Bool, "Copy Custom Job Lua",
 			"Custom jobs need seven Lua files inside your client's <b>data</b> folder. "
-			+ "Copy them there for you? You choose the folder next.", true))
+			+ "Copy them there for you? You choose the folder next.", true))))
 		{
 			Exe.GetUserInput('$cjLuaDir', D_Folder, "Custom Job Lua Target",
 				"Folder to copy them into. They go under <b>data\\Luafiles514\\Lua Files\\JobInfo</b> "
@@ -2356,10 +2516,6 @@ CustomJobs.apply0716 = function(_)
 			  + "default puts them beside the patched exe, and you move them across with it.",
 				System.DirPath(Warp.TgtExe), {saveDefault: true});
 		}
-		Exe.GetUserInput('$showFailures', D_Choice, "Lua Error Display",
-			"How should custom Lua file loading errors be shown?",
-			'Popup',
-			{choices: ['Silent', 'Log File', 'Popup']});
 	}
 
 	return true;
@@ -2372,7 +2528,7 @@ CustomJobs.onApplied = function()
 {
 	const _ = 'CustomJobs.onApplied';
 
-	if (!Warp.TestMode && Exe.GetSavedInput('$copyCJLub'))
+	if (!Warp.TestMode && ["true", "1"].includes(String(Exe.GetSavedInput('$copyCJLub'))))   // "false" is truthy: test the value
 	{
 		$$(_, 1.1, `Prepare the directory paths`)
 

@@ -22,14 +22,14 @@
 *                                                                          *
 *   Author(s)     : CrazyBebop, Shinryo                                    *
 *   Created Date  : 2026-03-19                                             *
-*   Last Modified : 2026-03-19                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
 
 ///
 /// \brief Enable Official Custom Fonts (Reforged)
 ///
-///   Microsoft's T2Embed API (TTLoadEmbeddedFont) is broken on modern Windows —
+///   Microsoft's T2Embed API (TTLoadEmbeddedFont) is broken on modern Windows:
 ///   returns E_T2NOFREEMEMORY (0x200) for all .eot files due to removed MTX
 ///   decompression support. This rewrite bypasses T2Embed entirely:
 ///
@@ -57,21 +57,23 @@ EnableCustomFonts = function(_)
 
 		if (clientDir !== false && clientDir.length > 0)
 		{
-			doCopy = Exe.GetUserInput('$fontCopyTtf', D_Bool,
+			// A profile or session hands a D_Bool back as the text "true" / "false", and "false" is
+			// truthy: test the value (an answered No used to copy, then DELETE the .eot files).
+			doCopy = ["true", "1"].includes(String(Exe.GetUserInput('$fontCopyTtf', D_Bool,
 				"Copy Font Files",
 				"<b>Custom Fonts (Reforged)</b> requires .ttf font files in your client's <b>System\\Font</b> folder.<br><br>"
 				+ "Copy the included .ttf fonts to:<br><b>" + clientDir + "/System/Font</b> ?",
 				true
-			);
+			)));
 
 			if (doCopy)
 			{
-				doDelete = Exe.GetUserInput('$fontDeleteEot', D_Bool,
+				doDelete = ["true", "1"].includes(String(Exe.GetUserInput('$fontDeleteEot', D_Bool,
 					"Delete .eot Files",
 					"Do you want to delete the old .eot files?<br><br>"
 					+ "They are no longer needed on modern Windows.",
 					false
-				);
+				)));
 			}
 
 			/// Now perform file operations
@@ -127,8 +129,13 @@ EnableCustomFonts = function(_)
 	if (addr < 0)
 		throw Error("Langtype comparison not found");
 
-	/// Get epilogue location from JNE target. Don't NOP — T2Embed block stays skipped.
+	/// Get epilogue location from JNE target. Don't NOP: T2Embed block stays skipped.
 	const jneTargetPhy = addr + 6 + Exe.GetInt32(addr + 2);
+
+	/// The JNE only skips the old .eot loader when the langtype is not 0. At langtype 0 that
+	/// loader runs on the face names step 7 strips, cannot open System\Font\<name> and exits
+	/// the client, so it is skipped at every langtype: NOP + JMP to the same target (2026-10-20).
+	Exe.SetHex(addr, " 90 E9");
 
 	$$(_, 3, `Find AddFontResourceExA import`)
 	const addFontAddr = Exe.FindFunc("AddFontResourceExA", "GDI32.dll");

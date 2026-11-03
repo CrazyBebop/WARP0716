@@ -1,0 +1,94 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 CrazyBebop                                          *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CrazyBebop                                             *
+*   Created Date  : 2026-10-26                                             *
+*   Last Modified : 2026-10-26                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief "Client restart is required, proceed?" restarts the client.
+///
+/// When Game Settings changes something the client applies only at startup (the resolution, the window
+/// mode, Render Scaling), OK saves the settings, closes the client and, at the end of WinMain, opens
+/// MSI_WEB_ADDRESS_FOR_RESTART (msgstringtable 0xD75) with ShellExecute: in kRO the official site the game
+/// is started from (http://ro.gnjoy.com); translated tables put their own page there (ROenglishRE's is its
+/// GitHub page). This makes that branch start the client itself again instead: the same exe, the same
+/// arguments (WinMain's lpCmdLine), the same working folder. The on-screen link that shows the address
+/// is left alone.
+///
+RelaunchOnRestart = function(_)
+{
+	$$(_, 1.1, `Find WinMain's restart branch (the flag set by Apply, then the restart address)`)
+	/// cmp byte [restart],0 / je end / push "Dev" / push <service> / call strstr / ... / push 0xD75 /
+	/// call GetMsgString / ... / push "OPEN" / push 0 / call [ShellExecuteA]
+	const code = " 80 3D ?? ?? ?? ?? 00 74 67 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 85 C0 74 25"
+		+ " 83 3D ?? ?? ?? ?? 00 6A 01 6A 00 75 0C 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? EB 2B 68 ?? ?? ?? ?? 68 ?? ?? ?? ??"
+		+ " EB 1F 68 75 0D 00 00 E8 ?? ?? ?? ?? 68 75 0D 00 00 8B F0 E8 ?? ?? ?? ?? 83 C4 08 6A 01 6A 00 56 50"
+		+ " 68 ?? ?? ?? ?? 6A 00 FF 15 ?? ?? ?? ??";
+	const site = Exe.FindHex(code);
+	if (site < 0 || Exe.FindHex(code, site + 1) >= 0)
+		throw Error("RelaunchOnRestart: the restart branch missing or not unique");
+
+	const shellIat = Exe.FindFunc("ShellExecuteA");
+	const nameIat = Exe.FindFunc("GetModuleFileNameA");
+	if (shellIat < 0 || nameIat < 0)
+		throw Error("RelaunchOnRestart: ShellExecuteA / GetModuleFileNameA imports missing");
+	if (Exe.GetInt32(site + 0x6C) !== shellIat)
+		throw Error("RelaunchOnRestart: the restart branch calls something else");
+	const openV = Exe.GetInt32(site + 0x64);           //the client's own "OPEN"
+	const jumpP = site + 9;                            //after je end: the address lookups
+	const backV = Exe.Phy2Vir(site + 0x70, CODE);      //end: where both ways meet
+
+	$$(_, 2.1, `Place the relaunch: this exe, WinMain's own arguments, the current folder`)
+	const [p, v] = Exe.Allocate(0x60, 0x10);
+	const body =
+		" 81 EC 04 01 00 00"                          //sub esp,0x104        (a MAX_PATH buffer)
+		+ " 68 04 01 00 00"                           //push 0x104
+		+ " 8D 44 24 04"                              //lea eax,[esp+4]
+		+ " 50"                                       //push eax
+		+ " 6A 00"                                    //push 0               (this module)
+		+ " FF 15 " + nameIat.toHex(4)                 //call [GetModuleFileNameA]
+		+ " 8B C4"                                    //mov eax,esp          (the exe's path)
+		+ " 6A 01"                                    //push 1               (SW_SHOWNORMAL)
+		+ " 6A 00"                                    //push 0               (the current folder)
+		+ " FF 75 10"                                 //push [ebp+0x10]      (WinMain's lpCmdLine)
+		+ " 50"                                       //push eax
+		+ " 68 " + openV.toHex(4)                      //push "OPEN"
+		+ " 6A 00"                                    //push 0
+		+ " FF 15 " + shellIat.toHex(4)                //call [ShellExecuteA]
+		+ " 81 C4 04 01 00 00";                       //add esp,0x104
+	const n = body.byteCount();
+	Exe.SetHex(p, body + " E9 " + (backV - (v + n + 5)).toHex(4));   //jmp end
+
+	$$(_, 3.1, `Jump there instead of opening the address`)
+	Exe.SetJMP(jumpP, v);
+
+	return true;
+};
+
+///
+/// \brief The 2025-07-16 client only (the branch is matched exactly).
+///
+RelaunchOnRestart.validate = () =>
+	Exe.BuildDate === 20250716;

@@ -33,6 +33,9 @@
 ///
 NoDoramCreation = function(_)
 {
+	if (Exe.BuildDate > 20170614)
+		return NoDoramCreation.Modern(_);
+
 	$$(_, 1.1, `Find the first pattern`)
 	let code =
 		PUSH([EDI, WCp]) //push dword ptr [edi + disp8A]
@@ -97,8 +100,46 @@ NoDoramCreation = function(_)
 };
 
 ///
-/// \brief Disable for older & more recent clients
-///       (since they didnt have Doram race or can be disabled externally)
+/// \brief 2025 clients keep a "Doram is available" byte. When it is 0 the creation window gives the
+///        Doram race button img_doram_comingSoon.bmp, ignores clicks on it, and the race panel's own
+///        draw skips the Doram label, description and character. Make all five tests of that byte
+///        read it as 0, and point the Coming Soon art at an empty name, so the Doram slot is blank.
+///
+NoDoramCreation.Modern = function(_)
+{
+	$$(_, 1.1, `Find the Coming Soon art`)
+	const soon = Exe.FindText(NoDoramCreation.SoonArt, CASE_INSENSITIVE, false);
+	if (soon < 0)
+		throw Error("Coming Soon art missing");
+
+	$$(_, 1.2, `Find the flag test in front of it (cmp byte ptr [flag], 0 ; jne short ; mov edi, <art>)`)
+	const addr = Exe.FindHex("80 3D ?? ?? ?? ?? 00 75 ?? BF " + soon.toHex());
+	if (addr < 0)
+		throw Error("Doram flag test missing");
+
+	const flag = Exe.GetInt32(addr + 2);
+
+	$$(_, 2.1, `Collect every test of the flag: the button art, two click paths, the toggle and the race panel draw`)
+	const sites = Exe.FindHexN("80 3D " + flag.toHex() + " 00");
+	if (sites.length !== 5)
+		throw Error("Expected 5 tests of the Doram flag, found " + sites.length);
+
+	$$(_, 2.2, `Replace each with cmp esp, esp (ZF=1, as if the flag were 0) and a 5 byte NOP`)
+	for (const p of sites)
+		Exe.SetHex(p, "39 E4 0F 1F 44 00 00");
+
+	$$(_, 3, `Blank the Coming Soon art: point the mov edi at the zero that ends its name`)
+	Exe.SetInt32(addr + 10, soon + NoDoramCreation.SoonArt.length);
+
+	return true;
+};
+
+NoDoramCreation.SoonArt = "\xC0\xAF\xC0\xFA\xC0\xCE\xC5\xCD\xC6\xE4\xC0\xCC\xBD\xBA\\make_character_ver2\\img_doram_comingSoon.bmp";
+
+///
+/// \brief Disable for clients without the Doram race, and for the ones between 2017 and the
+///        Coming Soon art whose creation code neither path knows
 ///
 NoDoramCreation.validate = () =>
-	Exe.BuildDate > 20151000 && Exe.BuildDate <= 20170614;
+	(Exe.BuildDate > 20151000 && Exe.BuildDate <= 20170614) ||
+	(Exe.BuildDate > 20170614 && Exe.FindText(NoDoramCreation.SoonArt, CASE_INSENSITIVE, false) > 0);
