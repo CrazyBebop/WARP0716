@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : CrazyBebop                                             *
 *   Created Date  : 2026-10-20                                             *
-*   Last Modified : 2026-10-21                                             *
+*   Last Modified : 2026-11-03                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -1680,6 +1680,51 @@ EnableDruidClasses = function(_)
 	const [guardP, guardV] = Exe.Allocate(guard.byteCount(), 0x10);
 	Exe.SetHex(guardP, SetFillTargets(guard, {start: guardV, 1: guardRetVir, 2: Exe.Phy2Vir(guardPhy + 6, CODE), 3: guardV + guardStock}));
 	Exe.SetJMP(guardPhy, guardV);
+
+	/// d. The actor's frame step plays an action by the mode a. passes on ([actor+0x6C]): 0 loops,
+	///    1 plays once and then sets the done flag [actor+0x9D], and only that flag ends an attack
+	///    (CPc's per-frame attack case returns the actor to standing). 07-16 has no case for a.'s 2,
+	///    so a Werewolf's attack never ended: the actor stayed in it until the form was gone (GitHub
+	///    #78). The 2026 client's case 2, for the attack motion (2) only: play once, frames 2 and 3
+	///    shown as frame 4. The cave then joins case 1's own tail (frame = played mod count, done at
+	///    the end); the time played and ECX are case 1's.
+	const pm2Pat = " 8B 46 6C 83 E8 00 74 ?? 83 E8 01 0F 85 ?? ?? ?? ?? FF 76 38 E8 ?? ?? ?? ?? F3 0F 10 4D FC 8B C8 F3 0F 5E 4E 58 66 0F 6E C1 F3 0F 2C C1";
+	const pm2Phy = Exe.FindHex(pm2Pat);
+	if (pm2Phy < 0 || Exe.FindHex(pm2Pat, pm2Phy + 1) >= 0)
+		throw Error("EnableDruidClasses: frame step's play-mode switch missing or not unique");
+	const pm2Jne = pm2Phy + 11;                                    //jne rel32 (6): any mode but 0 and 1
+	const pm2ExitVir = Exe.Phy2Vir(pm2Jne + 6, CODE) + Exe.GetInt32(pm2Jne + 2);
+	const pm2CountVir = Exe.Phy2Vir(pm2Phy + 25, CODE) + Exe.GetInt32(pm2Phy + 21); //the action's frame count
+	const pm2TailVir = Exe.Phy2Vir(pm2Phy + 0x25, CODE);           //case 1's movd xmm0,ecx
+	const [pm2FourP, pm2FourV] = Exe.Allocate(4, 4);
+	Exe.SetHex(pm2FourP, " 00 00 80 40");                          //4.0f
+
+	let pm2 = "";
+	pm2 += " 83 F8 01";                  // CMP EAX, 1             mode 2 (EAX = mode - 1)
+	pm2 += JNE(Filler(1));               // JNE the stock exit
+	pm2 += " 83 7E 70 02";               // CMP DWORD [ESI+0x70], 2 the attack motion
+	pm2 += JNE(Filler(1));               // JNE the stock exit
+	pm2 += " FF 76 38";                  // PUSH DWORD [ESI+0x38]  the action
+	pm2 += CALL(Filler(2));              // CALL frame count
+	pm2 += " F3 0F 10 4D FC";            // MOVSS XMM1, [EBP-4]    the time played
+	pm2 += " 8B C8";                     // MOV ECX, EAX           the frame count
+	pm2 += " F3 0F 10 56 58";            // MOVSS XMM2, [ESI+0x58] the time per frame
+	pm2 += " 0F 28 C1";                  // MOVAPS XMM0, XMM1
+	pm2 += " F3 0F 5E C2";               // DIVSS XMM0, XMM2
+	pm2 += " F3 0F 2C C0";               // CVTTSS2SI EAX, XMM0    the frame
+	pm2 += " 83 F8 02";                  // CMP EAX, 2
+	pm2 += JE(Filler(3));                // JE .four
+	pm2 += " 83 F8 03";                  // CMP EAX, 3
+	pm2 += JNE(Filler(4));               // JNE .go
+	const pm2Four = pm2.byteCount();
+	pm2 += " 0F 28 CA";                  // .four: MOVAPS XMM1, XMM2
+	pm2 += " F3 0F 59 0D" + pm2FourV.toHex(4); // MULSS XMM1, [4.0f]   the time of frame 4
+	const pm2Go = pm2.byteCount();
+	pm2 += " F3 0F 5E CA";               // .go: DIVSS XMM1, XMM2  frames played
+	pm2 += JMP(Filler(5));               // JMP case 1's tail      (its frame is int(XMM1))
+	const [pm2P, pm2V] = Exe.Allocate(pm2.byteCount(), 0x10);
+	Exe.SetHex(pm2P, SetFillTargets(pm2, {start: pm2V, 1: pm2ExitVir, 2: pm2CountVir, 3: pm2V + pm2Four, 4: pm2V + pm2Go, 5: pm2TailVir}));
+	Exe.SetInt32(pm2Jne + 2, pm2V - Exe.Phy2Vir(pm2Jne + 6, CODE));
 
 	$$(_, 6.7, `Named effects: play "<name>" on an actor`)
 	/// The 2026 client's skill and status visuals are .str effects looked up by name
