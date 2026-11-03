@@ -1,3 +1,15 @@
+# CrazyBebop - 2025-07-16 build (November 3, 2026)
+
+> **Patch update - re-WARP to apply.** One fix for Enable Druid classes (2026). Re-apply WARP to use it.
+>
+> Easiest route: open **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**, use the **WARP** tab to update this patch set, then re-apply your profile.
+
+## November 3 Hotfix
+
+### Fixed: a Werewolf's normal attack froze the character ([#78](https://github.com/CrazyBebop/WARP0716/issues/78))
+
+Reported by p4937124. In Werewolf form, one normal attack left the character stuck: it could not move or attack again until it left the form. Wereraptor was fine. kRO's 2026 client plays a Werewolf's attack in a mode of its own: once, skipping two frames, then back to standing. The patch started the attack in that mode, but this client's animation step did not know it, so the attack never finished. Enable Druid classes (2026) now carries kRO's handling for it, checked against kRO's own code with the same random inputs and in game: the Werewolf attacks, then walks off again. Nothing changes on the server or in data.grf.
+
 # CrazyBebop - 2025-07-16 build (November 2, 2026)
 
 > **Patch update - re-WARP to apply.** Seven new patches (two from the community), the hair release, nine issue fixes, five Custom Jobs fixes, four patches that now work on this client, nine that never had anything to patch removed, a crash fix for Party HP/SP Bars, and a new Filipino language pack. Re-apply WARP to use them. The website gains a **Docs** section, starting with this client's function catalog.
