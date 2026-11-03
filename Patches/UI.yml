@@ -32,6 +32,12 @@ CustomUI:
     color : orangered
     
     patches:
+        - NativeActJobPreviews:
+            title : Fix HD Job Sprite Previews (Alt+Q / Alt+S)
+            recommend : no
+            author : Louis T Steinhil
+            desc : "Applies ACT layer scale, mirror and rotation to the existing Equipment and Skill Tree sprite resources on 2025-07-16. HD sprites render at their intended size in the native window surfaces. No generated preview pack or runtime DLL is required. Uses the client's existing resource names and GRF priority; install complete matching SPR/ACT pairs."
+
         - LoadGRFOnSlashCmd:
             title : Load GRF via Slash Command
             recommend : no
