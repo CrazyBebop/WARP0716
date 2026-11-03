@@ -49,4 +49,10 @@ CustomSound:
             recommend : no
             author : Andrei Karas (4144) , X-EcutiOnner
             desc : Disables background music loading from mp3NameTable.txt, preventing BGM from playing on any map. Use if you want a completely silent game or handle music through external means.
+        
+        - PlayFirstFrameSounds:
+            title : Play the sound placed on the first frame of an animation
+            recommend : yes
+            author : Stingor
+            desc : The client never plays a sound event placed on frame 0 of an animation that has just REPLACED another one. On an action change it rewinds its "last sounded frame" cursor to 0 and then plays the frames after it, so frame 0 is skipped. Looping animations and actions replayed as-is are unaffected -- which is why hurt and attack sounds are already heard from the second blow onwards, only the first one missing. Death animations always follow another action and are never replayed, so their frame-0 sound is never heard at all: over the 2103 monster sprites of a 2025 kRO data.grf that is 47 silent death sounds, among them Doppelganger and the twelve Bio Lab clones, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune and Elder Willow. This patch rewinds the cursor to -1 instead, so the loop starts at frame 0 and those sounds are heard. (Warning: doppleganger_die.wav is a bit annoying :D)
 
