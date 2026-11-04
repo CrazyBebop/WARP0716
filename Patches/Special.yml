@@ -90,7 +90,7 @@ CustomSpecials:
             title : All HatEffects Screen-Size World Depth [QJS]
             recommend : no
             author : Louis T Steinhil
-            desc : "2025-07-16 DX9Ex only: HatEffects test against a separate world-depth surface, not player sprites. Replays native world passes without color writes and restores GPU/native caches; keeps STR resources, screen position, apparent size, texture RHW, lifecycle and native before/after-character queues. DX7 retains stock effects; capture failure falls back to stock overlay. Adds GPU replay cost while effects are present. Replaces the rejected sprite-plane workaround for issue #77. Real WARP/x86 and DX9Ex pixel tests pass; live game acceptance is pending. See tools/hat-effect-world-depth.md."
+            desc : "2025-07-16 DX9Ex only: HatEffects test against a separate world-depth surface, not player sprites. Respects isRenderBeforeCharacter: false (or omitted) retains after-character/foreground layering; true retains before-character/background layering. World-geometry occlusion applies independently of that setting. Replays native world passes without color writes and restores GPU/native caches; keeps STR resources, screen position, apparent size, texture RHW and lifecycle. DX7 retains stock effects; capture failure falls back to stock overlay. Adds GPU replay cost while effects are present. Replaces the rejected sprite-plane workaround for issue #77. Real WARP/x86 and DX9Ex pixel tests pass; Blossom foreground overlap is user-confirmed, remaining live checks are pending. See tools/hat-effect-world-depth.md."
 
         - AllowDualWeaponSprites:
             title : Dual-Wield Original Weapon Sprites [QJS]

@@ -203,6 +203,22 @@
   },
   "temporary_artifacts_removed": true,
   "live_visual_accepted": false,
+  "user_live_observations": [
+    {
+      "item_id": 20285,
+      "aegis_name": "C_Blossom_Fluttering",
+      "item_name": "Costume Dancing Fallen Sakura",
+      "hat_effect_id": 1,
+      "hat_effect_constant": "HAT_EF_BLOSSOM_FLUTTERING",
+      "vector": "foreground overlap with player",
+      "result": "user_confirmed_pass",
+      "user_report": "is now showing in front of the player. i think its fixed now",
+      "isRenderBeforeCharacter": "omitted (nil, native boolean false)",
+      "current_client_observed_sha256": "de215aaff898d4ca841bb0a9230b4e995b63af549d201e0bc731ff71cfc61ce9",
+      "user_supplied_test_client_hash": false,
+      "full_live_matrix_accepted": false
+    }
+  ],
   "clean_upstream_verification": {
     "base": "4be805c42664999c991f1e2c55a78f19b80f5108",
     "cases": [

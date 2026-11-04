@@ -1,4 +1,4 @@
-# HatEffect world-only occlusion ? issue #77
+# HatEffect world-only occlusion - issue #77
 
 Target: **2025-07-16 Ragexe, DX9Ex**. Original SHA-256:
 `ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff`.
@@ -12,6 +12,21 @@ sprites must not become depth-buffer occluders for HatEffects.** Preserve the
 native before/after-character queues, resources, animation, screen position,
 apparent size, texture RHW and lifecycle. Before-character effects can still
 appear behind players through normal color-pass compositing.
+
+### `isRenderBeforeCharacter` is respected
+
+The patch preserves the client Lua flag's native meaning; it does not force
+all HatEffects into the foreground:
+
+| HatEffectInfo setting | Native layering retained by this patch |
+| --- | --- |
+| `isRenderBeforeCharacter = false,` | Effect is drawn after the character; overlapping effect pixels can appear in front of the player. |
+| `isRenderBeforeCharacter = true,` | Effect is drawn before the character; the character can cover overlapping effect pixels. |
+
+An omitted field is Lua `nil`, which this client's boolean conversion treats
+the same as `false`. World-geometry occlusion applies independently of either
+setting; players are excluded from the HatEffect depth surface, not from native
+before/after compositing. No changes to existing Lua entries are required.
 
 Initial PR commit `b537bca8` matched sprite-row depth. It passed vertex tests
 but **failed live**: the user reported Blossom Fluttering behind its wearer.
@@ -105,9 +120,16 @@ Use `--rollback <receipt-rollback.json.gz>` with the game closed. Rollback
 refuses a subsequently changed release. Deployment helpers need the neighboring
 BanquetOfHeroes signer; upstream WARP patch use does not.
 
-## Remaining game acceptance
+## Live validation and remaining acceptance
 
-Check Blossom's foreground petals, Popping Poring Aura behind the wearer,
+The user confirmed that item **20285**, `C_Blossom_Fluttering` (Costume Dancing
+Fallen Sakura), now shows its **HAT_EF_BLOSSOM_FLUTTERING / HatEffect 1** in
+front of the player. This is a user-reported pass for the previously failing
+foreground-overlap vector, not approval of all effects, flags or camera/world
+occlusion cases. The current locally verified client hash is recorded in the
+evidence; the user did not separately provide a hash for their observation.
+
+Check Blossom's zoom stability, Popping Poring Aura behind the wearer,
 custom clouds, multiple overlapping players, near/far zoom, low/high pitch,
 floor contact, partial wall clipping/contact, moving/fading models, performance,
 movement, map change, relog, Alt+Tab, resolution changes and clean exit. Record
