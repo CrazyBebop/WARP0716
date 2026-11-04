@@ -1,6 +1,6 @@
 # CrazyBebop - 2025-07-16 build (November 3, 2026)
 
-> **Patch update - re-WARP to apply.** One fix for Enable Druid classes (2026). Re-apply WARP to use it.
+> **Patch update - re-WARP to apply.** Two fixes, for Enable Druid classes (2026) and Enable Custom Jobs (Reforged). Re-apply WARP to use them.
 >
 > Easiest route: open **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**, use the **WARP** tab to update this patch set, then re-apply your profile.
 
@@ -9,6 +9,10 @@
 ### Fixed: a Werewolf's normal attack froze the character ([#78](https://github.com/CrazyBebop/WARP0716/issues/78))
 
 Reported by p4937124. In Werewolf form, one normal attack left the character stuck: it could not move or attack again until it left the form. Wereraptor was fine. kRO's 2026 client plays a Werewolf's attack in a mode of its own: once, skipping two frames, then back to standing. The patch started the attack in that mode, but this client's animation step did not know it, so the attack never finished. Enable Druid classes (2026) now carries kRO's handling for it, checked against kRO's own code with the same random inputs and in game: the Werewolf attacks, then walks off again. Nothing changes on the server or in data.grf.
+
+### Fixed: a custom job's wings and capes covered its front
+
+A garment draws behind the body while the character faces you and over it in the other directions. The client reads which from Gravity's tables, and they list only official jobs, so a custom job got "over the body" in every frame and its wings covered its chest and arms. Enable Custom Jobs (Reforged) now answers for such a job as a stock job: the one named in `PCMotionInheritTbl`, else the job whose body its `PCPaths` names, else a Novice. A new `PCRobeInheritTbl` lets you pick the job yourself. Checked against kRO's own garment tables, every official job unchanged. **[Custom Jobs guide](https://warp.legacygamers.net/warp0716/CustomJobs/)**, Garments.
 
 # CrazyBebop - 2025-07-16 build (November 2, 2026)
 
