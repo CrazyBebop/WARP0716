@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : CrazyBebop                                             *
 *   Created Date  : 2026-03-10                                             *
-*   Last Modified : 2026-10-30                                             *
+*   Last Modified : 2026-11-03                                             *
 *                                                                          *
 *   07-16 build: Full rewrite (apply0716). Original patch by Neo-Mind.     *
 *   Generic codepath for older clients stripped (07-16 WARP only).         *
@@ -1664,8 +1664,15 @@ CustomJobs.apply0716 = function(_)
 		const [body, imf] = pair.split(":");
 		imfLua += "[" + luaStr(body) + "]=" + luaStr(imf) + ",";
 	}
-	luaCode = 'local cjim={' + imfLua + '} if type(PCPaths)~="table" then PCPaths={} end'
-		+ ' setmetatable(PCPaths,{__index={' + stockLua + '}}) ' + luaCode;
+	// Phase 15's garment answer. Once Phase 15 renames the question, the client asks PCNewDrawOnTop (not Gravity's
+	// _New_DrawOnTop) for every garment it draws, so it is defined first, before anything in this chunk can fail at
+	// run time. cjrx holds PCRobeInheritTbl (any job); cjrd holds the stock job each custom job layers like, used
+	// only while Gravity's own table has no row for that job. Any other job is asked exactly as before.
+	const robeLua = ' local cjrx,cjrd={},{} function PCNewDrawOnTop(r,s,j,...) local m=cjrx[j] if m==nil then m=cjrd[j]'
+		+ ' if m~=nil then local t=_New_GetLayerDirTbl(s,r) if t~=nil and t[GetSpriteInherite2Job(j)]~=nil then m=nil end end end'
+		+ ' return _New_DrawOnTop(r,s,m or j,...) end';
+	luaCode = 'local cjim={' + imfLua + '} local cjst={' + stockLua + '}' + robeLua
+		+ ' if type(PCPaths)~="table" then PCPaths={} end setmetatable(PCPaths,{__index=cjst}) ' + luaCode;
 	// The client finds sprite folders by their Korean CP949 bytes; written as their Latin-1 look-alike
 	// ("°Ë»ç" for 검사) in a UTF-8 file, each byte arrives as a two-byte pair. Fold those pairs back in
 	// the four path tables, but only for a value made entirely of such pairs plus ASCII: real CP949 bytes
@@ -1679,6 +1686,15 @@ CustomJobs.apply0716 = function(_)
 	// name (Phase 11's third populate call reads _CJ_IMF). After the fold, so a look-alike name maps too.
 	luaCode += ' _CJ_IMF={} if type(PCPaths)=="table" then for k,v in pairs(PCPaths) do if type(k)=="number" then'
 		+ ' _CJ_IMF[k]=(type(v)=="string" and cjim[v]) or v end end end';
+	// Phase 15's tables, after the fold so a look-alike folder name matches its stock body. A PCRobeInheritTbl row
+	// wins for any job. Otherwise each custom job (a PCPaths row) layers like its PCMotionInheritTbl job, else the
+	// stock job whose body folder it names (the lowest id with that folder), else Novice.
+	luaCode += ' if type(PCRobeInheritTbl)=="table" then for k,v in pairs(PCRobeInheritTbl) do'
+		+ ' if type(k)=="number" and type(v)=="number" then cjrx[k]=v end end end'
+		+ ' local cjfo={} for k,v in pairs(cjst) do if cjfo[v]==nil or k<cjfo[v] then cjfo[v]=k end end'
+		+ ' local cjmo=type(PCMotionInheritTbl)=="table" and PCMotionInheritTbl or {}'
+		+ ' if type(PCPaths)=="table" then for k,v in pairs(PCPaths) do if type(k)=="number" then local m=cjmo[k]'
+		+ ' if type(m)~="number" then m=cjfo[v] or 0 end cjrd[k]=m end end end';
 
 	if (failMode === 1) {
 		// Log File: write errors to customjobs_error.log
@@ -2499,6 +2515,32 @@ CustomJobs.apply0716 = function(_)
 	Exe.SetHex(p14Phys, SetFillTargets(JMP(Filler(1)), {
 		start: p14Vir, 1: p14TrVir
 	}) + " 90");
+
+
+	// ==========================================================
+	// Phase 15: garments draw behind a custom job like a stock job's
+	// ==========================================================
+	// Whether a garment draws over the body or behind it, frame by frame, is asked of the robe Lua
+	// _New_DrawOnTop(robe, sex, job, act, frame) (kRO's spreditinfo\_new_2dlayerdir_f.lub) from four
+	// places: the world actor 0x00D36D60, the UI avatar 0x007AD9E0, 0x007D6E40 and 0x00D58E60. Its
+	// tables list, per job, the frames where the garment goes behind (the ones facing the camera), and
+	// a job with no row gets "over the body" in every frame, so a custom job's wings covered its front.
+	//
+	// The four calls copy the one 14-letter name string, so renaming it to PCNewDrawOnTop (14 letters)
+	// sends all of them to Phase 11's wrapper, which asks Gravity's function as a stock job for a custom
+	// job Gravity has no row for, and passes every other job through unchanged. The fix is not written
+	// into Gravity's own LAYER_ALL_TABLE_LIST because the client loads the robe Lua again when a server
+	// is picked (0x00D2AAB7 calls 0x00D64530), which would put that table back.
+	//
+	// Lua API (optional; the default already covers a custom job with no row):
+	//   PCRobeInheritTbl = PCRobeInheritTbl or {}
+	//   PCRobeInheritTbl[PCIds.MY_CUSTOM] = 4252   -- garments layer like Dragon Knight
+
+	$$(_, '0716.P15', `Send the garment layer question to PCNewDrawOnTop (Phase 11's Lua)`)
+	const p15Phys = Exe.FindText("_New_DrawOnTop", PHYSICAL);
+	if (p15Phys < 0)
+		throw Error("Phase 15: the _New_DrawOnTop name string not found");
+	Exe.SetText(p15Phys, "PCNewDrawOnTop");
 
 
 	$$(_, '0716.14', `Ask about copying Lua files (the error display is asked in Phase 11, where it is used)`)
