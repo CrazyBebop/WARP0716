@@ -15,6 +15,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+from js_data_format import load_assignment
 
 import pefile
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
@@ -24,6 +25,7 @@ from unicorn import x86_const as reg
 
 ROOT = Path(__file__).resolve().parents[1]
 PATCH = 'AllHatEffectsWorldDepthOracle'
+QJS = ROOT / f'Scripts/Patches/{PATCH}.qjs'
 ORIGINAL = ROOT / '2025-07-16_Ragexe_175220998_clientinfo/2025-07-16_Ragexe_175220998_clientinfo.exe'
 SOURCE_HASH = 'ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff'
 HOOK, STOCK, CONVERTED = 0xAD93D4, 0xAD93D9, 0xAD93E2
@@ -107,7 +109,7 @@ class Machine:
         self.uc.emu_start(start, STOP, count=1000)
         assert self.uc.reg_read(reg.UC_X86_REG_EIP) in self.stop_at, 'Bridge did not return'
 
-    def depth(self, distance, row, layer=1, active=True, anchor_y=400.0, check_abi=True):
+    def depth(self, distance, row, layer=1, active=True, anchor_y=400.0, check_abi=True, legacy=False):
         uc = self.uc
         self.write_u32(self.cave, int(active))
         self.write_float(EBP - 0x64, f32(1.0 / distance))
@@ -115,6 +117,7 @@ class Machine:
         self.write_u32(EBP + 0x10, MATRIX)
         # Give the historical implementation a valid nondegenerate camera.
         self.write_u32(0x12515F8, CONTEXT)
+        self.write_u32(CONTEXT, 0x00FD6B08 if legacy else 0x00FD6D64)
         self.write_u32(CONTEXT + 0x24, 384)
         self.write_float(CONTEXT + 8, -1200.0)
         self.write_float(MATRIX + 0x10, math.cos(math.radians(45)))
@@ -138,8 +141,8 @@ class Machine:
             xmm[getattr(reg, f'UC_X86_REG_XMM{i}')] = value
             uc.reg_write(getattr(reg, f'UC_X86_REG_XMM{i}'), value)
         before = bytes(uc.mem_read(VERTEX - 0x20, 64))
-        self.run(HOOK, {STOCK, CONVERTED} if not active else {CONVERTED})
-        if not active:
+        self.run(HOOK, {STOCK, CONVERTED} if not active or legacy else {CONVERTED})
+        if not active or legacy:
             assert uc.reg_read(reg.UC_X86_REG_EIP) == STOCK
             assert bytes(uc.mem_read(VERTEX - 0x20, 64)) == before
             assert uc.reg_read(reg.UC_X86_REG_XMM0) & 0xFFFFFFFF == int.from_bytes(struct.pack('<f', f32(1 / distance)), 'little')
@@ -175,8 +178,14 @@ def normalized(rhw):
 
 def expected_depth(distance, row):
     anchor = f32(1 / distance)
-    denominator = f32(f32(1 / anchor) + f32(f32(min(row, 0.0)) * f32(.16)))
-    rhw = f32(1 / denominator) if denominator > 0 else anchor
+    rhw = anchor
+    if row < 0:
+        up = f32(math.cos(math.radians(45)))
+        depth = f32(-math.sin(math.radians(45)))
+        numerator = f32(f32(f32(f32(400 + row) - 384) * depth) - f32(up * -1200.))
+        denominator = f32(f32(f32(400 - 384) * depth) - f32(up * -1200.))
+        if abs(denominator) > 1e-5:
+            rhw = f32(f32(numerator / denominator) * anchor)
     return normalized(f32(rhw + BIAS))
 
 
@@ -188,19 +197,16 @@ def verify_depth(image):
             [-240., -160., -96., -48., -1., 0., 1., 32., 96.], [0, 1, 7, 31]):
         actual = cpu.depth(distance, row, layer)
         assert abs(actual - expected_depth(distance, row)) <= 2e-7, (distance, row, actual)
-        # A foreground wall remains nearer; geometry behind the effect does not
-        # win. This checks depth values, not a claim about D3D rasterization.
-        sprite_rhw = cpu.native_sprite_rhw(distance, row)
-        assert actual < normalized(sprite_rhw), 'Effect crossed behind sprite plane'
-        assert normalized(f32(sprite_rhw + BIAS + .0002)) < actual
-        assert normalized(f32(sprite_rhw - .0002)) > actual
+        # Do not compare against a wearer sprite plane: the actor prepass is
+        # deliberately absent from the separate world depth surface.
         cases += 1
     for distance, row in [(80., -500.), (80., float('nan')), (1000., 0.)]:
         result = cpu.depth(distance, row)
         assert math.isfinite(result), 'Degenerate row lost fallback'
     for row in [-96., 0., 96.]:
         cpu.depth(120., row, active=False)
-    return dict(depth_cases=cases, fallback_cases=3, non_hat_effect_cases=3)
+        cpu.depth(120., row, legacy=True)
+    return dict(depth_cases=cases, fallback_cases=3, non_hat_effect_cases=3, legacy_stock_cases=3)
 
 
 def verify_wrapper(image):
@@ -230,19 +236,71 @@ def verify_wrapper(image):
     return dict(render_call_cases=len(invocations))
 
 
+def verify_isolation(image):
+    payload = load_assignment(QJS.read_text(encoding='utf-8'), 'AllHatEffectsWorldDepthOracleStatic.Payload')
+    draw = int.from_bytes(image.read(0xFD6D9C, 4), 'little')
+    base = draw - payload['exports']['@HatDepthDraw32@12']
+    expected = bytearray.fromhex(payload['hex'])
+    for offset in payload['relocations']:
+        value = struct.unpack_from('<I', expected, offset)[0] + base - payload['imageBase']
+        struct.pack_into('<I', expected, offset, value)
+    config = payload['exports']['HatDepthConfig']
+    cpu = Machine(image)
+    values = [cpu.cave, 0x55C830, 0x55C8C0, 0x55E5B0, 0x55D680, 0x55D850, 0x55E120, 0xFD6D64]
+    expected[config:config + 32] = struct.pack('<8I', *values)
+    assert image.read(base, len(expected)) == bytes(expected), 'Runtime differs from compiled pinned payload'
+    assert image.target(0x55CA9C, 0xE8) == base + payload['exports']['@HatDepthFrame@8']
+    assert int.from_bytes(image.read(0xFD6D98, 4), 'little') == base + payload['exports']['@HatDepthDraw40@12']
+    uc = cpu.uc
+    polygon, primitive = MEM + 0x4000, MEM + 0x5000
+    def invoke(address, args=()):
+        cpu.write_u32(ESP, STOP)
+        for i, value in enumerate(args): cpu.write_u32(ESP + 4 + i * 4, value)
+        uc.reg_write(reg.UC_X86_REG_ESP, ESP)
+        cpu.run(address, {STOP})
+    for active in [0, 1]:
+        cpu.write_u32(cpu.cave, active)
+        uc.mem_write(polygon, bytes(0xA8))
+        invoke(base + payload['exports']['HatDepthMark'], [polygon, primitive])
+        assert uc.mem_read(polygon + 0x15, 1)[0] == (0xA7 if active else 0)
+    invoke(base + payload['exports']['HatDepthRelease'])
+    # Verify integration trampolines decode and retain their exact native tail.
+    md = Cs(CS_ARCH_X86, CS_MODE_32)
+    for site, continuation, replay in [(0xAD9413, 0xAD9418, 'call'),
+                                       (0x55E685, 0x55E68B, 'mov'),
+                                       (0x542B26, 0x542B2C, 'test'),
+                                       (0x55C189, 0x55C18F, 'mov')]:
+        target = image.target(site, 0xE9)
+        instructions = []
+        for insn in md.disasm(image.read(target, 220), target):
+            instructions.append(insn)
+            if insn.mnemonic == 'jmp' and insn.op_str == hex(continuation): break
+        assert instructions[-1].op_str == hex(continuation), hex(site)
+        assert any(insn.mnemonic == replay for insn in instructions), hex(site)
+    return dict(payload=hex(base), payload_bytes=len(expected), tagged_scope_cases=2,
+                capture_hook=hex(image.target(0x55E685, 0xE9)),
+                diagnostics=hex(base + payload['exports']['HatDepthDiagnostics']))
+
+
 def verify_layout(source, image, isolated):
     cpu = Machine(image)
     assert image.read(cpu.cave, 4) == bytes(4)
     assert image.read(cpu.cave + 4, 4) == struct.pack('<f', BIAS)
     md = Cs(CS_ARCH_X86, CS_MODE_32)
-    code = list(md.disasm(image.read(cpu.bridge, 151), cpu.bridge))
-    assert sum(i.size for i in code) == 151
+    code = list(md.disasm(image.read(cpu.bridge, 241), cpu.bridge))
+    assert sum(i.size for i in code) == 241
     assert code[-1].mnemonic == 'jmp' and int(code[-1].op_str, 16) == CONVERTED
     assert [int(i.op_str, 16) for i in code if i.mnemonic == 'call'] == [CONVERT]
     if isolated:
-        allowed = set(range(cpu.cave, cpu.cave + 0x120))
+        allowed = set(range(cpu.cave, cpu.cave + 0x160))
         for site in (*CALLS, HOOK):
             allowed.update(range(site, site + 5))
+        for va, size in [(0xAD9413, 5), (0x55E685, 6), (0x542B26, 6), (0x55C189, 6),
+                         (0x55CA9C, 5), (0xFD6D98, 8)]:
+            allowed.update(range(va, va + size))
+        payload = load_assignment(QJS.read_text(encoding='utf-8'), 'AllHatEffectsWorldDepthOracleStatic.Payload')
+        payload_base = int.from_bytes(image.read(0xFD6D9C, 4), 'little') - payload['exports']['@HatDepthDraw32@12']
+        allowed.update(range(payload_base, payload_base + len(payload['hex']) // 2 + 0x300))
         for section in source.pe.sections:
             if not section.Characteristics & 0x20000000:
                 continue
@@ -251,7 +309,8 @@ def verify_layout(source, image, isolated):
             stray = [BASE + section.VirtualAddress + i for i, (a, b) in enumerate(zip(before, after))
                      if a != b and BASE + section.VirtualAddress + i not in allowed]
             assert not stray, f'Unscoped native writes: {stray[:10]}'
-    return dict(bridge_bytes=151, cave=hex(cpu.cave), bridge=hex(cpu.bridge))
+    return dict(bridge_bytes=241, cave=hex(cpu.cave), bridge=hex(cpu.bridge),
+                world_isolation=verify_isolation(image))
 
 
 def export(fixture, folder, source, patches, expect_error=None):
@@ -348,7 +407,10 @@ def verify(source, warp, baseline=None, only=None, baseline_ref=None):
         saved = patch.read_bytes()
         try:
             patch.write_bytes(saved + b'\r\nAllHatEffectsWorldDepthOracle.validate = () => true;\r\n')
-            for i, va in enumerate([*CALLS, 0xAD8D91, 0xAD93C5, 0xAD9308, HOOK, 0xAD8B7D, 0xC4102B]):
+            guards = [*CALLS, 0xAD8D91, 0xAD93C5, 0xAD9308, HOOK, 0xAD8B7D]
+            guards += [row['va'] for row in load_assignment(QJS.read_text(encoding='utf-8'),
+                        'AllHatEffectsWorldDepthOracleStatic.WorldChecks')]
+            for i, va in enumerate(guards):
                 if only and f'guards-{i // 2 + 1}' not in only:
                     continue
                 raw = bytearray(source.read_bytes())
@@ -382,7 +444,7 @@ if __name__ == '__main__':
     parser.add_argument('--report', type=Path)
     parser.add_argument('--only', action='append', choices=[
         'isolated', 'sprite-first', 'hat-first', 'reapply',
-        'guards-1', 'guards-2', 'guards-3', 'guards-4'],
+        *[f'guards-{i}' for i in range(1, 12)]],
         help='Run a bounded subset; repeat to combine groups (default: all)')
     args = parser.parse_args()
     report = verify(args.source, args.warp, args.baseline_qjs, args.only, args.baseline_ref)

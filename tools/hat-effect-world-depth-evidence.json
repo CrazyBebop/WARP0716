@@ -1,66 +1,85 @@
 {
   "issue": "https://github.com/CrazyBebop/WARP0716/issues/77",
+  "revision": "world-only-depth-isolation",
   "source_sha256": "ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff",
-  "patch_sha256": "15c90cbb7cb2f6bb1e6f3c2df34072828168ac4dddee03410079873d93baef32",
-  "verifier_sha256": "7ae638e26638230df6177e8b565632d03ee190e6fbe3679114c5e0a3825ec674",
+  "patch_sha256": "c8defd35fb3792c6164a897997b6bff276b978a199292e3374c4e0a80e861414",
+  "verifier_sha256": "eedf6648a0cbfb7290ccf08ef31c91e53a8975d7f0564f0b1c360c753873c2d0",
   "warp_sha256": "0a16548929427fb4913bd5c46a47955f025a692c3f79830e5657365dd33f9660",
   "cases": [
     {
-      "case": "historical-regression",
-      "effect_z": 0.9156139492988586,
-      "wearer_plane_z": 0.9105042219161987,
-      "reproduced": true
-    },
-    {
       "case": "isolated",
-      "sha256": "5ac236c6d21d230fa68c994c46bacf2fa95b3335b95fd623c02e77401a82a264",
+      "sha256": "b3fbb9463177002c279c70f5c82170b915d99b6154fa710073901eaac588ebc9",
       "patches": [
         "AllHatEffectsWorldDepthOracle"
       ],
-      "bridge_bytes": 151,
+      "bridge_bytes": 241,
       "cave": "0x171d350",
       "bridge": "0x171d380",
+      "world_isolation": {
+        "payload": "0x171d4c0",
+        "payload_bytes": 8312,
+        "tagged_scope_cases": 2,
+        "capture_hook": "0x171f5c0",
+        "diagnostics": "0x171f4e4"
+      },
       "depth_cases": 216,
       "fallback_cases": 3,
       "non_hat_effect_cases": 3,
+      "legacy_stock_cases": 3,
       "render_call_cases": 2
     },
     {
+      "case": "reapply",
+      "sha256": "9e4f3affc20cac6b693554c8fa04fa7064e0f04bdb0ec3629d0fe05c9c0acd9e",
+      "passed": true
+    },
+    {
       "case": "sprite-first",
-      "sha256": "240b598868bc950d57e6f0fd853441065004c04c1f23e524f46b57f0e2f72a36",
+      "sha256": "0e1d05a1f4c3425e636d3417fd17513b61cfd010b84ba46d455064303940d1a9",
       "patches": [
         "UniformSpriteRHW",
         "FloorSafeSpriteDepth",
         "AllHatEffectsWorldDepthOracle"
       ],
-      "bridge_bytes": 151,
+      "bridge_bytes": 241,
       "cave": "0x171d4a0",
       "bridge": "0x171d4d0",
+      "world_isolation": {
+        "payload": "0x171d610",
+        "payload_bytes": 8312,
+        "tagged_scope_cases": 2,
+        "capture_hook": "0x171f710",
+        "diagnostics": "0x171f634"
+      },
       "depth_cases": 216,
       "fallback_cases": 3,
       "non_hat_effect_cases": 3,
+      "legacy_stock_cases": 3,
       "render_call_cases": 2
     },
     {
       "case": "hat-first",
-      "sha256": "240b598868bc950d57e6f0fd853441065004c04c1f23e524f46b57f0e2f72a36",
+      "sha256": "0e1d05a1f4c3425e636d3417fd17513b61cfd010b84ba46d455064303940d1a9",
       "patches": [
         "AllHatEffectsWorldDepthOracle",
         "UniformSpriteRHW",
         "FloorSafeSpriteDepth"
       ],
-      "bridge_bytes": 151,
+      "bridge_bytes": 241,
       "cave": "0x171d4a0",
       "bridge": "0x171d4d0",
+      "world_isolation": {
+        "payload": "0x171d610",
+        "payload_bytes": 8312,
+        "tagged_scope_cases": 2,
+        "capture_hook": "0x171f710",
+        "diagnostics": "0x171f634"
+      },
       "depth_cases": 216,
       "fallback_cases": 3,
       "non_hat_effect_cases": 3,
+      "legacy_stock_cases": 3,
       "render_call_cases": 2
-    },
-    {
-      "case": "reapply",
-      "sha256": "6df233aacec5bba249e77357f4e52075b7e50d5cd5ac626bd7ca05f26d7f913c",
-      "passed": true
     },
     {
       "case": "reject-native-guard",
@@ -99,82 +118,122 @@
     },
     {
       "case": "reject-native-guard",
-      "address": "0xc4102b",
+      "address": "0xad9413",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55e685",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x542b26",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55c189",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55ca9c",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xfd6d98",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55c830",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55c8c0",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55d680",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55d850",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55e120",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x560190",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xaee91a",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0x55e685",
       "passed": true
     }
   ],
+  "gpu": {
+    "passed": true,
+    "gpu_pixel_cases": 43,
+    "backend": "real DX9Ex HAL",
+    "source_sha256": "f02606d2f4d498b8b470cec1a9b87755ed03a1247de5383b32ab88a6bbf19a10",
+    "test_sha256": "1d24f3920e0361685ea61dc0721ea1994dbc2332bd2a4c4d63c9f091a35b978e",
+    "stdout": "PASS 43 real DX9Ex pixel/readback cases: world-only occlusion, both character layers, stock fallback, state/surface restore",
+    "game_live_accepted": false,
+    "temporary_artifacts_removed": true
+  },
+  "historical": {
+    "rejected_commit": "b537bca81caf9fdfbd44e75f567ef4e410dc86f3",
+    "reason": "User reports Blossom foreground hidden by wearer; vertex-only plane matching did not isolate character prepass depth"
+  },
   "temporary_artifacts_removed": true,
   "live_visual_accepted": false,
-  "upstream_base": "4be805c42664999c991f1e2c55a78f19b80f5108",
   "clean_upstream_verification": {
+    "base": "4be805c42664999c991f1e2c55a78f19b80f5108",
     "cases": [
       {
-        "case": "historical-regression",
-        "effect_z": 0.9156139492988586,
-        "wearer_plane_z": 0.9105042219161987,
-        "reproduced": true
-      },
-      {
         "case": "isolated",
-        "sha256": "5ac236c6d21d230fa68c994c46bacf2fa95b3335b95fd623c02e77401a82a264",
+        "sha256": "b3fbb9463177002c279c70f5c82170b915d99b6154fa710073901eaac588ebc9",
         "patches": [
           "AllHatEffectsWorldDepthOracle"
         ],
-        "bridge_bytes": 151,
+        "bridge_bytes": 241,
         "cave": "0x171d350",
         "bridge": "0x171d380",
+        "world_isolation": {
+          "payload": "0x171d4c0",
+          "payload_bytes": 8312,
+          "tagged_scope_cases": 2,
+          "capture_hook": "0x171f5c0",
+          "diagnostics": "0x171f4e4"
+        },
         "depth_cases": 216,
         "fallback_cases": 3,
         "non_hat_effect_cases": 3,
+        "legacy_stock_cases": 3,
         "render_call_cases": 2
       },
       {
         "case": "reapply",
-        "sha256": "6df233aacec5bba249e77357f4e52075b7e50d5cd5ac626bd7ca05f26d7f913c",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xafe41c",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xafe52b",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xad8d91",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xad93c5",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xad9308",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xad93d4",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xad8b7d",
-        "passed": true
-      },
-      {
-        "case": "reject-native-guard",
-        "address": "0xc4102b",
+        "sha256": "9e4f3affc20cac6b693554c8fa04fa7064e0f04bdb0ec3629d0fe05c9c0acd9e",
         "passed": true
       }
     ],
     "temporary_artifacts_removed": true
-  },
-  "exception_path_cleanup_verified": true
+  }
 }

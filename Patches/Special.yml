@@ -90,7 +90,7 @@ CustomSpecials:
             title : All HatEffects Screen-Size World Depth [QJS]
             recommend : no
             author : Louis T Steinhil
-            desc : "2025-07-16 build-specific global HatEffect depth patch. Preserves original STR resources, animation, attachments, lifecycle, screen position, apparent size and texture RHW. Only the two generic HatEffect render methods use native sprite-row depth (0.16 screen-Y tilt) with a floor-safe anchor clamp and bounded four-quantum contact bias, converted through 0x00554040. Replaces the world-Y plane that crossed the wearer at close zoom (issue #77). Native world STR NPCs and draw-order flags remain unchanged. This revision is WARP/native-execution tested; live visual acceptance is pending. See tools/hat-effect-world-depth.md."
+            desc : "2025-07-16 DX9Ex only: HatEffects test against a separate world-depth surface, not player sprites. Replays native world passes without color writes and restores GPU/native caches; keeps STR resources, screen position, apparent size, texture RHW, lifecycle and native before/after-character queues. DX7 retains stock effects; capture failure falls back to stock overlay. Adds GPU replay cost while effects are present. Replaces the rejected sprite-plane workaround for issue #77. Real WARP/x86 and DX9Ex pixel tests pass; live game acceptance is pending. See tools/hat-effect-world-depth.md."
 
         - AllowDualWeaponSprites:
             title : Dual-Wield Original Weapon Sprites [QJS]

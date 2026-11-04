@@ -1,109 +1,114 @@
-# HatEffect world depth — issue #77
+# HatEffect world-only occlusion ? issue #77
 
-Target: **2025-07-16 Ragexe**, original SHA-256
+Target: **2025-07-16 Ragexe, DX9Ex**. Original SHA-256:
 `ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff`.
-
 Issue: <https://github.com/CrazyBebop/WARP0716/issues/77>.
+PR: <https://github.com/CrazyBebop/WARP0716/pull/80> (draft).
 
-## Finding
+## Contract and rejected revision
 
-The report describes an effect covering its wearer at distant zoom but being
-cut by the wearer at close zoom. The issue's lists of effect IDs are predictions
-from Lua draw-order flags, **not** a confirmed affected-ID matrix. The reporter
-has not supplied the gender-change effect's ID.
+**Buildings, opaque walls/models and terrain may occlude HatEffects. Player
+sprites must not become depth-buffer occluders for HatEffects.** Preserve the
+native before/after-character queues, resources, animation, screen position,
+apparent size, texture RHW and lifecycle. Before-character effects can still
+appear behind players through normal color-pass compositing.
 
-The previous bridge reconstructed upper vertices along world Y using the
-projection matrix. Ordinary native sprite rows do something different:
-`0x00C4102B` uses `z + 0.16 * (screenY - anchorY)` before taking the reciprocal.
-Consequently the two depth planes can cross. Increasing a fixed reciprocal-depth
-bias cannot correct that discrepancy at every zoom.
+Initial PR commit `b537bca8` matched sprite-row depth. It passed vertex tests
+but **failed live**: the user reported Blossom Fluttering behind its wearer.
+That approach is rejected. Blossom's absent Lua field is nil; the native
+boolean converter treats nil and false identically. Lua overrides or larger
+contact biases are not the fix. Historical visual acceptance does not accept
+this revision.
 
-The verifier exports the old QJS through real WARP, then executes the actual
-bridge and native `0x00554040` with Unicorn. At camera distance 120 and row -96,
-the historical effect Z is behind the native sprite-row plane. The receipt
-records both values; this is a **numeric reproduction**, not a screenshot of
-the reporter's particular effect or a reconstruction of their camera settings.
+## Native pipeline and replacement
 
-## Change
+The client writes character depth in an alpha-tested prepass before drawing
+sprite colors. Changing HatEffect vertex Z alone cannot isolate world depth.
 
-For HatEffect-scoped normalized Z only:
+The import-free static EXE payload:
 
-```text
-row   = min(screenY - anchorY, 0)
-depth = 1 / anchorRHW + nativeSpriteTilt * row
-rhwZ  = (depth > 0 ? 1 / depth : anchorRHW) + contactBias
-Z     = nativeDepthConversion(rhwZ)
-```
+1. Tags only polygons emitted in the two generic HatEffect render scopes.
+   Polygon byte `+0x15` is reset by native pool reset `0x005601B8`.
+2. At `0x0055E685`, before character prepass, replays native world passes
+   `0x0055D680`, `0x0055D850`, `0x0055E120` into a separate depth surface.
+   Color writes are disabled and re-enforced at both actual draw boundaries.
+   Character and HatEffect queues are not replayed into this surface.
+3. Only tagged HatEffect draws bind world depth, enable Z testing and disable
+   Z writes; the original surface and exact Z states are restored afterward.
+   Native before/after queues, blend/materials and other sprite draws stay stock.
+4. Restores the GPU state block AND native state/texture caches after replay.
+5. Releases the owned surface before ResetEx and renderer destruction; recreates
+   it with matching format/dimensions/multisampling. Frame scope/ready state is
+   reset every frame. No replay occurs when no HatEffects were queued.
 
-The native tilt is read from `0x011DD478`, with its consuming instruction
-verified before allocation/writes. The existing four-quantum contact bias
-(`0x3827C5AC`) remains bounded. At/below the anchor the floor-safe plane remains
-unchanged. Nonpositive/NaN denominators fall back to the anchor. NaN row input
-uses SSE MINSS's zero operand.
+The established four-quantum Y-up world-depth calculation is retained, but no
+longer tested against character depth. Its bridge preserves all live GPR/XMM
+lanes. Native hook signatures are checked before allocation/activation.
+No DLL imports, API detours, shaders, recv hooks or Lua/server changes.
 
-The two original render call sites, scope wrapper, renderer submission, flags
-and native draw-order routing are unchanged. This does **not** force every
-HatEffect in front of its wearer or disable depth testing. Screen X/Y, texture
-RHW (including its original layer bias), UV, colors, animation and lifecycle
-remain native. Other screen STR users still execute the displaced instruction
-and return to the stock continuation.
+### Limitations
 
-The old upper-vertex calculation also overwrote EAX/ECX and restored only the
-low lanes of its temporary XMM registers. The smaller bridge needs no GPR
-temporaries and saves/restores all 128 bits of XMM1/XMM4, including XMM1 around
-the native conversion call. Its 151 bytes fit the existing 0x120-byte allocation.
+- **DX9Ex only. DX7 retains stock effects**, without world occlusion.
+- Capture failure uses stock overlay instead of player-containing depth. A
+  state-query failure skips that draw safely; diagnostics expose failures.
+  Fallback is not successful world-occlusion acceptance.
+- Extra world replay GPU cost and one full-sized depth surface when HatEffects
+  are present. Real-scene performance and transparent/fading models still need
+  review; not every model/material is claimed to be an opaque occluder.
+- GPU tests use synthetic geometry and the same C++ implementation, not the
+  complete Ragnarok world renderer. They do not establish game acceptance.
 
-## Reproduction and automated checks
+## Reproducible checks
 
-Run from the repository root with the existing pefile/capstone/unicorn Python
-environment and `win32/WARP_console.exe`:
+Use the existing pefile/capstone/unicorn Python environment and WARP console.
+GPU tests additionally need MSVC x86, Windows SDK and DX9Ex HAL; paths are pinned
+in the builder. Directory symlinks require Developer Mode or elevation.
 
 ```powershell
-.\.venv-target-hud\Scripts\python.exe tools\verify_hat_effect_world_depth.py --baseline-ref 4be805c42664999c991f1e2c55a78f19b80f5108 --report tools\hat-effect-world-depth-evidence.json
+.\.venv-target-hud\Scripts\python.exe tools\build_hat_effect_world_depth.py --check --gpu-test
+.\.venv-target-hud\Scripts\python.exe tools\verify_hat_effect_world_depth.py --report tools\hat-effect-world-depth-evidence.json
 ```
 
-`--source` and `--warp` override local binary locations. `--baseline-ref` reads
-the original QJS bytes directly from Git into the temporary fixture. Alternatively,
-`--baseline-qjs` accepts an unmodified patch file. Do not use PowerShell text
-redirection to extract that CRLF/no-BOM file; preserve the raw `git show` bytes.
-`--only` provides bounded test groups. Directory symlinks require Windows
-Developer Mode or an elevated shell, as on the verified host.
+The builder emits the patch from its checked-in template/C++ and leaves no
+EXE/object/library copies. `--check` verifies generated byte identity. The
+verifier accepts `--source`, `--warp`, and bounded `--only` groups. Historical
+upstream numeric reproduction is available through `--baseline-ref 4be805c4`.
 
-Checks execute emitted machine code, not a JavaScript reimplementation:
+- **43 real DX9Ex GPU/readback cases:** both draw formats and character layers,
+  nearer players, opaque wall mask, fallback, non-tagged draws, no world repaint,
+  GPU/native cache restoration, release/ResetEx/resolution recreation and scope.
+- **216 emitted x86 vertex cases per export:** full GPR/XMM preservation, exact
+  native texture RHW, NaN fallback, unscoped STR and DX7 stock paths.
+- Pinned payload relocation/configuration, scoped tags, integration continuations,
+  real WARP export and safe reapply (one initialized payload write avoids WARP
+  overlapping-write unpatch/reapply loss).
+- Both requested orders with optional UniformSpriteRHW/FloorSafeSpriteDepth;
+  neither is a dependency. WARP can canonicalize selected patch order.
+- **21 native signature rejection vectors** before hook activation.
+- Temporary-directory cleanup; PE reads use bytes, not Windows mapped-file locks.
 
-- QJS source encoding/CRLF, banner alignment and indentation (also checked
-  independently with the local `verify_qjs_patch_style.py` gate).
-- Real QuickJS/WARP patch export, both HatEffect render-call wrappers and safe
-  reapplication through WARP's own unpatch/reapply handling.
-- Six camera distances, nine vertex rows, four native STR layer indices:
-  **216 cases per export**, including full GPR/live-XMM preservation and exact
-  stock RHW. Degenerate rows/denominators and unscoped STR paths are separate.
-- Nearer/farther geometry depth comparisons, scoped native-code write coverage,
-  complete bridge decode and native call/continuation targets.
-- Eight individually corrupted native guards reject before activating hooks.
-- Where available, both orders with `UniformSpriteRHW` and
-  `FloorSafeSpriteDepth`; neither is a prerequisite of this patch.
-- TemporaryDirectory teardown removes fixtures, read-only directory links and test clients
-  on both success and Python exceptions. No deployed client/resources/settings
-  are modified. Qt/data directories are linked, not duplicated. PE files are
-  read from bytes (fast-load mode) to avoid Windows mmap file locks and expensive
-  parsing of the client's unrelated imports/resources.
+Receipt: [hat-effect-world-depth-evidence.json](hat-effect-world-depth-evidence.json).
 
-Compact results: [`hat-effect-world-depth-evidence.json`](hat-effect-world-depth-evidence.json).
+## Updating a current signed local client
 
-## Acceptance boundary
+`upgrade_hat_effect_world_depth.py` copies the real WARP-emitted runtime into
+one isolated `.hdepth` section. Existing section contents outside the named
+hooks and the overlay are preserved. Raw section offsets shift only when
+header space is exhausted. The current GrayMap option hook is individually
+fingerprinted and preserved; unknown changes are rejected.
 
-Automated native execution verifies the calculation and ABI, **not** D3D
-rasterization, interpolated overlap, all attachment offsets, or live visibility.
-Do not carry the old July 14 visual acceptance claim forward to this revision.
-The exact reported gender-change effect remains unavailable locally; the issue
-also states that the maintainer's test setup could not render stock HatEffects.
+It requires the current EXE hash, validates the previous signature, scans assets,
+signs with the existing local server key, and installs only EXE/signature.
+No key/full client/assets are committed. Sparse gzip rollback is hash-guarded
+and actually executed in a temporary signed sandbox before installation.
+Use `--rollback <receipt-rollback.json.gz>` with the game closed. Rollback
+refuses a subsequently changed release. Deployment helpers need the neighboring
+BanquetOfHeroes signer; upstream WARP patch use does not.
 
-Before marking this revision visually accepted, compare stock/old/fixed clients
-with the reporter's effect and representative custom effects at near/far zoom
-and low/high pitch. Check before/after-character flags, full-body clouds,
-head-only effects, floor contact, partial opaque-wall clipping, wall contact,
-animation, actor movement, map change, relog and teardown. Include overlapping
-sprite/effect quads and attachment offsets rather than testing vertices alone.
-Record effect IDs, client hashes and screenshots. The PR remains a draft until
-that live matrix is supplied; no server/Lua resources are altered to mask it.
+## Remaining game acceptance
+
+Check Blossom's foreground petals, Popping Poring Aura behind the wearer,
+custom clouds, multiple overlapping players, near/far zoom, low/high pitch,
+floor contact, partial wall clipping/contact, moving/fading models, performance,
+movement, map change, relog, Alt+Tab, resolution changes and clean exit. Record
+effect IDs, client hashes and screenshots. **Keep PR draft until game acceptance.**

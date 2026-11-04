@@ -1,0 +1,442 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-11-04                                             *
+*   Last Modified : 2026-11-04                                             *
+*   Description   : 2025-07-16 DX9Ex: HatEffects test only world depth.    *
+*                   Native world passes replay without color writes;       *
+*                   actor depth and before/after queues stay original.     *
+*                   On capture failure and DX7, retain stock effects.      *
+*                   Replaces rejected sprite-plane workaround (#77).       *
+*   Generator     : tools/build_hat_effect_world_depth.py                  *
+*   Evidence      : tools/hat-effect-world-depth.md                        *
+*   Verifier      : tools/verify_hat_effect_world_depth.py                 *
+*                                                                          *
+\**************************************************************************/
+
+const AllHatEffectsWorldDepthOracleStatic = {
+	BuildDate: 20250716,
+	RenderCallNoArgVir: 0x00AFE41C,
+	RenderCallNoArgBytes: "E8 2F A3 FD FF",
+	RenderCallArgVir: 0x00AFE52B,
+	RenderCallArgBytes: "E8 20 A2 FD FF",
+	ScreenLayerLoopVir: 0x00AD8750,
+	AnchorProjectionVir: 0x00AD8D91,
+	AnchorProjectionBytes: "E8 1A B4 A7 FF",
+	ScreenNearDepthVir: 0x00AD93C5,
+	ScreenNearDepthBytes: "C7 42 EC C8 1C 02 38",
+	ScreenLayerBiasVir: 0x00AD9308,
+	ScreenLayerBiasBytes: "F3 0F 59 1D E4 6A FD 00",
+	DepthHookVir: 0x00AD93D4,
+	DepthHookBytes: "F3 0F 10 45 9C",
+	DepthStockContinueVir: 0x00AD93D9,
+	DepthConvertedContinueVir: 0x00AD93E2,
+	WorldDepthConvertVir: 0x00554040,
+	WorldDepthConvertCallVir: 0x00AD8B7D,
+	WorldDepthConvertCallBytes: "E8 BE B4 A7 FF",
+	RenderContextPtrVir: 0x012515F8,
+	NativeDepthQuantumVir: 0x00FD6AE4,
+	NativeAbsMaskVir: 0x00FD5D60,
+	ContactDepthBiasBits: 0x3827C5AC,
+	CaveSize: 0x160,
+	ContactBiasOffset: 0x04,
+	WrapperOffset: 0x08,
+	DepthBridgeOffset: 0x30,
+	WrapperSize: 32,
+	DepthBridgeSize: 241
+};
+
+AllHatEffectsWorldDepthOracleStatic.normalizeHex = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+AllHatEffectsWorldDepthOracleStatic.assertBytes = function(label, virAddr, expected)
+{
+	const phyAddr = Exe.Vir2Phy(virAddr);
+	if (phyAddr < 0)
+		throw Error(`AllHatEffectsWorldDepthOracle: ${label} is not mapped`);
+
+	const normalized = AllHatEffectsWorldDepthOracleStatic.normalizeHex(expected);
+	const size = normalized.split(" ").length;
+	const actual = AllHatEffectsWorldDepthOracleStatic.normalizeHex(
+		Exe.GetHex(phyAddr, size)
+	);
+	if (actual !== normalized)
+		throw Error(
+			`AllHatEffectsWorldDepthOracle: ${label} mismatch, got ${actual}`
+		);
+	return phyAddr;
+};
+
+AllHatEffectsWorldDepthOracleStatic.byteCount = function(hex)
+{
+	const compact = (hex || "").replace(/\s+/g, "");
+	if ((compact.length & 1) !== 0)
+		throw Error("AllHatEffectsWorldDepthOracle: odd generated hex length");
+	return compact.length / 2;
+};
+
+AllHatEffectsWorldDepthOracleStatic.rel32 = function(opcode, targetVir, sourceVir)
+{
+	return opcode + (targetVir - (sourceVir + 5)).toHex(4);
+};
+
+AllHatEffectsWorldDepthOracleStatic.rel8 = function(opcode, targetVir, sourceVir)
+{
+	const relative = targetVir - (sourceVir + 2);
+	if (relative < -128 || relative > 127)
+		throw Error(`AllHatEffectsWorldDepthOracle: rel8 out of range ${relative}`);
+	return opcode + (relative & 0xFF).toHex(1);
+};
+
+AllHatEffectsWorldDepthOracle = function(_)
+{
+	const state = AllHatEffectsWorldDepthOracleStatic;
+	if (Exe.BuildDate !== state.BuildDate)
+		throw Error("AllHatEffectsWorldDepthOracle supports only the 2025-07-16 client");
+
+	$$(_, 1, `Verify HatEffect render calls and the screen-STR depth path`);
+	const renderCallNoArgPhy = state.assertBytes(
+		"HatEffect no-argument render call",
+		state.RenderCallNoArgVir,
+		state.RenderCallNoArgBytes
+	);
+	const renderCallArgPhy = state.assertBytes(
+		"HatEffect argument render call",
+		state.RenderCallArgVir,
+		state.RenderCallArgBytes
+	);
+	state.assertBytes(
+		"screen-STR anchor projection",
+		state.AnchorProjectionVir,
+		state.AnchorProjectionBytes
+	);
+	state.assertBytes(
+		"screen-STR constant near depth",
+		state.ScreenNearDepthVir,
+		state.ScreenNearDepthBytes
+	);
+	state.assertBytes(
+		"screen-STR native layer-depth quantum",
+		state.ScreenLayerBiasVir,
+		state.ScreenLayerBiasBytes
+	);
+	const depthHookPhy = state.assertBytes(
+		"screen-STR reciprocal-depth load",
+		state.DepthHookVir,
+		state.DepthHookBytes
+	);
+	state.assertBytes(
+		"native normalized-depth conversion call",
+		state.WorldDepthConvertCallVir,
+		state.WorldDepthConvertCallBytes
+	);
+	for (const check of state.WorldChecks)
+		state.assertBytes(check.name, check.va, check.bytes);
+
+	$$(_, 2, `Build the HatEffect render scope and normalized-depth bridge`);
+	const [cavePhy, caveVir] = Exe.Allocate(state.CaveSize, 0x10);
+	const flagPhy = cavePhy;
+	const flagVir = caveVir;
+	const contactBiasPhy = cavePhy + state.ContactBiasOffset;
+	const contactBiasVir = caveVir + state.ContactBiasOffset;
+	const wrapperPhy = cavePhy + state.WrapperOffset;
+	const wrapperVir = caveVir + state.WrapperOffset;
+	const depthBridgePhy = cavePhy + state.DepthBridgeOffset;
+	const depthBridgeVir = caveVir + state.DepthBridgeOffset;
+
+	Exe.SetUint32(flagPhy, 0);
+	Exe.SetUint32(contactBiasPhy, state.ContactDepthBiasBits);
+	state.installWorldIsolation(flagVir);
+
+	// The wrapper scopes the global depth hook to the two generic HatEffect
+	// render methods. The original screen-space STR loop still owns position,
+	// size, animation, texture, UV, color, blend state, and submission.
+	const wrapperCode =
+		"C7 05 " + flagVir.toHex(4) + " 01 00 00 00 " +
+		"FF 74 24 04 " +
+		state.rel32("E8", state.ScreenLayerLoopVir, wrapperVir + 14) +
+		"C7 05 " + flagVir.toHex(4) + " 00 00 00 00 " +
+		"C2 04 00";
+	const wrapperSize = state.byteCount(wrapperCode);
+	if (wrapperSize !== state.WrapperSize)
+		throw Error(`AllHatEffectsWorldDepthOracle: wrapper size ${wrapperSize}`);
+	Exe.SetHex(wrapperPhy, state.normalizeHex(wrapperCode));
+
+	// AD8C40 already obtains the actor projection from 005541B0. Keep its stock
+	// layer-biased RHW at vertex +0C. For vertex Z, pixels at/below the projected
+	// actor anchor retain a four-quantum contact-biased anchor plane, preventing
+	// floor intersection and shallow wall contact from consuming the sprite.
+	// Upper pixels reconstruct reciprocal depth along Ragnarok's Y-up axis:
+	//
+	//   rhw' = rhw * (m5*(y-cy) - m4*sy) /
+	//                (m5*(anchorY-cy) - m4*sy)
+	//
+	// This is the algebraic inverse of the native 005541B0 Y projection. A
+	// four-native-quantum contact tolerance is tiny relative to the stock
+	// always-on-top Z, but lets attached visuals survive touching geometry.
+	const depthBridgeHead =
+		"83 3D " + flagVir.toHex(4) + " 00 " +
+		"74 0F " +
+		"50 A1 " + state.RenderContextPtrVir.toHex(4) + " " +
+		"81 38 64 6D FD 00 58 74 0A " +
+		"F3 0F 10 45 9C " +
+		state.rel32("E9", state.DepthStockContinueVir, depthBridgeVir + 29) +
+		"F3 0F 10 45 9C " +
+		"F3 0F 5C C3 " +
+		"F3 0F 11 42 F0 " +
+		"50 51 " +
+		"83 EC 44 " +
+		"0F 11 4C 24 04 " +
+		"0F 11 64 24 14 " +
+		"0F 11 6C 24 24 " +
+		"0F 11 74 24 34 " +
+		"F3 0F 10 45 9C " +
+		"F3 0F 58 05 " + contactBiasVir.toHex(4) + " " +
+		"F3 0F 10 62 E8 " +
+		"0F 2F 65 C4 " +
+		"7A 65 ";
+	// The projection matrix must be reloaded from stable argument [EBP+10].
+	// Local [EBP-38] initially mirrors it but is reused before the vertex loop.
+	const uprightDepthHead =
+		"A1 " + state.RenderContextPtrVir.toHex(4) + " " +
+		"66 0F 6E 68 24 " +
+		"0F 5B ED " +
+		"F3 0F 5C E5 " +
+		"F3 0F 10 75 C4 " +
+		"F3 0F 5C F5 " +
+		"8B 4D 10 " +
+		"F3 0F 10 69 14 " +
+		"F3 0F 59 E5 " +
+		"F3 0F 59 F5 " +
+		"F3 0F 10 69 10 " +
+		"F3 0F 59 68 08 " +
+		"F3 0F 5C E5 " +
+		"F3 0F 5C F5 ";
+	const uprightDepthGuard =
+		"0F 28 EE " +
+		"0F 54 2D " + state.NativeAbsMaskVir.toHex(4) + " " +
+		"0F 2F 2D " + state.NativeDepthQuantumVir.toHex(4) + " ";
+	const uprightDepthTail =
+		"F3 0F 5E E6 " +
+		"F3 0F 59 65 9C " +
+		"F3 0F 58 25 " + contactBiasVir.toHex(4) + " " +
+		"0F 28 C4 ";
+	const depthConvertVir = depthBridgeVir +
+		state.byteCount(depthBridgeHead) + 2 +
+		state.byteCount(uprightDepthHead) +
+		state.byteCount(uprightDepthGuard) + 2 +
+		state.byteCount(uprightDepthTail);
+	const depthBridgeBeforeCall =
+		depthBridgeHead +
+		state.rel8(
+			"73",
+			depthConvertVir,
+			depthBridgeVir + state.byteCount(depthBridgeHead)
+		) +
+		uprightDepthHead +
+		uprightDepthGuard +
+		state.rel8(
+			"76",
+			depthConvertVir,
+			depthBridgeVir + state.byteCount(depthBridgeHead) + 2 +
+				state.byteCount(uprightDepthHead) +
+				state.byteCount(uprightDepthGuard)
+		) +
+		uprightDepthTail +
+		"F3 0F 11 04 24 ";
+	const depthConvertCallVir = depthBridgeVir +
+		state.byteCount(depthBridgeBeforeCall);
+	const depthBridgeAfterCall =
+		"0F 10 4C 24 04 " +
+		"0F 10 64 24 14 " +
+		"0F 10 6C 24 24 " +
+		"0F 10 74 24 34 " +
+		"D9 5A EC " +
+		"83 C4 44 " +
+		"59 58 ";
+	const depthBridgeBeforeReturn =
+		depthBridgeBeforeCall +
+		state.rel32("E8", state.WorldDepthConvertVir, depthConvertCallVir) +
+		depthBridgeAfterCall;
+	const depthBridgeCode =
+		depthBridgeBeforeReturn +
+		state.rel32(
+			"E9",
+			state.DepthConvertedContinueVir,
+			depthBridgeVir + state.byteCount(depthBridgeBeforeReturn)
+		);
+	const depthBridgeSize = state.byteCount(depthBridgeCode);
+	if (depthBridgeSize !== state.DepthBridgeSize)
+		throw Error(`AllHatEffectsWorldDepthOracle: depth bridge size ${depthBridgeSize}`);
+	if (state.DepthBridgeOffset + depthBridgeSize > state.CaveSize)
+		throw Error("AllHatEffectsWorldDepthOracle: depth cave overflow");
+	Exe.SetHex(depthBridgePhy, state.normalizeHex(depthBridgeCode));
+
+	$$(_, 3, `Activate HatEffect-scoped depth conversion`);
+	Exe.SetCALL(renderCallNoArgPhy, wrapperVir, 0);
+	Exe.SetCALL(renderCallArgPhy, wrapperVir, 0);
+	Exe.SetJMP(depthHookPhy, depthBridgeVir, 0);
+
+	if (typeof PatchDiagnostics !== "undefined" && PatchDiagnostics &&
+		typeof PatchDiagnostics.add === "function")
+	{
+		PatchDiagnostics.add("AllHatEffectsWorldDepthOracle.Static", {
+			renderCallNoArgVir: state.RenderCallNoArgVir,
+			renderCallArgVir: state.RenderCallArgVir,
+			screenLayerLoopVir: state.ScreenLayerLoopVir,
+			anchorProjectionVir: state.AnchorProjectionVir,
+			screenNearDepthVir: state.ScreenNearDepthVir,
+			renderContextPtrVir: state.RenderContextPtrVir,
+			nativeDepthQuantumVir: state.NativeDepthQuantumVir,
+			contactBiasVir,
+			depthHookVir: state.DepthHookVir,
+			flagVir,
+			wrapperVir,
+			depthBridgeVir
+		});
+	}
+
+	return true;
+};
+
+AllHatEffectsWorldDepthOracle.validate = function()
+{
+	const state = AllHatEffectsWorldDepthOracleStatic;
+	if (Exe.BuildDate !== state.BuildDate)
+		return false;
+
+	try
+	{
+		state.assertBytes(
+			"HatEffect no-argument render call",
+			state.RenderCallNoArgVir,
+			state.RenderCallNoArgBytes
+		);
+		state.assertBytes(
+			"HatEffect argument render call",
+			state.RenderCallArgVir,
+			state.RenderCallArgBytes
+		);
+		state.assertBytes(
+			"screen-STR anchor projection",
+			state.AnchorProjectionVir,
+			state.AnchorProjectionBytes
+		);
+		state.assertBytes(
+			"screen-STR constant near depth",
+			state.ScreenNearDepthVir,
+			state.ScreenNearDepthBytes
+		);
+		state.assertBytes(
+			"screen-STR native layer-depth quantum",
+			state.ScreenLayerBiasVir,
+			state.ScreenLayerBiasBytes
+		);
+		state.assertBytes(
+			"screen-STR reciprocal-depth load",
+			state.DepthHookVir,
+			state.DepthHookBytes
+		);
+		state.assertBytes(
+			"native normalized-depth conversion call",
+			state.WorldDepthConvertCallVir,
+			state.WorldDepthConvertCallBytes
+		);
+		for (const check of state.WorldChecks)
+			state.assertBytes(check.name, check.va, check.bytes);
+	}
+	catch (error)
+	{
+		console.warn(String(error));
+		return false;
+	}
+
+	return true;
+};
+
+AllHatEffectsWorldDepthOracleStatic.installWorldIsolation = function(scopeVir)
+{
+	const state = this, blob = state.Payload;
+	const reserve = blob.hex.length / 2 + 0x300;
+	const [phy, vir] = Exe.Allocate(reserve, 16);
+	let hex = blob.hex;
+	for (const offset of blob.relocations)
+	{
+		if (offset < 0 || offset + 4 > blob.hex.length / 2)
+			throw Error("AllHatEffectsWorldDepthOracle: invalid relocation");
+		let value = 0;
+		for (let i = 0; i < 4; i++)
+			value += parseInt(hex.substr((offset + i) * 2, 2), 16) * Math.pow(256, i);
+		value += vir - blob.imageBase;
+		hex = hex.slice(0, offset * 2) + value.toHex(4).replace(/\s+/g, "") + hex.slice((offset + 4) * 2);
+	}
+	const address = name => vir + blob.exports[name];
+	const config = blob.exports.HatDepthConfig;
+	const values = [scopeVir, 0x0055C830, 0x0055C8C0, 0x0055E5B0,
+		0x0055D680, 0x0055D850, 0x0055E120, 0x00FD6D64];
+	for (let i = 0; i < values.length; i++)
+	{
+		const at = (config + i * 4) * 2;
+		hex = hex.slice(0, at) + values[i].toHex(4).replace(/\s+/g, "") + hex.slice(at + 8);
+	}
+	// One write owns the initialized payload. Overlapping zero-fill/config
+	// writes lose their configured bytes in WARP's unpatch/reapply ledger.
+	Exe.SetHex(phy, hex);
+	let cursor = (blob.hex.length / 2 + 15) & ~15;
+	const emit = code =>
+	{
+		const at = vir + cursor, size = state.byteCount(code);
+		if (cursor + size > reserve)
+			throw Error("AllHatEffectsWorldDepthOracle: helper cave overflow");
+		Exe.SetHex(phy + cursor, state.normalizeHex(code));
+		cursor = (cursor + size + 15) & ~15;
+		return at;
+	};
+	const save = "9C 60 81 EC 80 00 00 00 " +
+		[0, 1, 2, 3, 4, 5, 6, 7].map(i =>
+			"0F 11 " + (0x44 | (i << 3)).toHex(1) + " 24 " + (i * 16).toHex(1)).join(" ");
+	const restore = [0, 1, 2, 3, 4, 5, 6, 7].map(i =>
+		"0F 10 " + (0x44 | (i << 3)).toHex(1) + " 24 " + (i * 16).toHex(1)).join(" ") +
+		" 81 C4 80 00 00 00 61 9D ";
+	const helper = (args, name, tail, resume) =>
+	{
+		const at = vir + cursor;
+		let code = save + args;
+		code += state.rel32("E8", address(name), at + state.byteCount(code));
+		code += "83 C4 " + (name === "HatDepthMark" ? 8 : name === "HatDepthCapture" ? 4 : 0).toHex(1) + " ";
+		code += restore + tail;
+		code += state.rel32("E9", resume, at + state.byteCount(code));
+		return emit(code);
+	};
+	const mark = helper("53 51 ", "HatDepthMark", "FF D0 8B 4D FC ", 0x00AD9418);
+	const capture = helper("57 ", "HatDepthCapture", "8B 87 5C 02 00 00 ", 0x0055E68B);
+	const reset = helper("", "HatDepthRelease", "FF D7 8B F8 85 FF ", 0x00542B2C);
+	const destroy = helper("", "HatDepthRelease", "C7 06 64 6D FD 00 ", 0x0055C18F);
+	Exe.SetJMP(Exe.Vir2Phy(0x00AD9413), mark, 0);
+	for (const [site, target] of [[0x0055E685, capture], [0x00542B26, reset], [0x0055C189, destroy]])
+		Exe.SetHex(Exe.Vir2Phy(site), state.rel32("E9", target, site) + "90");
+	Exe.SetCALL(Exe.Vir2Phy(0x0055CA9C), address("@HatDepthFrame@8"), 0);
+	Exe.SetUint32(Exe.Vir2Phy(0x00FD6D9C), address("@HatDepthDraw32@12"));
+	Exe.SetUint32(Exe.Vir2Phy(0x00FD6D98), address("@HatDepthDraw40@12"));
+};
