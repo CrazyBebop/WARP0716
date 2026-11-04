@@ -11,22 +11,26 @@
 *                                                                          *
 *   This program is distributed in the hope that it will be useful,        *
 *   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the           *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
 *   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
 *   Created Date  : 2026-07-14                                             *
-*   Last Modified : 2026-07-14                                             *
+*   Last Modified : 2026-11-04                                             *
 *                                                                          *
-*   Description   : Gives every HatEffect STR in the 2025-07-16 client     *
-*                   world-derived normalized vertex depth while preserving *
-*                   its original screen-space position and scale. Upper    *
-*                   vertices reconstruct Y-up world depth; floor-side      *
-*                   vertices retain a bounded camera-facing contact bias.  *
-*                                                                          *
-*   This build-specific oracle passed live occlusion and zoom validation.  *
+*   Description   : 2025-07-16 Ragexe: retain stock HatEffect STR sizing,  *
+*                   RHW and lifecycle, but replace always-on-top Z with    *
+*                   native sprite-row depth and floor-safe contact bias.   *
+*                   Former world-Y reconstruction crossed the wearer at    *
+*                   close zoom (upstream issue #77). Use the sprite tilt   *
+*                   at 0x00C4102B instead; leave non-HatEffect STRs stock. *
+*   Evidence      : tools/hat-effect-world-depth.md                        *
+*   Verifier      : tools/verify_hat_effect_world_depth.py                 *
 *                                                                          *
 \**************************************************************************/
 
@@ -50,16 +54,17 @@ const AllHatEffectsWorldDepthOracleStatic = {
 	WorldDepthConvertVir: 0x00554040,
 	WorldDepthConvertCallVir: 0x00AD8B7D,
 	WorldDepthConvertCallBytes: "E8 BE B4 A7 FF",
-	RenderContextPtrVir: 0x012515F8,
-	NativeDepthQuantumVir: 0x00FD6AE4,
-	NativeAbsMaskVir: 0x00FD5D60,
+	SpriteDepthTiltVir: 0x00C4102B,
+	SpriteDepthTiltBytes: "F3 0F 59 25 78 D4 1D 01",
+	NativeSpriteTiltVir: 0x011DD478,
+	NativeOneVir: 0x00FD5B08,
 	ContactDepthBiasBits: 0x3827C5AC,
 	CaveSize: 0x120,
 	ContactBiasOffset: 0x04,
 	WrapperOffset: 0x08,
 	DepthBridgeOffset: 0x30,
 	WrapperSize: 32,
-	DepthBridgeSize: 228
+	DepthBridgeSize: 151
 };
 
 AllHatEffectsWorldDepthOracleStatic.normalizeHex = function(hex)
@@ -148,6 +153,11 @@ AllHatEffectsWorldDepthOracle = function(_)
 		state.WorldDepthConvertCallVir,
 		state.WorldDepthConvertCallBytes
 	);
+	state.assertBytes(
+		"native sprite screen-row depth tilt",
+		state.SpriteDepthTiltVir,
+		state.SpriteDepthTiltBytes
+	);
 
 	$$(_, 2, `Build the HatEffect render scope and normalized-depth bridge`);
 	const [cavePhy, caveVir] = Exe.Allocate(state.CaveSize, 0x10);
@@ -177,18 +187,18 @@ AllHatEffectsWorldDepthOracle = function(_)
 		throw Error(`AllHatEffectsWorldDepthOracle: wrapper size ${wrapperSize}`);
 	Exe.SetHex(wrapperPhy, state.normalizeHex(wrapperCode));
 
-	// AD8C40 already obtains the actor projection from 005541B0. Keep its stock
-	// layer-biased RHW at vertex +0C. For vertex Z, pixels at/below the projected
-	// actor anchor retain a four-quantum contact-biased anchor plane, preventing
-	// floor intersection and shallow wall contact from consuming the sprite.
-	// Upper pixels reconstruct reciprocal depth along Ragnarok's Y-up axis:
+	// Keep the stock layer-biased RHW at vertex +0C, independently of Z.
+	// C40C20/C4102B gives ordinary sprite rows camera distance
+	// z + 0.16 * (y - anchorY). The former world-Y inverse projection used a
+	// different plane: upper effect vertices could fall behind their wearer,
+	// and the fixed reciprocal-depth bias only hid that error at distant zoom.
 	//
-	//   rhw' = rhw * (m5*(y-cy) - m4*sy) /
-	//                (m5*(anchorY-cy) - m4*sy)
+	// Use the native screen-row plane, clamped at the anchor below the feet:
+	//   rhwZ = 1 / (1 / anchorRHW + 0.16 * min(y - anchorY, 0)) + bias
 	//
-	// This is the algebraic inverse of the native 005541B0 Y projection. A
-	// four-native-quantum contact tolerance is tiny relative to the stock
-	// always-on-top Z, but lets attached visuals survive touching geometry.
+	// Retain the bounded four-quantum contact tolerance and native normalized-Z
+	// conversion, not the stock always-on-top Z. Nonpositive/NaN denominators
+	// fall back to the anchor plane. Preserve the complete live XMM registers.
 	const depthBridgeHead =
 		"83 3D " + flagVir.toHex(4) + " 00 " +
 		"75 0A " +
@@ -197,73 +207,42 @@ AllHatEffectsWorldDepthOracle = function(_)
 		"F3 0F 10 45 9C " +
 		"F3 0F 5C C3 " +
 		"F3 0F 11 42 F0 " +
-		"83 EC 14 " +
-		"F3 0F 11 4C 24 04 " +
-		"F3 0F 11 64 24 08 " +
-		"F3 0F 11 6C 24 0C " +
-		"F3 0F 11 74 24 10 " +
+		"83 EC 24 " +
+		"0F 11 4C 24 04 " +
+		"0F 11 64 24 14 " +
 		"F3 0F 10 45 9C " +
-		"F3 0F 58 05 " + contactBiasVir.toHex(4) + " " +
 		"F3 0F 10 62 E8 " +
-		"0F 2F 65 C4 ";
-	// The projection matrix must be reloaded from stable argument [EBP+10].
-	// Local [EBP-38] initially mirrors it but is reused before the vertex loop.
-	const uprightDepthHead =
-		"A1 " + state.RenderContextPtrVir.toHex(4) + " " +
-		"66 0F 6E 68 24 " +
-		"0F 5B ED " +
-		"F3 0F 5C E5 " +
-		"F3 0F 10 75 C4 " +
-		"F3 0F 5C F5 " +
-		"8B 4D 10 " +
-		"F3 0F 10 69 14 " +
-		"F3 0F 59 E5 " +
-		"F3 0F 59 F5 " +
-		"F3 0F 10 69 10 " +
-		"F3 0F 59 68 08 " +
-		"F3 0F 5C E5 " +
-		"F3 0F 5C F5 ";
-	const uprightDepthGuard =
-		"0F 28 EE " +
-		"0F 54 2D " + state.NativeAbsMaskVir.toHex(4) + " " +
-		"0F 2F 2D " + state.NativeDepthQuantumVir.toHex(4) + " ";
-	const uprightDepthTail =
-		"F3 0F 5E E6 " +
-		"F3 0F 59 65 9C " +
-		"F3 0F 58 25 " + contactBiasVir.toHex(4) + " " +
-		"0F 28 C4 ";
-	const depthConvertVir = depthBridgeVir +
-		state.byteCount(depthBridgeHead) + 2 +
-		state.byteCount(uprightDepthHead) +
-		state.byteCount(uprightDepthGuard) + 2 +
-		state.byteCount(uprightDepthTail);
+		"F3 0F 5C 65 C4 " +
+		"0F 57 C9 " +
+		"F3 0F 5D E1 " +
+		"F3 0F 59 25 " + state.NativeSpriteTiltVir.toHex(4) + " " +
+		"F3 0F 10 0D " + state.NativeOneVir.toHex(4) + " " +
+		"F3 0F 5E C8 " +
+		"F3 0F 58 CC " +
+		"0F 57 E4 " +
+		"0F 2F CC ";
+	const spriteDepthTail =
+		"F3 0F 10 05 " + state.NativeOneVir.toHex(4) + " " +
+		"F3 0F 5E C1 ";
+	const contactDepthVir = depthBridgeVir +
+		state.byteCount(depthBridgeHead) + 2 + state.byteCount(spriteDepthTail);
 	const depthBridgeBeforeCall =
 		depthBridgeHead +
 		state.rel8(
-			"73",
-			depthConvertVir,
+			"76",
+			contactDepthVir,
 			depthBridgeVir + state.byteCount(depthBridgeHead)
 		) +
-		uprightDepthHead +
-		uprightDepthGuard +
-		state.rel8(
-			"76",
-			depthConvertVir,
-			depthBridgeVir + state.byteCount(depthBridgeHead) + 2 +
-				state.byteCount(uprightDepthHead) +
-				state.byteCount(uprightDepthGuard)
-		) +
-		uprightDepthTail +
+		spriteDepthTail +
+		"F3 0F 58 05 " + contactBiasVir.toHex(4) + " " +
 		"F3 0F 11 04 24 ";
 	const depthConvertCallVir = depthBridgeVir +
 		state.byteCount(depthBridgeBeforeCall);
 	const depthBridgeAfterCall =
-		"F3 0F 10 4C 24 04 " +
-		"F3 0F 10 64 24 08 " +
-		"F3 0F 10 6C 24 0C " +
-		"F3 0F 10 74 24 10 " +
+		"0F 10 4C 24 04 " +
+		"0F 10 64 24 14 " +
 		"D9 5A EC " +
-		"83 C4 14 ";
+		"83 C4 24 ";
 	const depthBridgeBeforeReturn =
 		depthBridgeBeforeCall +
 		state.rel32("E8", state.WorldDepthConvertVir, depthConvertCallVir) +
@@ -278,6 +257,8 @@ AllHatEffectsWorldDepthOracle = function(_)
 	const depthBridgeSize = state.byteCount(depthBridgeCode);
 	if (depthBridgeSize !== state.DepthBridgeSize)
 		throw Error(`AllHatEffectsWorldDepthOracle: depth bridge size ${depthBridgeSize}`);
+	if (state.DepthBridgeOffset + depthBridgeSize > state.CaveSize)
+		throw Error("AllHatEffectsWorldDepthOracle: depth cave overflow");
 	Exe.SetHex(depthBridgePhy, state.normalizeHex(depthBridgeCode));
 
 	$$(_, 3, `Activate HatEffect-scoped depth conversion`);
@@ -294,8 +275,7 @@ AllHatEffectsWorldDepthOracle = function(_)
 			screenLayerLoopVir: state.ScreenLayerLoopVir,
 			anchorProjectionVir: state.AnchorProjectionVir,
 			screenNearDepthVir: state.ScreenNearDepthVir,
-			renderContextPtrVir: state.RenderContextPtrVir,
-			nativeDepthQuantumVir: state.NativeDepthQuantumVir,
+			nativeSpriteTiltVir: state.NativeSpriteTiltVir,
 			contactBiasVir,
 			depthHookVir: state.DepthHookVir,
 			flagVir,
@@ -349,6 +329,11 @@ AllHatEffectsWorldDepthOracle.validate = function()
 			"native normalized-depth conversion call",
 			state.WorldDepthConvertCallVir,
 			state.WorldDepthConvertCallBytes
+		);
+		state.assertBytes(
+			"native sprite screen-row depth tilt",
+			state.SpriteDepthTiltVir,
+			state.SpriteDepthTiltBytes
 		);
 	}
 	catch (error)

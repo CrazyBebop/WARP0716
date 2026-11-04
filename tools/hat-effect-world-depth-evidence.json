@@ -1,0 +1,180 @@
+{
+  "issue": "https://github.com/CrazyBebop/WARP0716/issues/77",
+  "source_sha256": "ead7c0a316bc6c27705a5a6876daf5093abec31677f3c1af7525c1709b201bff",
+  "patch_sha256": "15c90cbb7cb2f6bb1e6f3c2df34072828168ac4dddee03410079873d93baef32",
+  "verifier_sha256": "7ae638e26638230df6177e8b565632d03ee190e6fbe3679114c5e0a3825ec674",
+  "warp_sha256": "0a16548929427fb4913bd5c46a47955f025a692c3f79830e5657365dd33f9660",
+  "cases": [
+    {
+      "case": "historical-regression",
+      "effect_z": 0.9156139492988586,
+      "wearer_plane_z": 0.9105042219161987,
+      "reproduced": true
+    },
+    {
+      "case": "isolated",
+      "sha256": "5ac236c6d21d230fa68c994c46bacf2fa95b3335b95fd623c02e77401a82a264",
+      "patches": [
+        "AllHatEffectsWorldDepthOracle"
+      ],
+      "bridge_bytes": 151,
+      "cave": "0x171d350",
+      "bridge": "0x171d380",
+      "depth_cases": 216,
+      "fallback_cases": 3,
+      "non_hat_effect_cases": 3,
+      "render_call_cases": 2
+    },
+    {
+      "case": "sprite-first",
+      "sha256": "240b598868bc950d57e6f0fd853441065004c04c1f23e524f46b57f0e2f72a36",
+      "patches": [
+        "UniformSpriteRHW",
+        "FloorSafeSpriteDepth",
+        "AllHatEffectsWorldDepthOracle"
+      ],
+      "bridge_bytes": 151,
+      "cave": "0x171d4a0",
+      "bridge": "0x171d4d0",
+      "depth_cases": 216,
+      "fallback_cases": 3,
+      "non_hat_effect_cases": 3,
+      "render_call_cases": 2
+    },
+    {
+      "case": "hat-first",
+      "sha256": "240b598868bc950d57e6f0fd853441065004c04c1f23e524f46b57f0e2f72a36",
+      "patches": [
+        "AllHatEffectsWorldDepthOracle",
+        "UniformSpriteRHW",
+        "FloorSafeSpriteDepth"
+      ],
+      "bridge_bytes": 151,
+      "cave": "0x171d4a0",
+      "bridge": "0x171d4d0",
+      "depth_cases": 216,
+      "fallback_cases": 3,
+      "non_hat_effect_cases": 3,
+      "render_call_cases": 2
+    },
+    {
+      "case": "reapply",
+      "sha256": "6df233aacec5bba249e77357f4e52075b7e50d5cd5ac626bd7ca05f26d7f913c",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xafe41c",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xafe52b",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xad8d91",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xad93c5",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xad9308",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xad93d4",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xad8b7d",
+      "passed": true
+    },
+    {
+      "case": "reject-native-guard",
+      "address": "0xc4102b",
+      "passed": true
+    }
+  ],
+  "temporary_artifacts_removed": true,
+  "live_visual_accepted": false,
+  "upstream_base": "4be805c42664999c991f1e2c55a78f19b80f5108",
+  "clean_upstream_verification": {
+    "cases": [
+      {
+        "case": "historical-regression",
+        "effect_z": 0.9156139492988586,
+        "wearer_plane_z": 0.9105042219161987,
+        "reproduced": true
+      },
+      {
+        "case": "isolated",
+        "sha256": "5ac236c6d21d230fa68c994c46bacf2fa95b3335b95fd623c02e77401a82a264",
+        "patches": [
+          "AllHatEffectsWorldDepthOracle"
+        ],
+        "bridge_bytes": 151,
+        "cave": "0x171d350",
+        "bridge": "0x171d380",
+        "depth_cases": 216,
+        "fallback_cases": 3,
+        "non_hat_effect_cases": 3,
+        "render_call_cases": 2
+      },
+      {
+        "case": "reapply",
+        "sha256": "6df233aacec5bba249e77357f4e52075b7e50d5cd5ac626bd7ca05f26d7f913c",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xafe41c",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xafe52b",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xad8d91",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xad93c5",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xad9308",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xad93d4",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xad8b7d",
+        "passed": true
+      },
+      {
+        "case": "reject-native-guard",
+        "address": "0xc4102b",
+        "passed": true
+      }
+    ],
+    "temporary_artifacts_removed": true
+  },
+  "exception_path_cleanup_verified": true
+}
