@@ -1695,6 +1695,13 @@ CustomJobs.apply0716 = function(_)
 		+ ' local cjmo=type(PCMotionInheritTbl)=="table" and PCMotionInheritTbl or {}'
 		+ ' if type(PCPaths)=="table" then for k,v in pairs(PCPaths) do if type(k)=="number" then local m=cjmo[k]'
 		+ ' if type(m)~="number" then m=cjfo[v] or 0 end cjrd[k]=m end end end';
+	// A custom job with no PCPaths row is drawn with Novice's body (tester, 2026-11-04: its wings showed in front), so a
+	// job named in the patch's other tables, not stock and not yet in cjrd, layers like its PCMotionInheritTbl job, else
+	// Novice. Stock ids (cjst) and ids the operator never names stay Gravity's.
+	luaCode += ' local function cjnp(k) if type(k)=="number" and cjrd[k]==nil and cjst[k]==nil then local m=cjmo[k]'
+		+ ' if type(m)~="number" then m=0 end cjrd[k]=m end end'
+		+ ' if type(PCIds)=="table" then for _,v in pairs(PCIds) do cjnp(v) end end'
+		+ ' for _,t in pairs({PCNames,PCHands,PCPals,PCImfs,cjmo}) do if type(t)=="table" then for k in pairs(t) do cjnp(k) end end end';
 
 	if (failMode === 1) {
 		// Log File: write errors to customjobs_error.log
