@@ -1,7 +1,7 @@
 --[[
   CustomJobs Lua Data
   Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
-  Last Modified: 2026-03-16
+  Last Modified: 2026-11-06
 ]]--
 
 -- ============================================================
@@ -195,3 +195,17 @@ PCIds.EXAMPLE_JOB_B = 4436
 Scales = Scales or { "3F400000", "3F51EB85", "3F4CCCCD" }
 Shrink_Map = Shrink_Map or {}
 Shrink_Map[PCIds.EXAMPLE_JOB_B] = Scales[1]
+
+-- Optional: attack like a stock job (2026-10-21). The client picks a player's attack animation by job, and its
+-- table stops at job 4307, so a custom job always plays the first group. Name the stock job whose sprites yours
+-- reuses; only a number counts, and a job with no row keeps the stock behaviour. Read while the game runs:
+-- restart the client after an edit, no re-patch.
+-- PCMotionInheritTbl = PCMotionInheritTbl or {}
+-- PCMotionInheritTbl[PCIds.EXAMPLE_JOB] = 1      -- attack like Swordman: a spear thrusts
+
+-- Optional: which stock job's garments (wings, capes) it layers like (2026-11-06). With no row: its
+-- PCMotionInheritTbl job, else the job whose body its PCPaths names, else a Novice. Read when the client starts.
+-- PCRobeInheritTbl = PCRobeInheritTbl or {}
+-- PCRobeInheritTbl[PCIds.EXAMPLE_JOB] = 7        -- garments layer like Knight
+
+-- Guide: https://warp.legacygamers.net/warp0716/CustomJobs/ (Attack Motion, Garments)
