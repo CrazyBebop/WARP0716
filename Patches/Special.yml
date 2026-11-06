@@ -42,7 +42,7 @@ CustomSpecials:
             title : Enable Custom Jobs (Reforged)
             recommend : no
             author : CrazyBebop
-            desc : Adds support for custom job classes beyond the official set. Jobs are defined via lua files in the data folder. Required for servers with custom classes like Druid or other fan-made jobs.
+            desc : Adds your own job classes to this client, beyond the official ones (job ids up to 9999). Each job's sprites, palettes, hands, name and other details come from seven JobInfo Lua files (PCIds, PCPaths, PCPals, PCHands, PCImfs, PCNames, PCFuncs); the Custom Jobs guide on warp.legacygamers.net shows how to write them. For Gravity's Druid line, use Enable Druid classes (2026) instead.
 
         - EnableDruidClasses:
             title : Enable Druid classes (2026)
