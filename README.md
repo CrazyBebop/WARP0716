@@ -4,9 +4,9 @@
 
 **[warp.legacygamers.net](https://warp.legacygamers.net)** is the project website: a guide for every patch that needs files from you, an FAQ for a client that will not start, and one changelog covering both WARP0716 and WARPGATE.
 
-## Development Status - Active
+## Development Status - Active, Part 3 next
 
-**WARP0716 is actively developed.** New patches and fixes ship in regular updates (see the [changelog](CHANGELOG.md)), and issues and pull requests are welcome.
+**WARP0716 is actively developed, and Part 3 is next.** The November 6, 2026 update is the last before it: expect one to two months without updates, and until then only hotfixes for bugs ship. With Part 3, **WARP0716 becomes LGN-WARP**: our own WARP, rebuilt from source, inside WARPGATE, so one app gets your client and patches it. Issues and pull requests are still welcome; every update so far is in the [changelog](CHANGELOG.md).
 
 **What's been built so far:**
 - 280 patches that work on the 2025-07-16 kRO Ragexe client, 37 of them recommended by default
@@ -17,6 +17,15 @@
 - Multi-connection clientinfo support
 - A working exit button on the service select screen
 - …and plenty more improvements across the board
+
+**What's next: Part 3**
+- **WARP0716 becomes LGN-WARP.** The project takes a new name with Part 3: LGN-WARP, our own WARP rebuilt from source.
+- **WARPGATE and LGN-WARP in one app.** You patch your client from inside WARPGATE instead of a separate WARP.exe.
+- **Your patches come along.** LGN-WARP is built to run the same patch scripts, so the patches and profiles you use today carry over.
+- **More of kRO's 2026 quality-of-life changes**, continuing Quality of Life Changes (2026).
+- **Still made for the 2025-07-16 client.**
+
+Until then, only hotfixes for bugs ship. This repository stays up, and where bug reports and pull requests go after the move comes with Part 3.
 
 Thanks to everyone who's tested, reported issues, and helped shape WARP0716. Your bug reports and feedback are what keep this project moving.
 
@@ -40,7 +49,9 @@ That's all most people need. The sections below are for server operators and tin
 
 See **[CHANGELOG.md](CHANGELOG.md)** for every patch and update, newest first.
 
-The latest is the **November 2, 2026 update** (Part 2): seven new patches, two of them from the community. **Enable Druid classes (2026)** brings the whole Druid line to this client, with a server patch for plain rAthena master; **Hair colour guard** stops the crash on a hair colour with no palette and adds extra colours; then **More Body Styles**, **Restart relaunches the client** and the experimental **Quality of Life Changes (2026)**. It also fixes the Party HP/SP Bars crash on warp, brings a round of Custom Jobs fixes, ports four more patches to this client, removes nine with nothing to patch here, and adds a Filipino language pack. This one is a patch update, so re-apply WARP to use it.
+The latest is the **November 6, 2026 update**, the last before Part 3: fixes for Enable Custom Jobs (Reforged) garments, All HatEffects Screen-Size World Depth up close ([#77](https://github.com/CrazyBebop/WARP0716/issues/77)) and the Druid line's Nature Rage and Plume Piercer ([#81](https://github.com/CrazyBebop/WARP0716/issues/81)), and one server patch for the Druid line, which is now in beta. It is a patch update, so re-apply WARP to use it.
+
+The **November 2, 2026 update** (Part 2) before it brought seven new patches, two of them from the community. **Enable Druid classes (2026)** brings the whole Druid line to this client, with a server patch for plain rAthena master; **Hair colour guard** stops the crash on a hair colour with no palette and adds extra colours; then **More Body Styles**, **Restart relaunches the client** and the experimental **Quality of Life Changes (2026)**. It also fixes the Party HP/SP Bars crash on warp, brings a round of Custom Jobs fixes, ports four more patches to this client, removes nine with nothing to patch here, and adds a Filipino language pack.
 
 The **July 29, 2026 Ragexe update** before it fixed the exit button on server select, switching to a different server mid-session, an 8 server limit at start-up, and a broken `clientinfo.xml` that said nothing about what was wrong. Those fixes are in the executable itself, so get the new one through **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)** (the **RAGEXE** tab) rather than by re-WARPing an older exe.
 

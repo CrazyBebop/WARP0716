@@ -1,6 +1,32 @@
+# CrazyBebop - 2025-07-16 build (November 6, 2026)
+
+> **Patch update - re-WARP to apply.** Three fixes, for Enable Custom Jobs (Reforged), All HatEffects Screen-Size World Depth and Enable Druid classes (2026), and one server patch for the Druid line. Re-apply WARP to use them.
+>
+> **This is the last update before Part 3.** Expect one to two months without updates; until then only hotfixes for bugs ship. With Part 3, WARP0716 becomes **LGN-WARP**, our own WARP rebuilt from source, and moves into WARPGATE: one app that gets your client and patches it.
+>
+> Easiest route: open **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**, use the **WARP** tab to update this patch set, then re-apply your profile.
+
+## November 6 Update
+
+### Fixed: a custom job's wings and capes covered its front
+
+A garment draws behind the body while the character faces you and over it in the other directions. The client reads which from Gravity's tables, and they list only official jobs, so a custom job got "over the body" in every frame and its wings covered its chest and arms. Enable Custom Jobs (Reforged) now answers for such a job as a stock job: the one named in `PCMotionInheritTbl`, else the job whose body its `PCPaths` names, else a Novice. That includes a custom job with no `PCPaths` row at all. A new `PCRobeInheritTbl` lets you pick the job yourself. Checked against kRO's own garment tables, every official job unchanged. **[Custom Jobs guide](https://warp.legacygamers.net/warp0716/CustomJobs/)**, Garments.
+
+### Fixed: hat effects drew behind their wearer when zoomed in ([#77](https://github.com/CrazyBebop/WARP0716/issues/77))
+
+Reported by gidzdlcrz. All HatEffects Screen-Size World Depth (YlenXWalker's patch) lets walls and buildings hide hat effects. Zoomed in, it also put an effect behind its own wearer, so an effect meant to cover the character, like the gender change cloud, was cut by the body. The patch now stands each effect just in front of its wearer at every zoom, the way the wearer's own layers stand, so the wearer never hides it while walls, buildings and trees still do. Checked in game at three zooms, against the patch turned off and as it shipped.
+
+### Fixed: Nature Rage and Plume Piercer showed no effect ([#81](https://github.com/CrazyBebop/WARP0716/issues/81))
+
+Reported by zhongwei86322-design. The hits landed, but nothing was drawn on the target. The client plays both effects when the server sends the "skill used" packet, and the server patch sent only the damage. `EnableDruidClasses.master.patch` now sends it first, as the other Druid skills do, and both effects show in game. Already applied the November 2 copy? The **[Druid guide](https://warp.legacygamers.net/warp0716/EnableDruidClasses/)** has a small update file for it.
+
+### Changed: Enable Druid classes (2026) is in beta, with one server patch
+
+Enable Druid classes (2026) is now marked experimental (still in beta), like Quality of Life Changes (2026): fixes are added with each update. Its server patch is one file, `EnableDruidClasses.master.patch`, for a fresh rAthena; the separate file for datawulf's own branches is gone. The file says when it was last updated and where to check for a newer copy. The Druid line's server code is datawulf's (rathena#9765), credited in the file. Enable Custom Jobs (Reforged) also gets a clearer description in WARP, which points the Druid line at its own patch.
+
 # CrazyBebop - 2025-07-16 build (November 3, 2026)
 
-> **Patch update - re-WARP to apply.** Two fixes, for Enable Druid classes (2026) and Enable Custom Jobs (Reforged). Re-apply WARP to use them.
+> **Patch update - re-WARP to apply.** One fix for Enable Druid classes (2026). Re-apply WARP to use it.
 >
 > Easiest route: open **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)**, use the **WARP** tab to update this patch set, then re-apply your profile.
 
@@ -9,10 +35,6 @@
 ### Fixed: a Werewolf's normal attack froze the character ([#78](https://github.com/CrazyBebop/WARP0716/issues/78))
 
 Reported by p4937124. In Werewolf form, one normal attack left the character stuck: it could not move or attack again until it left the form. Wereraptor was fine. kRO's 2026 client plays a Werewolf's attack in a mode of its own: once, skipping two frames, then back to standing. The patch started the attack in that mode, but this client's animation step did not know it, so the attack never finished. Enable Druid classes (2026) now carries kRO's handling for it, checked against kRO's own code with the same random inputs and in game: the Werewolf attacks, then walks off again. Nothing changes on the server or in data.grf.
-
-### Fixed: a custom job's wings and capes covered its front
-
-A garment draws behind the body while the character faces you and over it in the other directions. The client reads which from Gravity's tables, and they list only official jobs, so a custom job got "over the body" in every frame and its wings covered its chest and arms. Enable Custom Jobs (Reforged) now answers for such a job as a stock job: the one named in `PCMotionInheritTbl`, else the job whose body its `PCPaths` names, else a Novice. A new `PCRobeInheritTbl` lets you pick the job yourself. Checked against kRO's own garment tables, every official job unchanged. **[Custom Jobs guide](https://warp.legacygamers.net/warp0716/CustomJobs/)**, Garments.
 
 # CrazyBebop - 2025-07-16 build (November 2, 2026)
 
