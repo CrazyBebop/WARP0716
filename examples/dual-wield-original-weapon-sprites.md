@@ -7,9 +7,10 @@ For **2025-07-16 Ragexe 175220998**, this patch preserves original dagger, one-h
 | File | Purpose |
 |---|---|
 | `Scripts/Patches/AllowDualCustomWeaponSprites.qjs` | Validates the client, owns resources, loads the bundles and installs three hooks |
+| `Scripts/Patches/AllowDualWeaponSprites.qjs` | Compatibility shim for old profiles and saved sessions; select only one name |
 | `Patches/Special.yml` | Registers the same exported patch name |
 | `Inputs/DualWeaponRuntime/compositor.dwcp` | Compiled weapon compositor and placement data |
-| `Inputs/DualWeaponRuntime/legacy-support.dwls` | Validated frozen support bundle; supplies the active depth helper |
+| `Inputs/DualWeaponRuntime/legacy-support.dwls` | Rebuildable 1,452-byte v2 bundle containing only the unchanged depth helper |
 | `Inputs/DualWeaponRuntime/dual_weapon_male_assets.grf` | Missing original-weapon resources for both genders |
 | `Inputs/DualWeaponRuntime/embedded-grfs-20250716.ini` | Example archive list for the tested GRFsEmbedded installation |
 
@@ -18,6 +19,14 @@ For **2025-07-16 Ragexe 175220998**, this patch preserves original dagger, one-h
 Keep the directory structure when installing into WARP. Copy the GRF into the client directory and register it at highest priority in the loader the EXE actually uses. The example INI requires the named base archives to exist. With GRFsEmbedded, select the matching archive list when repatching; DATA.INI alone does not change the embedded list.
 
 Apply to a source with stock dual-weapon hook bytes, preserving other patch selections through the WARP session. Occupied hooks are rejected.
+
+Before allocating or writing dual-weapon hooks, the patch now checks the active
+embedded/INI configuration and requires the compatibility GRF at highest priority
+and present beside the target EXE. An inactive DATA.INI does not satisfy an embedded
+configuration. Unknown reopened loaders fail with a clear instruction to reapply
+GRFsEmbedded or GRFsFromIni. Runtime INI changes after patching remain the operator's
+responsibility. Selecting both historical/current patch names is rejected instead
+of installing duplicate hooks.
 
 ## Scope and fixes
 
@@ -38,12 +47,50 @@ Held actions 32–39 use body/image-specific hand–hilt contacts. Dual attacks 
 
 ## Verification and source reference
 
-The full generation tools, readable C source, authored profiles and machine evidence are retained in the [complete verified source snapshot](https://github.com/YlenXWalker/WARP0716/tree/f2a3a710f96fd8f1f705d8f7fd5ab19462a321a7). They are intentionally outside this PR's final runtime-only file diff.
+This PR now includes the runtime generator, readable compositor C source, frozen
+profile headers, canonical rig/grip inputs and depth-helper C++/inline-assembly
+source. The build does not need a private client installation, evidence directory,
+Git history, or a download from the source snapshot.
+
+```text
+python -m pip install -r tools/requirements-dual-weapon.txt
+python tools/build_dual_weapon_runtime.py --check
+python tools/build_dual_weapon_runtime.py --write
+node tools/test_dual_weapon_requirements.cjs
+python tools/test_dual_weapon_runtime_build.py
+```
+
+Use **MSVC toolset 14.51.36231 Hostx64/x86**, `cl` **19.51.36260** and linker
+**14.51.36260.0**. `--tool-dir` locates that same toolset elsewhere.
+`Inputs/DualWeaponRuntime/build.json` pins the compiler/backend/linker hashes,
+normalized source hashes and exact outputs. `--check` compiles into temporary
+storage, compares both bundles byte-for-byte, and never overwrites them. The only
+normalized container bytes are the identified non-executable PE export/debug build
+identity fields historically carried inside DWCP. Code, data, exports and
+relocations are rebuilt from source.
+
+DWLS v2 removes the retired capture core and old authoring rig; neither was injected
+by the current renderer. Its 1,380-byte depth helper and all three relocation pairs
+are identical to v1. The source preserves that helper's audited x86 instruction
+order inside a naked C++ function so it can be assembled/rebuilt, rather than
+shipping an opaque machine-code array. V1 inputs remain readable. The old complete
+bundle and broader authoring/evidence history remain recoverable at
+[`bf7bb2ad`](https://github.com/YlenXWalker/WARP0716/tree/bf7bb2ad16bded390bac67b0e3dfca57d831e311).
 
 The [detailed reference](https://github.com/YlenXWalker/WARP0716/blob/f2a3a710f96fd8f1f705d8f7fd5ab19462a321a7/docs/dual-wield-original-weapon-sprites.md) records the view list, native ABI, coordinates, frames, directions, angles, donors, hashes, commands and earlier GIF previews.
 
 Verified results:
 
+- Fresh 2026-11-07 checks: exact source rebuild/check-only regressions, both
+  profile-name `.epi` identities with identical EXEs, runtime INI and embedded
+  loader cases, explicit missing/wrong-priority/duplicate-name failures, and raw
+  reopened embedded inputs with the existing scoped PE-header repair. Successful
+  clients were checked for the exact relocated DWCP/helper bytes and executed
+  through the native owner/trampoline page-protection fixture.
+- Fresh native equipment/resource regression: **602 cases**, with the exact same
+  emitted owner x86 hash as the accepted baseline.
+- The following larger artwork/geometry counts are historical (2026-09-07), not
+  freshly rerun by this packaging/prerequisite revision:
 - 668,160 execution cases and 1,182,240 original-resource draws across ten bodies.
 - 77,952 accepted geometry cases with maximum change **0.0**.
 - 75,792 added geometry draws and 602 equipment/resource ABI cases.
@@ -60,10 +107,15 @@ These are compiled-x86/native-projection tests, not exhaustive live GPU/occlusio
 
 Injected addresses vary by patch order. The former metadata hook at 0x00605D41 and native ACT-frame call at 0x00D36EE4 remain stock in new builds.
 
+On raw already-expanded PE inputs, the existing WARP section-header/raw-pointer
+growth defect still needs the previously maintained scoped repair. This revision
+does not fix the GUI serializer. The normal `.epi` recipe path should retain and
+replay the selected loader with the dual-weapon patch.
+
 | Runtime artifact | SHA-256 |
 |---|---|
 | compositor.dwcp | b8bf5902c798e4ba7a144d60f04f2b7dff3933414230e8cafc86cacb3bf33404 |
-| legacy-support.dwls | e6d0149196ef2a344f429b4ab4280c860d22a4bd20853514719372f00e8077d2 |
+| legacy-support.dwls v2 | cbe42e80f62de5c64f1d5f6cd43740e2a60f41e67a1f69766a5d3f3edc8a2f81 |
 | dual_weapon_male_assets.grf | 37a7e2aa876ab9b4383f86e00c0015a65555cebf919612ec2a4b57409c8930cc |
 
 No server or character-record changes are included.

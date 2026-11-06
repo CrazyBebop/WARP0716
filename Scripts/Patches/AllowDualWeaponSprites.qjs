@@ -1,0 +1,41 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-11-07                                             *
+*   Last Modified : 2026-11-07                                             *
+*   Description   : Preserve legacy AllowDualWeaponSprites profiles on     *
+*                   2025-07-16. Forward to the original-resource compositor*
+*                   instead of silently skipping the historical patch name.*
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/69                 *
+*   Verifier      : tools/test_dual_weapon_requirements.cjs                *
+*                                                                          *
+\**************************************************************************/
+
+AllowDualWeaponSprites = function(_)
+{
+	return AllowDualCustomWeaponSprites(_ || "AllowDualWeaponSprites");
+};
+
+AllowDualWeaponSprites.validate = function()
+{
+	return AllowDualCustomWeaponSprites.validate();
+};

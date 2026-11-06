@@ -14,37 +14,47 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
 *   GNU General Public License for more details.                           *
 *                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
 |**************************************************************************|
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
 *   Created Date  : 2026-07-12                                             *
-*   Last Modified : 2026-09-07                                             *
-*                                                                          *
+*   Last Modified : 2026-11-07                                             *
 *   Description   : Retains original item SPR/ACT resources for dual and   *
-*                   off-hand-only equipment on 2025-07-16 Ragexe. Resolves *
-*                   dagger/sword/axe classes from actual views, rejects    *
-*                   native fallback art, and composes original layers      *
-*                   using separate male/female body and animation profiles.*
-*                                                                          *
-*   Stock equipment state and native channel 5/6 resources stay intact.    *
-*   Channel 5 is the combined weapon; channel 6 is its overlay. Neither    *
-*   channel represents a physical hand. Both hands prepare before drawing. *
-*   Actual item views and requested Lua resource suffixes are verified.    *
-*                                                                          *
-*   Source, generation tools and full evidence are linked in the document. *
-*   Payload: Inputs/DualWeaponRuntime/compositor.dwcp.                    *
-*   The frozen depth helper remains active; legacy capture is not injected.*
-*   The new path derives ownership from current stock ACT/SPR + palette,   *
-*   without the legacy capture ring or its hard-coded pair28 fingerprint.  *
-*   2026 is unsupported. Five male and five female Assassin-family bodies  *
-*   cover 24 mapped non-Drake dagger, sword and axe views. Missing job     *
-*   filenames require the bundled 60-entry compatibility GRF.              *
-*   Native solo80/dual88 timelines remain distinct; other bodies stay stock*
-*   Validated runtime bundles replace the old inline hex blobs.          *
-*   Keep compositor.dwcp and legacy-support.dwls with this patch.         *
-*   See examples/dual-wield-original-weapon-sprites.md for scope and proof.     *
+*                   off-hand-only equipment on 2025-07-16 Ragexe.          *
+*                   Resolves dagger/sword/axe classes from actual views,   *
+*                   rejects native fallback art, and composes original     *
+*                   layers using separate male/female body and animation   *
+*                   profiles. Stock equipment state and native channel     *
+*                   5/6 resources stay intact. Channel 5 is the combined   *
+*                   weapon; channel 6 is its overlay. Neither channel      *
+*                   represents a physical hand. Both hands prepare         *
+*                   before drawing. Actual item views and requested Lua    *
+*                   resource suffixes are verified. New readable           *
+*                   compositor: CustomDLL/DualWeapon/compositor.c          *
+*                   Payload: Inputs/DualWeaponRuntime/compositor.dwcp      *
+*                   (build with tools). The frozen depth helper remains    *
+*                   active; legacy capture is not injected. The new path   *
+*                   derives ownership from current stock ACT/SPR +         *
+*                   palette, without the legacy capture ring or its        *
+*                   hard-coded pair28 fingerprint. 2026 is unsupported.    *
+*                   Five male and five female Assassin-family bodies       *
+*                   cover 24 mapped non-Drake dagger, sword and axe        *
+*                   views. Missing job filenames require the bundled       *
+*                   60-entry compatibility GRF. Native solo80/dual88       *
+*                   timelines remain distinct; other bodies stay stock     *
+*                   Readable source and generated data replace the old     *
+*                   inline hex blobs. Keep compositor.dwcp and             *
+*                   legacy-support.dwls beside build.json. See PR #69      *
+*                   for install scope and reproducible build commands.     *
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/69                 *
+*   Verifier      : tools/test_dual_weapon_requirements.cjs;               *
+*                   tools/build_dual_weapon_runtime.py --check             *
 *                                                                          *
 \**************************************************************************/
+
 
 const DualWeaponStatic = {
 	Profiles: {
@@ -687,18 +697,21 @@ DualWeaponStatic.verifyAssetCRC = function(data, start, expected)
 		throw Error("DualWeaponStatic: asset CRC mismatch");
 };
 
-// Frozen legacy code, protected depth helper and reference rig. Their raw
-// bytes and relocations live in one versioned bundle, never on giant QJS lines.
-// tools/dual_weapon_legacy_assets.py documents and verifies the DWLS layout.
+// DWLS v2 contains only the protected depth helper and its relocations.
+// Version 1 remains readable for older WARP installations. The retired capture
+// core and guide are never injected. Rebuild with build_dual_weapon_runtime.py.
 DualWeaponStatic.readLegacyAssets = function()
 {
 	const data = DualWeaponStatic.readAssetBytes("legacy-support.dwls");
 	const u32 = o => (data[o] | data[o+1]<<8 | data[o+2]<<16 | data[o+3]<<24) >>> 0;
-	if (data.length < 48 || u32(0) !== 0x534C5744 || u32(4) !== 1 || u32(40) || u32(44))
+	const version = u32(4);
+	if (data.length < 48 || u32(0) !== 0x534C5744 ||
+		(version !== 1 && version !== 2) || u32(40) || u32(44))
 		throw Error("DualWeaponStatic: invalid legacy asset header");
 	const cn=u32(8), ce=u32(12), cr=u32(16), hn=u32(20), he=u32(24), hr=u32(28), rn=u32(32);
 	const relocStart=48+cn+hn+rn;
-	if (!cn || cn>0x200000 || !hn || hn>0x10000 || rn>0x100000 || ce>=cn || he>=hn ||
+	if ((version === 1 ? (!cn || ce >= cn) : (cn || ce || cr || rn)) ||
+		cn>0x200000 || !hn || hn>0x10000 || rn>0x100000 || he>=hn ||
 		cr>4096 || hr>4096 || relocStart+8*(cr+hr)!==data.length)
 		throw Error("DualWeaponStatic: invalid legacy asset dimensions");
 	DualWeaponStatic.verifyAssetCRC(data, 48, u32(36));
@@ -745,6 +758,117 @@ DualWeaponStatic.readCompositor = function()
 	return {data:data.slice(begin), codeBytes, entry, relocs, rigOffset:codeBytes, gripOffset:codeBytes+rigBytes};
 };
 
+// Both historical profile names remain catalogued. Only one owns binary tags;
+// selecting both is a clear error rather than a duplicate hook installation.
+DualWeaponStatic.assertSingleOwner = function(patchName)
+{
+	const other = patchName === "AllowDualWeaponSprites"
+		? "AllowDualCustomWeaponSprites" : "AllowDualWeaponSprites";
+	if (Warp.GetPatchState(other))
+		throw Error("Select only one dual-weapon patch name; " + other + " is already applied");
+};
+
+DualWeaponStatic.readArchiveList = function(path, embedded)
+{
+	const file = new TextFile(path, "r");
+	if (!file.Valid)
+		throw Error("DualWeaponStatic: archive list is not readable: " + path);
+	const names = [];
+	let section = false;
+	try
+	{
+		while (!file.AtEnd())
+		{
+			const line = file.ReadLine().trim();
+			if (!embedded && /^\[/.test(line))
+			{
+				section = /^\[data\]$/i.test(line);
+				continue;
+			}
+			// Mirror MultiGRFs.embedList's actual single-digit parser. Runtime
+			// INI mode instead follows GetPrivateProfileString's [Data] section.
+			const match = line.match(embedded ? /^(\d)\s*=\s*(.*)/ : /^(\d)\s*=\s*(.*)$/);
+			if (match && (embedded || section)) names[Number(match[1])] = match[2].trim();
+		}
+	}
+	finally
+	{
+		file.Close();
+	}
+	return names.filter(name => name);
+};
+
+DualWeaponStatic.assertArchiveNames = function(names, source)
+{
+	const name = "dual_weapon_male_assets.grf";
+	if (!names.length || names[0].toLowerCase().replace(/\\/g, "/").replace(/^\.\//, "") !== name)
+		throw Error("DualWeaponStatic: mount " + name + " first (key 0) in " + source +
+			"; DATA.INI does not override an embedded GRF list");
+};
+
+DualWeaponStatic.assertArchives = function()
+{
+	const root = System.DirPath(Warp.TgtExe);
+	let names, source;
+	if (Warp.GetPatchState("GRFsEmbedded"))
+	{
+		source = Exe.GetSavedInput("$inpMultGRF");
+		if (!source) throw Error("DualWeaponStatic: cannot verify the active embedded GRF list");
+		names = DualWeaponStatic.readArchiveList(source, true);
+	}
+	else if (Warp.GetPatchState("GRFsFromIni"))
+	{
+		const ini = Exe.GetSavedInput("$dataINI");
+		if (!ini) throw Error("DualWeaponStatic: cannot verify the active runtime INI filename");
+		source = root + "/" + ini;
+		names = DualWeaponStatic.readArchiveList(source, false);
+	}
+	else
+	{
+		// Already-patched sources can contain an embedded loader. Decode its
+		// actual CALL-over-string/AddPak chain, not an unrelated name string.
+		const site = Exe.Vir2Phy(0x00DB98B6, CODE);
+		if (site < 0 || Exe.GetUint8(site) !== 0xE8)
+			throw Error("DualWeaponStatic: unrecognized archive loader call site");
+		let call = Exe.Phy2Vir(site) + 5 + Exe.GetInt32(site + 1);
+		if (call === 0x00A88890)
+			throw Error("DualWeaponStatic: mount dual_weapon_male_assets.grf first using GRFsEmbedded " +
+				"or GRFsFromIni before applying the dual-weapon patch");
+		names = [];
+		source = "the existing embedded GRF loader";
+		for (let i = 0; i < 10; ++i)
+		{
+			const phy = Exe.Vir2Phy(call);
+			if (phy < 0) break;
+			if (Exe.GetUint8(phy) === 0xC3 && names.length)
+			{
+				DualWeaponStatic.assertArchiveNames(names, source);
+				break;
+			}
+			if (Exe.GetUint8(phy) !== 0xE8) break;
+			const length = Exe.GetInt32(phy + 1);
+			const suffix = Exe.Vir2Phy(call + 5 + length);
+			if (length < 2 || length > 128 || suffix < 0 ||
+				Exe.GetUint8(suffix) !== 0xB9 || Exe.GetUint32(suffix + 1) !== 0x0159D410 ||
+				Exe.GetUint8(suffix + 5) !== 0xE8) break;
+			const addPak = call + 15 + length + Exe.GetInt32(suffix + 6);
+			if (addPak !== 0x00A88890) break;
+			if (Exe.GetUint8(phy + 4 + length) !== 0) break;
+			names.unshift(Exe.GetText(phy + 5, length - 1));
+			call += 15 + length;
+		}
+		const end = Exe.Vir2Phy(call);
+		if (!names.length || end < 0 || Exe.GetUint8(end) !== 0xC3)
+			throw Error("DualWeaponStatic: cannot verify this archive loader; reapply GRFsEmbedded " +
+				"or GRFsFromIni with dual_weapon_male_assets.grf at key 0");
+	}
+	DualWeaponStatic.assertArchiveNames(names, source);
+	const archive = new BinFile(root + "/" + names[0], "r");
+	if (!archive.Valid)
+		throw Error("DualWeaponStatic: copy dual_weapon_male_assets.grf into the target client directory: " + root);
+	archive.Close();
+};
+
 AllowDualCustomWeaponSprites = function(_)
 {
 	const profile = DualWeaponStatic.selectProfile();
@@ -752,6 +876,8 @@ AllowDualCustomWeaponSprites = function(_)
 		throw Error("DualWeaponStatic: " + profile.Name + " has no dual-weapon compositor");
 	const compositor = DualWeaponStatic.readCompositor();
 	const legacy = DualWeaponStatic.readLegacyAssets();
+	DualWeaponStatic.assertSingleOwner(_ || "AllowDualCustomWeaponSprites");
+	DualWeaponStatic.assertArchives();
 	if (typeof RagexeAllocationStatic !== "undefined")
 		RagexeAllocationStatic.prepare();
 	const equipPhy = DualWeaponStatic.assertBytes(

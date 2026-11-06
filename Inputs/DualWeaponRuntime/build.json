@@ -1,0 +1,58 @@
+{
+  "schema": "dual_weapon_reproducible_build/v1",
+  "toolset": "14.51.36231",
+  "compiler_banner": "MSVC cl 19.51.36260 for x86; linker 14.51.36260.0; toolset 14.51.36231 Hostx64/x86",
+  "tool_sha256": {
+    "cl.exe": "58702ed8002b28348dbbd1099e9d2c2b2b092681cda024a5eaee371cc28aa881",
+    "c1xx.dll": "bedee10938b6699139094605984d92c6aaaaa4a5f1a198e53aab4992d04ce30a",
+    "c2.dll": "f14e3aa139b88aa8378cba892061f03c1196026adfa3f46611f2a7cd604b2cb2",
+    "link.exe": "78c1de5188da927239a017b4690491be838917478a0ee91401dfcc0291a9aa48"
+  },
+  "source_sha256": {
+    "CustomDLL/DualWeapon/compositor.c": "0ae1d287277623e1ac0bb6ac6a0d96dfee924b89eb3d6d00c39495b688aff0ff",
+    "CustomDLL/DualWeapon/depth_helper.cpp": "e5d0ee80812adf86050659ae6f982ba7e215832ca96b288620d4541b4fd417ca",
+    "CustomDLL/DualWeapon/female_dagger_compositor.h": "c99f6713c3c5a7ae80b8c8ba3cebfcf88a4f74ec80bd44f3f2d59f461ee3a336",
+    "CustomDLL/DualWeapon/female_dagger_profile.h": "e72e0319a965a852bd7e0f3808394f7336301910bc80ee761d3a6b900e674fc3",
+    "CustomDLL/DualWeapon/female_family_compositor.h": "30425c03c5ed941660693aa37d14f02fc7d73d7aaf4972908bacda3518c9bde9",
+    "CustomDLL/DualWeapon/female_family_profile.h": "1994898b7965e76f91bb18499cca9f2bbd3d766dfda28d4afd63992e9dc35625",
+    "CustomDLL/DualWeapon/grip_profile.h": "aee1fbb965df26de1fbd7b7d62def1a43818b2d1c849f1e18caca305f46df502",
+    "CustomDLL/DualWeapon/held_edge_contacts.h": "67527bda90d2bc30d0c9b534d0b241173a19620ff560cbcb7c078e1d92abb6fc",
+    "CustomDLL/DualWeapon/male_axe_profile.h": "2d9d56d8fee8aeb21cad030d94fbece07f061ccdd1067339bf3bb23a1a6e27d2",
+    "CustomDLL/DualWeapon/male_compositor.h": "c354ca6c32516ff7b95fd857ac59b0508880fddaf8758afc1ec184ed88ef5ffd",
+    "CustomDLL/DualWeapon/male_profile.h": "3e18702bb58742a634ae9172195e168808d90a3dc8ac5e2344691c1efd0a9fbf",
+    "CustomDLL/DualWeapon/native_basis.h": "647268dd7348e8e18b38087e76b5a624df3a9160811194f16796e9eff769a8b1",
+    "Inputs/DualWeaponAuthored/rigs/female-assassin-canonical.dwr3": "cda6c39af7cb620febd02d6a5a84e9027993904d33bf1de810cbfd1be304b38f",
+    "Inputs/DualWeaponAuthored/grips/female-assassin-canonical.dwc2": "4ba59f903ee992217253679d21df1564eb150b5b62d44adb5bcf3742a4a6a815",
+    "tools/build_dual_weapon_runtime.py": "16e4ed7c085c08965aa1d04974ef64ec6b2280801716dfe61eacef510579463f",
+    "tools/test_dual_weapon_runtime_build.py": "ccbd8c436b889afb7e69bdea4974e6a6ccfdb563266531d2ae9ba2e88d31b38f",
+    "tools/test_dual_weapon_requirements.cjs": "bc7f52acf200bfb06c48341cd58304b6d2c77b7c35203016280f84220cf41b56"
+  },
+  "container_metadata": {
+    "export_timestamp": 2842532845,
+    "debug_timestamps": {
+      "13": 2842532845,
+      "16": 2842532845
+    },
+    "repro_data": "20000000e9841bffcf89d52518b57eea566ff2e7a97bdc29c30b4fd6bbef3e3ded9b6da9"
+  },
+  "payload_sha256": {
+    "compositor.dwcp": "b8bf5902c798e4ba7a144d60f04f2b7dff3933414230e8cafc86cacb3bf33404",
+    "legacy-support.dwls": "cbe42e80f62de5c64f1d5f6cd43740e2a60f41e67a1f69766a5d3f3edc8a2f81"
+  },
+  "helper_sha256": "e2907b79240e3a9341f84f1f7a58948576c23e2626fe95bc1f482849a4149f80",
+  "helper_relocations": [
+    [
+      402,
+      1360
+    ],
+    [
+      636,
+      1360
+    ],
+    [
+      957,
+      1376
+    ]
+  ],
+  "retired_support_recovery_commit": "bf7bb2ad16bded390bac67b0e3dfca57d831e311"
+}
