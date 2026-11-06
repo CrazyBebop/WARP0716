@@ -1,5 +1,4 @@
 # Required byte formats for the dual-weapon patch.
-Scripts/Patches/AllowDualCustomWeaponSprites.qjs text eol=crlf
 Scripts/Patches/AllowDualWeaponSprites.qjs text eol=crlf
 CustomDLL/DualWeapon/*.c text eol=crlf
 CustomDLL/DualWeapon/*.cpp text eol=crlf

@@ -7,7 +7,6 @@ For **2025-07-16 Ragexe 175220998**, this patch preserves original dagger, one-h
 | File | Purpose |
 |---|---|
 | `Scripts/Patches/AllowDualWeaponSprites.qjs` | Canonical implementation: validates the client, owns resources, loads the bundles and installs three hooks |
-| `Scripts/Patches/AllowDualCustomWeaponSprites.qjs` | Compatibility shim for profiles using the newer name; select only one name |
 | `Patches/Special.yml` | Registers the same exported patch name |
 | `Inputs/DualWeaponRuntime/compositor.dwcp` | Compiled weapon compositor and placement data |
 | `Inputs/DualWeaponRuntime/legacy-support.dwls` | Rebuildable 1,452-byte v2 bundle containing only the unchanged depth helper |
@@ -21,17 +20,18 @@ Keep the directory structure when installing into WARP. Copy the GRF into the cl
 Apply to a source with stock dual-weapon hook bytes, preserving other patch selections through the WARP session. Occupied hooks are rejected.
 
 The full implementation retains the original `AllowDualWeaponSprites` name.
-`AllowDualCustomWeaponSprites` forwards application/validation only; it contains no
-renderer or allocator. Existing profiles using either name remain valid without
-rewriting them. Both entries share the same implementation and emitted bytes.
+It is now the only patch filename, export and catalog entry. The temporary
+custom-name wrapper has been removed at the user's request. External profiles
+and saved sessions using `AllowDualCustomWeaponSprites` must change that selection
+to `AllowDualWeaponSprites`. No alias or implicit migration remains. The patch-time
+diagnostic event also uses `AllowDualWeaponSprites.AuthoredRig`.
 
 Before allocating or writing dual-weapon hooks, the patch now checks the active
 embedded/INI configuration and requires the compatibility GRF at highest priority
 and present beside the target EXE. An inactive DATA.INI does not satisfy an embedded
 configuration. Unknown reopened loaders fail with a clear instruction to reapply
 GRFsEmbedded or GRFsFromIni. Runtime INI changes after patching remain the operator's
-responsibility. Selecting both historical/current patch names is rejected instead
-of installing duplicate hooks.
+responsibility.
 
 ## Scope and fixes
 
@@ -86,7 +86,13 @@ The [detailed reference](https://github.com/YlenXWalker/WARP0716/blob/f2a3a710f9
 
 Verified results:
 
-- Canonical-name follow-up: seven real-WARP cases compare the prior/current
+- Single-name removal: seven real-WARP cases cover the prior/current original
+  name, reversed IDs/invocation, runtime INI, and missing-GRF/wrong-priority/
+  missing-loader failures. Successful EXEs retain the pre-removal hashes and
+  original `.epi` identity. The 602-case emitted-x86 owner suite and native
+  owner/trampoline permissions pass unchanged. Source tests require the removed
+  wrapper/catalog/export to be absent.
+- Prior canonical-name follow-up (before wrapper removal): seven real-WARP cases compare the prior/current
   implementation, both selectable names, reversed IDs/invocation, runtime INI,
   and duplicate selections. All successful EXEs match the pre-move hashes and
   retain their selected `.epi` names. The 602-case emitted-x86 owner suite and

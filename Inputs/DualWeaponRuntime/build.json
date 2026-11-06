@@ -25,7 +25,7 @@
     "Inputs/DualWeaponAuthored/grips/female-assassin-canonical.dwc2": "4ba59f903ee992217253679d21df1564eb150b5b62d44adb5bcf3742a4a6a815",
     "tools/build_dual_weapon_runtime.py": "16e4ed7c085c08965aa1d04974ef64ec6b2280801716dfe61eacef510579463f",
     "tools/test_dual_weapon_runtime_build.py": "ccbd8c436b889afb7e69bdea4974e6a6ccfdb563266531d2ae9ba2e88d31b38f",
-    "tools/test_dual_weapon_requirements.cjs": "b0279c63169fda42eb702441963a784bb602366c91d85e1e971564d8f6d26c01"
+    "tools/test_dual_weapon_requirements.cjs": "1a320f554aa3eb789df068dd1c9e66f718adb02d58bd241dab512323d31ecf0a"
   },
   "container_metadata": {
     "export_timestamp": 2842532845,

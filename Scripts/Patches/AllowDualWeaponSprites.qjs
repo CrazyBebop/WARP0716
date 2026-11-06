@@ -758,16 +758,6 @@ DualWeaponStatic.readCompositor = function()
 	return {data:data.slice(begin), codeBytes, entry, relocs, rigOffset:codeBytes, gripOffset:codeBytes+rigBytes};
 };
 
-// Both historical profile names remain catalogued. Only one owns binary tags;
-// selecting both is a clear error rather than a duplicate hook installation.
-DualWeaponStatic.assertSingleOwner = function(patchName)
-{
-	const other = patchName === "AllowDualWeaponSprites"
-		? "AllowDualCustomWeaponSprites" : "AllowDualWeaponSprites";
-	if (Warp.GetPatchState(other))
-		throw Error("Select only one dual-weapon patch name; " + other + " is already applied");
-};
-
 DualWeaponStatic.readArchiveList = function(path, embedded)
 {
 	const file = new TextFile(path, "r");
@@ -876,7 +866,6 @@ AllowDualWeaponSprites = function(_)
 		throw Error("DualWeaponStatic: " + profile.Name + " has no dual-weapon compositor");
 	const compositor = DualWeaponStatic.readCompositor();
 	const legacy = DualWeaponStatic.readLegacyAssets();
-	DualWeaponStatic.assertSingleOwner(_ || "AllowDualWeaponSprites");
 	DualWeaponStatic.assertArchives();
 	if (typeof RagexeAllocationStatic !== "undefined")
 		RagexeAllocationStatic.prepare();
@@ -1032,7 +1021,7 @@ AllowDualWeaponSprites = function(_)
 	if (typeof PatchDiagnostics !== "undefined" &&
 		typeof PatchDiagnostics.add === "function")
 	{
-		PatchDiagnostics.add("AllowDualCustomWeaponSprites.AuthoredRig", {
+		PatchDiagnostics.add("AllowDualWeaponSprites.AuthoredRig", {
 			build: profile.Name,
 			mode: "authored-physical-hand-rig",
 			minimumState: "authored",
