@@ -21,14 +21,14 @@
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
 *   Created Date  : 2026-10-29                                             *
-*   Last Modified : 2026-10-30                                             *
+*   Last Modified : 2026-11-07                                             *
 *   Description   : Cache native chat measurements on 2025-07-16 Ragexe.   *
 *                   Reuse exact native widths, retaining original wrapping,*
 *                   tag routing and ChatItemIcons. SCIEL & ICE design.     *
 *   Research      : SCIEL and ICE supplied the chat performance            *
 *                   research and design information used by this port.     *
-*   Evidence      : examples/chat_performance/validation.json              *
-*   Verifier      : tools/verify_chat_performance.py                       *
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/75                 *
+*   Verifier      : PR #75 head 75c29434: external build/native test kit.  *
 *                                                                          *
 \**************************************************************************/
 

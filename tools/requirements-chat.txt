@@ -1,4 +1,0 @@
-pefile
-capstone
-unicorn
-PyYAML

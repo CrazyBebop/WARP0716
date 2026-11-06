@@ -21,12 +21,12 @@
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
 *   Created Date  : 2026-10-30                                             *
-*   Last Modified : 2026-10-30                                             *
+*   Last Modified : 2026-11-07                                             *
 *   Description   : Shared byte guards and x86 emission for 2025-07-16.    *
 *                   Used by both native chat fixes at patch time only.     *
 *                   No client logging, diagnostics or runtime worker.      *
-*   Evidence      : examples/chat_performance/validation.json              *
-*   Verifier      : tools/verify_chat_performance.py                       *
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/75                 *
+*   Verifier      : PR #75 head 75c29434: external build/native test kit.  *
 *                                                                          *
 \**************************************************************************/
 

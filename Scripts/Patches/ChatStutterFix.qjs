@@ -21,14 +21,14 @@
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
 *   Created Date  : 2026-10-29                                             *
-*   Last Modified : 2026-10-31                                             *
+*   Last Modified : 2026-11-07                                             *
 *   Description   : Remove pre-wrap and both history tag-check copies.     *
 *                   Guard native tag grammar; retain native wrapping,      *
 *                   ITEML/NAVIL routing and ChatItemIcons on 2025-07-16.   *
 *   Research      : SCIEL and ICE research; gidzdlcrz history-site         *
 *                   proposal derived from ICE (PR #75 comment).            *
-*   Evidence      : examples/chat_performance/validation.json              *
-*   Verifier      : tools/verify_chat_performance.py                       *
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/75                 *
+*   Verifier      : PR #75 head 75c29434: external build/native test kit.  *
 *                                                                          *
 \**************************************************************************/
 ChatStutterFix = function(_)
