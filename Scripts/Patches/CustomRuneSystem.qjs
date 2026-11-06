@@ -1,0 +1,1232 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil, Ylen X Walker                        *
+*   Created Date  : 2026-06-01                                             *
+*   Last Modified : 2026-10-09                                             *
+*                                                                          *
+*   Description   : Multiple equipped Rune Sets for the 2025-07-16 Ragexe. *
+*                   Stock keeps one equipped set in CRuneSystemMgr+0x14    *
+*                   and draws one UIEquipRuneSetWnd row. Static EXE caves  *
+*                   skip the stock equip guard, cache every server-        *
+*                   refreshed set by set ID, show a scrollable stack of    *
+*                   pane rows, and route hover, preview, the Equip/Unequip *
+*                   button and unequip requests to the right set.          *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Multiple equipped Rune Sets, emitted entirely into EXE caves
+///        (no DLL, no import, no runtime hook).
+///
+/// Server contract (rAthena Rune Tablet patch, doc/rune_tablet.txt, 6.):
+///   Full sync     0x0bd7 <0> <category> <0> for every category, then
+///                 0x0bd7 <0> <category> <set id> once per equipped set.
+///   Unequip one   0x0bd6 <category | 0x8000>.W <set id>.L
+///
+/// Reverse-engineered contract (2025-07-16_Ragexe_175220998):
+///   [0x01318A10]          CRuneSystemMgr*; +0x14 is the one equipped set.
+///   0x00730B40            Refresh(tag, set, a3, a4), ret 0x10. Sets +0x14 to
+///                         the set object of (tag, set), 0 for set 0 or an
+///                         unknown set. Called from the 0x0bd7 handler
+///                         (0x00CF953F) and the 0x0bd5/0x0bf2 handler
+///                         (0x00CF9591). Set objects are built from the
+///                         System/Rune lubs and the list packets update them
+///                         in place (0x00730CF0), so cached pointers stay
+///                         valid for the session.
+///   0x0072F140            GetEquippedSet(): mov eax,[ecx+0x14]; ret.
+///   0x0072F1D0            Set ID: mov eax,[ecx+0x10]; mov edx,[ecx+0x14].
+///   0x007E1610            UIEquipRuneSetWnd::OnDraw (vtable 0x0102312C+0x50).
+///                         Every pixel it emits goes through four
+///                         UIWindow::DrawBitmap calls, four TextOut calls and
+///                         one CDCBitmap +0x40 overlay call, all on this pane.
+///   0x007E4CC0            UIEquipRuneSetWnd::OnMouseHover (vtable +0x70). It
+///                         places the tag and rune tooltips through
+///                         LocalToScreen 0x00A1EF70 (0x007E4D17, 0x007E4E00).
+///   vtable +0x8C          OnWheel(delta), the UIWindow stub 0x005A8AF0
+///                         (ret 4). UIWindowMgr sends hover and wheel to the
+///                         same window under the cursor (0x00A46B41/0x00A46B66).
+///   0x007E4B70            UIRuneSystem_tagListWnd +0x64 (vtable 0x01023204).
+///                         Its only rune effect is the [mgr+0x14] swap.
+///   UIRuneSet_Info        Detail panel (vtable 0x010239AC). +0x7C is the set
+///                         it shows; it owns the Equip (+0x88, ID 0xC3) and
+///                         Unequip (+0x8C, ID 0x158) buttons and forwards their
+///                         clicks (SendMsg 0x007E6130) to UIRuneSystemWnd as
+///                         (info, 0xAB, ID).
+///   0x007E6530            UIRuneSystemWnd::SendMsg(sender, msg, value, ...).
+///                         Value 0x158 from the pane (+0x68, 0x007E4910) or the
+///                         info panel reaches 0x007E67E4: a confirmation, then
+///                         0x0bd6 <[set+0x48]> <0> built at 0x007E684C.
+///   0x007E5C12, 0x007E5E47, 0x007E5E56
+///                         Equip/Unequip button state (ESI = UIRuneSet_Info):
+///                         Unequip while the equipped set is the shown set.
+///   UIRuneSystemWnd       +0xC4 pane (283x82), +0xC8 tier bar (283x32) below
+///                         it, +0xCC Rune Tablet set list (283x345, page 5),
+///                         +0xD0/+0xD4 the Encyclopedia/Disassemble pages. The
+///                         tab switch 0x007DF130 shows the pane on the Rune
+///                         Tablet tab only and places the tier bar from the
+///                         pane height (message 0xA9).
+///
+/// Client behaviour:
+///   - Up to 255 cached sets in arrival order (server sync order). Refresh with
+///     set 0 drops every set of that tag; a known set is updated or appended.
+///   - The pane shows $runeVisibleRows rows from the scroll position; the mouse
+///     wheel over the pane, or a click on the scroll column drawn at its right
+///     edge when sets are hidden, scrolls one row. Hover, preview and the
+///     pane's own unequip (double click) use the row under the cursor.
+///   - The Equip/Unequip button follows the set shown in the detail panel:
+///     Unequip when it is equipped.
+///   - Unequip sends the set ID with unequip_set_flag, so only that set goes.
+///   - Only the tier bar and the Rune Tablet set list move down; the list is
+///     shortened by the same amount and its scroll page scaled, so its bottom
+///     and every set stay reachable. The other tabs' pages are not touched.
+///   - Row Y offsets are applied at the nine draw call sites inside OnDraw and
+///     the two tooltip sites inside OnMouseHover, so no other UI is touched;
+///     layout state is keyed to the pane instance and
+///     child pointers are re-read from the parent, so a recreated Rune window
+///     never dereferences a stale child.
+///
+CustomRuneSystem = function(_)
+{
+	if (Exe.BuildDate !== RuneStatic.BuildDate)
+		throw Error("CustomRuneSystem supports only the 2025-07-16 client");
+	if (typeof ExtNameStaticAsm === "undefined" ||
+		typeof ExtNameStaticAsm.asm !== "function")
+		throw Error("CustomRuneSystem: ExtNameStaticAsm helper is unavailable");
+
+	$$(_, 1, `Ask for the visible equipped Rune Set rows`);
+	const V = RuneStatic.VisibleRows;
+	const rowsIn = Exe.GetUserInput('$runeVisibleRows', D_Uint32, "Equipped Rune Set Rows",
+		`Equipped Rune Sets shown at once (${V.min}-${V.max}).\nThe mouse wheel over them scrolls the rest. Default = ${V.def}.`,
+		V.def, {min: V.min, max: V.max});
+	const rows = (typeof rowsIn === "number") ? rowsIn : V.def; // keep default if left unchanged
+	if (rows < V.min || rows > V.max)
+		throw Error(`CustomRuneSystem: $runeVisibleRows must be ${V.min}-${V.max}`);
+
+	$$(_, 2, `Verify every native site before writing`);
+	const sites = CustomRuneSystem.verifySites();
+
+	CustomRuneSystem.patchEquipGuard(_);
+	CustomRuneSystem.installVisuals(_, sites, rows);
+
+	return true;
+};
+
+const RuneStatic = {
+	BuildDate: 20250716,
+	RuneMgrPtr: 0x01318A10,
+	EquippedOffset: 0x14,
+	RefreshHelper: 0x00730B40,
+	SetIdGetter: 0x0072F1D0,
+	WindowResize: 0x00A1CB70,    // UIWindow::Resize(w, h); recreates [this+0x24]
+	ImageDraw: 0x00A1D260,       // UIWindow::DrawBitmap(x, y, bitmap, a4)
+	TextDraw: 0x00A25A70,        // UIWindow::TextOut(x, y, text, ...)
+	LocalToScreen: 0x00A1EF70,   // UIWindow(&x, &y): adds +0x1C/+0x20 of this and every parent
+	PaneDraw: 0x007E1610,
+	PaneHover: 0x007E4CC0,
+	TagListClick: 0x007E4B70,
+	ScrollRange: 0x00864470,     // UIRuneSetList::SetScrollRange(max, page, total)
+	FillRect: 0x00A1D460,        // UIWindow::FillRect(x, y, w, h, color)
+	ResourceManager: 0x00A90350, // CResMgr singleton
+	TexturePath: 0x00A9F030,     // cdecl(ui-relative name) -> texture path
+	GetBitmap: 0x00A8D4A0,       // CResMgr::Get(path), ret 4
+	PaneClick: 0x007E4A50,       // UIEquipRuneSetWnd +0x64 OnLBtnDown: preview
+	PaneDblClick: 0x007E4910,    // UIEquipRuneSetWnd +0x68 OnLBtnDblClk: unequip
+	// Scroll column of the equipped pane, drawn like the Rune Tablet list's own
+	// scrollbar (UIRuneSetList 0x007E4790): 7 px track, 6 px arrows, 3 px
+	// thumb caps and middle tiles, in the row background's transparent margin.
+	Strip: {width: 7, arrow: 6, cap: 3, minThumb: 9, track: 0x00DCC4B1, inner: 0x00FFFFFF},
+	// UI-relative names, after the 15-byte CP949 user-interface folder prefix.
+	StripBitmaps: {
+		up: {vir: 0x01023FAC, name: "runesystem\\scrollbar_arrow_upper.bmp"},
+		down: {vir: 0x01023FE0, name: "runesystem\\scrollbar_arrow_down.bmp"},
+		thumbTop: {vir: 0x01024014, name: "runesystem\\scrollBar_up.bmp"},
+		thumbMid: {vir: 0x01024040, name: "runesystem\\scrollBar_m.bmp"},
+		thumbBottom: {vir: 0x0102406C, name: "runesystem\\scrollBar_down.bmp"}
+	},
+	StripNameOffset: 15,
+	DefaultRowHeight: 0x52,      // bg_runeequip.bmp is 283x82
+	ParentPaneSlot: 0xC4,
+	ChildSlots: [0xC8, 0xCC],    // tier bar, Rune Tablet set list: moved below the rows
+	ListSlot: 0xCC,              // also shortened; its page is [+0x9C], total [+0x98]
+	MinListHeight: 0x44,         // one UIRuneSetList entry
+	InfoVtable: 0x010239AC,      // UIRuneSet_Info
+	InfoSendMsg: 0x007E6130,     // UIRuneSet_Info vtable +0x94
+	InfoSelected: 0x7C,          // UIRuneSet_Info: set shown in the detail panel
+	InvalidateSlot: 0x98,        // UIWindow vtable: Invalidate()
+	Capacity: 255,               // map-server MAX_RUNE_TABLET_EQUIPPED
+	UnequipSetFlag: 0x8000,      // map-server rune_tablet_wire::unequip_set_flag
+	// Each extra row takes 82 px from the 345 px set list; at four rows one
+	// 68 px list entry remains.
+	VisibleRows: {def: 3, min: 1, max: 4},
+
+	Prologues: [
+		{label: "rune refresh", vir: 0x00730B40, hex: "55 8B EC 83 EC 08 56 57 8B F9"},
+		{label: "equipped getter", vir: 0x0072F140, hex: "8B 41 14 C3"},
+		{label: "set id getter", vir: 0x0072F1D0, hex: "8B 41 10 8B 51 14 C3"},
+		{label: "window resize", vir: 0x00A1CB70, hex: "55 8B EC 53 8B D9 56 57 8B 4B 24"},
+		{label: "pane draw", vir: 0x007E1610, hex: "55 8B EC 6A FF 68 15 E9 E8 00"},
+		{label: "pane hover", vir: 0x007E4CC0, hex: "55 8B EC 83 EC 10"},
+		{label: "tag list click", vir: 0x007E4B70, hex: "55 8B EC 57 8B F9"},
+		{label: "local to screen", vir: 0x00A1EF70, hex: "55 8B EC 8B 55 08 8B 41 1C"},
+		{label: "set list scroll range", vir: 0x00864470, hex: "55 8B EC 8B 45 08 56 8B F1 89 86 80 00 00 00"},
+		{label: "fill rect", vir: 0x00A1D460, hex: "55 8B EC 83 EC 14"},
+		{label: "resource manager", vir: 0x00A90350, hex: "55 8B EC 6A FF 68 1D 8B EF 00"},
+		{label: "texture path", vir: 0x00A9F030, hex: "55 8B EC 6A FF 68 9E AF EF 00"},
+		{label: "get bitmap", vir: 0x00A8D4A0, hex: "55 8B EC 6A FF 68 93 86 EF 00"},
+		{label: "base wheel stub", vir: 0x005A8AF0, hex: "C2 04 00"}
+	],
+	Calls: [
+		{label: "refresh handler 1", vir: 0x00CF953F, target: 0x00730B40, bridge: "refresh"},
+		{label: "refresh handler 2", vir: 0x00CF9591, target: 0x00730B40, bridge: "refresh"},
+		{label: "preview equipped set", vir: 0x007E69D6, target: 0x0072F140, bridge: "preview"},
+		{label: "button equipped set 1", vir: 0x007E5C12, target: 0x0072F140, bridge: "selected"},
+		{label: "button equipped set 2", vir: 0x007E5E47, target: 0x0072F140, bridge: "selected"},
+		{label: "button equipped set 3", vir: 0x007E5E56, target: 0x0072F140, bridge: "selected"},
+		{label: "unequip equipped set", vir: 0x007E67EA, target: 0x0072F140, bridge: "unequip"},
+		{label: "bg_runeequip_empty", vir: 0x007E1673, target: 0x00A1D260, bridge: "image"},
+		{label: "bg_runeequip", vir: 0x007E169B, target: 0x00A1D260, bridge: "image"},
+		{label: "rune icon", vir: 0x007E1723, target: 0x00A1D260, bridge: "image"},
+		{label: "tag badge", vir: 0x007E18E8, target: 0x00A1D260, bridge: "image"},
+		{label: "upgrade text shadow", vir: 0x007E17D5, target: 0x00A25A70, bridge: "text"},
+		{label: "upgrade text", vir: 0x007E17FA, target: 0x00A25A70, bridge: "text"},
+		{label: "set name shadow", vir: 0x007E1878, target: 0x00A25A70, bridge: "text"},
+		{label: "set name", vir: 0x007E189D, target: 0x00A25A70, bridge: "text"},
+		{label: "tag tooltip position", vir: 0x007E4D17, target: 0x00A1EF70, bridge: "tooltip"},
+		{label: "rune tooltip position", vir: 0x007E4E00, target: 0x00A1EF70, bridge: "tooltip"}
+	],
+	// Calls that are only checked: the unequip packet reads the category here.
+	Anchors: [
+		{label: "unequip category", vir: 0x007E685A, target: 0x0072F4D0}
+	],
+	// mov eax,[ecx] / push esi / call [eax+0x40]: the locked-rune dim overlay
+	// on the pane's CDCBitmap. Rewritten as push esi / call bridge.
+	Overlay: {label: "locked rune overlay", vir: 0x007E1757, hex: "8B 01 56 FF 50 40"},
+	// mov dword [ebp-84h],0 / mov [ebp-86h],ax: the 0x0bd6 set ID and category.
+	// The first 10 bytes become call bridge + 5 NOPs; the store is kept.
+	UnequipId: {label: "unequip set id", vir: 0x007E685F, hex: "C7 85 7C FF FF FF 00 00 00 00 66 89 85 7A FF FF FF", size: 10},
+	Vtables: [
+		{label: "UIEquipRuneSetWnd draw", entry: 0x0102317C, original: 0x007E1610, bridge: "draw"},
+		{label: "UIEquipRuneSetWnd hover", entry: 0x0102319C, original: 0x007E4CC0, bridge: "hover"},
+		{label: "UIEquipRuneSetWnd wheel", entry: 0x010231B8, original: 0x005A8AF0, bridge: "wheel"},
+		{label: "UIEquipRuneSetWnd click", entry: 0x01023190, original: 0x007E4A50, bridge: "click"},
+		{label: "UIEquipRuneSetWnd double click", entry: 0x01023194, original: 0x007E4910, bridge: "dblClick"},
+		{label: "UIRuneSystem_tagListWnd click", entry: 0x01023268, original: 0x007E4B70, bridge: "tagClick"}
+	],
+
+	State: {
+		Count: 0x00,             // cached sets
+		First: 0x04,             // first visible cache entry
+		InteractPtr: 0x08,       // set under the cursor
+		DrawYOffset: 0x0C,
+		DrawPane: 0x10,
+		DrawSurface: 0x14,
+		DrawDepth: 0x18,
+		PaneSelf: 0x1C,          // pane whose single-row size is captured
+		PaneWidth: 0x20,
+		PaneHeight: 0x24,        // row height
+		LayoutCaptured: 0x28,
+		LayoutChild: 0x2C,       // 2 child pointers, compared only
+		LayoutX: 0x34,
+		LayoutY: 0x3C,
+		ListHeight: 0x44,        // stock set list height
+		ListPage: 0x48,          // stock set list page
+		HoverYOffset: 0x5C,      // hovered row Y during the stock hover call
+		Slots: 0x60,             // Capacity x {tag, set, ptr}
+		SlotSize: 12
+	}
+};
+
+CustomRuneSystem.patchEquipGuard = function(_)
+{
+	$$(_, 3.1, `Find the Rune System equipped-set message branch`);
+	const tail =
+		PUSH_0
+	+	PUSH(0x78)
+	+	PUSH(0x118)
+	+	PUSH(POS4WC)
+	+	PUSH_0
+	+	PUSH_0
+	+	PUSH_1
+	+	PUSH_0
+	+	PUSH(0xFD4)      // MSI_RUNESYSTEM_EQUIP_PUTERR on 2025-07-16 Ragexe
+	+	JMP()
+	;
+	const code =
+		TEST(EAX, EAX)   // test eax, eax ; existing equipped Rune Set?
+	+	JZ(WCp)          // jz short _continue ; no equipped set
+	+	tail
+	;
+	const patchedCode =
+		TEST(EAX, EAX)
+	+	JMP(WCp)
+	+	tail
+	;
+
+	let addr = Exe.FindHex(code);
+	if (addr < 0 && Exe.FindHex(patchedCode) > 0)
+	{
+		$$(_, 3.2, `Rune System equipped-set guard is already patched`);
+		return;
+	}
+
+	if (addr < 0)
+	{
+		$$(_, 3.3, `Fallback: find the message push and scan back to its guard`);
+		const msgAddr = Exe.FindHex(PUSH(0xFD4) + JMP());
+		if (msgAddr < 0)
+			throw Error("Rune System equip error message branch not found");
+
+		addr = Exe.FindHex(TEST(EAX, EAX) + JZ(WCp), msgAddr - 0x40, msgAddr);
+		if (addr < 0 && Exe.FindHex(TEST(EAX, EAX) + JMP(WCp), msgAddr - 0x40, msgAddr) > 0)
+		{
+			$$(_, 3.4, `Rune System equipped-set guard is already patched`);
+			return;
+		}
+		if (addr < 0)
+			throw Error("Rune System equipped-set guard not found");
+	}
+
+	$$(_, 3.5, `Change JZ to JMP so the equip request can continue`);
+	Exe.SetJMP(addr + 2);
+};
+
+CustomRuneSystem.hexNorm = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+CustomRuneSystem.rel32Hex = function(opcode, fromVir, toVir)
+{
+	const rel = (toVir - (fromVir + 5)) >>> 0;
+	return ExtNameStaticAsm.bytesToHex([
+		opcode, rel & 0xFF, (rel >>> 8) & 0xFF, (rel >>> 16) & 0xFF, rel >>> 24
+	]);
+};
+
+CustomRuneSystem.assertBytes = function(label, vir, expectedHex)
+{
+	const phy = Exe.Vir2Phy(vir, CODE);
+	if (phy < 0)
+		throw Error(`CustomRuneSystem: ${label} is not mapped`);
+	const expected = CustomRuneSystem.hexNorm(expectedHex);
+	const actual = CustomRuneSystem.hexNorm(
+		Exe.GetHex(phy, expected.split(" ").length)
+	);
+	if (actual !== expected)
+		throw Error(`CustomRuneSystem: ${label} mismatch, got ${actual}`);
+	return phy;
+};
+
+CustomRuneSystem.assertCall = function(spec)
+{
+	const phy = Exe.Vir2Phy(spec.vir, CODE);
+	if (phy < 0 || Exe.GetUint8(phy) !== 0xE8)
+		throw Error(`CustomRuneSystem: ${spec.label} is not a relative CALL`);
+	const target = Exe.GetTgtAddr(phy + 1);
+	if (target !== spec.target)
+		throw Error(
+			`CustomRuneSystem: ${spec.label} calls 0x${target.toString(16)}` +
+			`, expected 0x${spec.target.toString(16)}`
+		);
+	return Object.assign({phy}, spec);
+};
+
+CustomRuneSystem.verifySites = function()
+{
+	for (const spec of RuneStatic.Prologues)
+		CustomRuneSystem.assertBytes(spec.label, spec.vir, spec.hex);
+	for (const spec of RuneStatic.Anchors)
+		CustomRuneSystem.assertCall(spec);
+
+	for (const key in RuneStatic.StripBitmaps)
+	{
+		const bmp = RuneStatic.StripBitmaps[key];
+		const phy = Exe.Vir2Phy(bmp.vir);
+		const hex = ExtNameStaticAsm.bytesToHex(Array.from(bmp.name + "\0", c => c.charCodeAt(0)));
+		if (phy < 0 || CustomRuneSystem.hexNorm(Exe.GetHex(phy + RuneStatic.StripNameOffset, bmp.name.length + 1)) !== CustomRuneSystem.hexNorm(hex))
+			throw Error(`CustomRuneSystem: ${bmp.name} string not found`);
+	}
+
+	// The unequip getter identifies the detail panel sender by this vtable.
+	const infoPhy = Exe.Vir2Phy(RuneStatic.InfoVtable + 0x94);
+	if (infoPhy < 0 || Exe.GetUint32(infoPhy) !== RuneStatic.InfoSendMsg)
+		throw Error("CustomRuneSystem: UIRuneSet_Info vtable mismatch");
+
+	const calls = RuneStatic.Calls.map(CustomRuneSystem.assertCall);
+	const patchAt = spec => Object.assign({
+		phy: CustomRuneSystem.assertBytes(spec.label, spec.vir, spec.hex)
+	}, spec);
+	const overlay = patchAt(RuneStatic.Overlay);
+	const unequipId = patchAt(RuneStatic.UnequipId);
+
+	const vtables = RuneStatic.Vtables.map(spec =>
+	{
+		const phy = Exe.Vir2Phy(spec.entry);
+		if (phy < 0)
+			throw Error(`CustomRuneSystem: ${spec.label} vtable entry is not mapped`);
+		const current = Exe.GetUint32(phy);
+		if (current !== spec.original)
+			throw Error(
+				`CustomRuneSystem: ${spec.label} points to 0x${current.toString(16)}` +
+				`, expected 0x${spec.original.toString(16)}`
+			);
+		return Object.assign({phy}, spec);
+	});
+
+	return {calls, overlay, unequipId, vtables};
+};
+
+CustomRuneSystem.stateMap = function(stateVir)
+{
+	const S = RuneStatic.State;
+	const at = offset => stateVir + offset;
+	return {
+		at,
+		slots: at(S.Slots),
+		slotPtr: at(S.Slots + 8),
+		child: i => at(S.LayoutChild + i * 4),
+		x: i => at(S.LayoutX + i * 4),
+		y: i => at(S.LayoutY + i * 4)
+	};
+};
+
+CustomRuneSystem.allocateCode = function(a)
+{
+	const [phyAddr, virAddr] = Exe.Allocate(a.bytes.length, 0x10);
+	Exe.SetHex(phyAddr, a.finish(virAddr));
+	return {phyAddr, virAddr, size: a.bytes.length};
+};
+
+/// isCached: EAX = set object -> EAX = it while cached, else 0. Flags only.
+CustomRuneSystem.buildIsCached = function(st)
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "done");
+	a.emit(0x51, 0x52);                         // PUSH ECX / PUSH EDX
+	a.emit(0x8B, 0x0D); a.dword(st.at(RuneStatic.State.Count));
+	a.emit(0xBA); a.dword(st.slotPtr);          // EDX=&slots[0].ptr
+	a.label("loop");
+	a.emit(0x85, 0xC9);
+	a.jcc(0x84, "miss");
+	a.emit(0x39, 0x02);                         // CMP [EDX],EAX
+	a.jcc(0x84, "hit");
+	a.emit(0x83, 0xC2, 0x0C, 0x49);             // next slot / DEC ECX
+	a.jmp("loop");
+	a.label("miss");
+	a.emit(0x33, 0xC0);
+	a.label("hit");
+	a.emit(0x5A, 0x59);
+	a.label("done");
+	a.emit(0xC3);
+	return a;
+};
+
+/// clampFirst: first = min(first, max(0, count - rows)). EAX clobbered.
+CustomRuneSystem.buildClampFirst = function(st, rows)
+{
+	const S = RuneStatic.State;
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0xA1); a.dword(st.at(S.Count));
+	a.emit(0x2D); a.dword(rows);                // SUB EAX,rows
+	a.jcc(0x8D, "have_max");
+	a.emit(0x33, 0xC0);
+	a.label("have_max");
+	a.emit(0x39, 0x05); a.dword(st.at(S.First));
+	a.jcc(0x8E, "done");
+	a.emit(0xA3); a.dword(st.at(S.First));
+	a.label("done");
+	a.emit(0xC3);
+	return a;
+};
+
+/// visibleRows: clamp first, then EAX = min(rows, count - first).
+CustomRuneSystem.buildVisibleRows = function(st, clampVir, rows)
+{
+	const S = RuneStatic.State;
+	const a = ExtNameStaticAsm.asm();
+	a.call(clampVir);
+	a.emit(0xA1); a.dword(st.at(S.Count));
+	a.emit(0x2B, 0x05); a.dword(st.at(S.First));
+	a.emit(0x3D); a.dword(rows);                // CMP EAX,rows
+	a.jcc(0x8E, "done");
+	a.emit(0xB8); a.dword(rows);
+	a.label("done");
+	a.emit(0xC3);
+	return a;
+};
+
+/// rowPtr: EAX = visible row -> EAX = set object of slots[first + row].
+CustomRuneSystem.buildRowPtr = function(st)
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x03, 0x05); a.dword(st.at(RuneStatic.State.First));
+	a.emit(0x8D, 0x04, 0x40);                   // LEA EAX,[EAX+EAX*2]
+	a.emit(0x8B, 0x04, 0x85); a.dword(st.slotPtr); // MOV EAX,[EAX*4+ptr0]
+	a.emit(0xC3);
+	return a;
+};
+
+/// layout(parent, extra) stdcall. Captures the stock positions of the tier bar
+/// and the set list once per pane instance, then moves each to its stock Y +
+/// extra through its own vtable +0x10 (UIWindow::Move) when it has drifted.
+/// The set list is also shortened by extra (not below one entry) and its
+/// scroll page scaled to the new height, so its bottom stays in place and
+/// every set remains reachable; extra 0 restores the stock height and page.
+CustomRuneSystem.buildLayout = function(st)
+{
+	const S = RuneStatic.State;
+	const a = ExtNameStaticAsm.asm();
+	const slots = RuneStatic.ChildSlots;
+	const list = slots.indexOf(RuneStatic.ListSlot);
+	a.emit(0x55, 0x8B, 0xEC, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0x5D, 0x08);                   // EBX=parent
+	a.emit(0x83, 0x3D); a.dword(st.at(S.LayoutCaptured)); a.emit(0x00);
+	a.jcc(0x85, "apply");
+	slots.forEach((offset, i) =>
+	{
+		a.emit(0x8B, 0x83); a.dword(offset);    // MOV EAX,[EBX+child]
+		a.emit(0xA3); a.dword(st.child(i));
+		a.emit(0x85, 0xC0);
+		a.jcc(0x84, `capture_next${i}`);
+		a.emit(0x8B, 0x50, 0x1C, 0x89, 0x15); a.dword(st.x(i));
+		a.emit(0x8B, 0x50, 0x20, 0x89, 0x15); a.dword(st.y(i));
+		a.label(`capture_next${i}`);
+	});
+	a.emit(0xA1); a.dword(st.child(list));      // stock list height and page
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "captured");
+	a.emit(0x8B, 0x50, 0x18, 0x89, 0x15); a.dword(st.at(S.ListHeight));
+	a.emit(0x8B, 0x90); a.dword(0x9C);
+	a.emit(0x89, 0x15); a.dword(st.at(S.ListPage));
+	a.label("captured");
+	a.emit(0xC7, 0x05); a.dword(st.at(S.LayoutCaptured)); a.dword(1);
+
+	a.label("apply");
+	slots.forEach((offset, i) =>
+	{
+		a.emit(0x8B, 0xB3); a.dword(offset);    // MOV ESI,[EBX+child]
+		a.emit(0x85, 0xF6);
+		a.jcc(0x84, `apply_next${i}`);
+		a.emit(0x3B, 0x35); a.dword(st.child(i));
+		a.jcc(0x85, `apply_next${i}`);          // never touch an unknown child
+		a.emit(0x8B, 0x3D); a.dword(st.y(i));
+		a.emit(0x03, 0x7D, 0x0C);               // EDI=stock Y+extra
+		a.emit(0xA1); a.dword(st.x(i));
+		a.emit(0x39, 0x46, 0x1C);
+		a.jcc(0x85, `move${i}`);
+		a.emit(0x39, 0x7E, 0x20);
+		a.jcc(0x84, `apply_next${i}`);
+		a.label(`move${i}`);
+		a.emit(0x57, 0x50, 0x8B, 0xCE);         // PUSH y / PUSH x / ECX=child
+		a.emit(0x8B, 0x16, 0xFF, 0x52, 0x10);   // CALL [vtable+0x10]
+		a.label(`apply_next${i}`);
+	});
+
+	a.emit(0x8B, 0xB3); a.dword(RuneStatic.ListSlot); // ESI=set list
+	a.emit(0x85, 0xF6);
+	a.jcc(0x84, "done");
+	a.emit(0x3B, 0x35); a.dword(st.child(list));
+	a.jcc(0x85, "done");
+	a.emit(0x8B, 0x3D); a.dword(st.at(S.ListHeight));
+	a.emit(0x2B, 0x7D, 0x0C);                   // EDI=stock height-extra
+	a.emit(0x81, 0xFF); a.dword(RuneStatic.MinListHeight);
+	a.jcc(0x8D, "height_ok");
+	a.emit(0xBF); a.dword(RuneStatic.MinListHeight);
+	a.label("height_ok");
+	a.emit(0x39, 0x7E, 0x18);
+	a.jcc(0x84, "done");
+	a.emit(0x57, 0xFF, 0x76, 0x14, 0x8B, 0xCE); // PUSH h / PUSH w / ECX=list
+	a.call(RuneStatic.WindowResize);
+	a.emit(0xA1); a.dword(st.at(S.ListPage));   // EAX=stock page*h/stock height
+	a.emit(0x0F, 0xAF, 0xC7, 0x99);             // IMUL EAX,EDI / CDQ
+	a.emit(0x8B, 0x0D); a.dword(st.at(S.ListHeight));
+	a.emit(0x85, 0xC9);
+	a.jcc(0x84, "page_one");
+	a.emit(0xF7, 0xF9);                         // IDIV ECX
+	a.emit(0x83, 0xF8, 0x01);
+	a.jcc(0x8D, "page_ok");
+	a.label("page_one");
+	a.emit(0xB8); a.dword(1);
+	a.label("page_ok");
+	a.emit(0x8B, 0x96); a.dword(0x98);          // EDX=total
+	a.emit(0x8B, 0xCA, 0x2B, 0xC8);             // ECX=total-page
+	a.jcc(0x89, "max_ok");
+	a.emit(0x33, 0xC9);
+	a.label("max_ok");
+	a.emit(0x52, 0x50, 0x51, 0x8B, 0xCE);       // SetScrollRange(max, page, total)
+	a.call(RuneStatic.ScrollRange);
+	a.label("done");
+	a.emit(0x5F, 0x5E, 0x5B, 0x5D, 0xC2, 0x08, 0x00);
+	return a;
+};
+
+/// Wraps Refresh(tag, set, a3, a4). A known set is updated in place or
+/// appended (arrival order is the server's sync order); set 0 drops every
+/// cached set of the tag, compacting the cache. A set the client does not know
+/// ([mgr+0x14] = 0) leaves the cache alone.
+CustomRuneSystem.buildRefresh = function(st, h)
+{
+	const a = ExtNameStaticAsm.asm();
+	const S = RuneStatic.State;
+	const count = st.at(S.Count);
+	const interact = st.at(S.InteractPtr);
+
+	a.emit(0x55, 0x8B, 0xEC, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0xF1);                         // ESI=mgr
+	a.emit(0xFF, 0x75, 0x14, 0xFF, 0x75, 0x10, 0xFF, 0x75, 0x0C, 0xFF, 0x75, 0x08);
+	a.call(RuneStatic.RefreshHelper);
+	a.emit(0x50);                               // keep the helper result
+	a.emit(0x8B, 0x4D, 0x08, 0x85, 0xC9);       // ECX=tag
+	a.jcc(0x84, "done");
+	a.emit(0x8B, 0x55, 0x0C, 0x85, 0xD2);       // EDX=set
+	a.jcc(0x84, "remove");
+	a.emit(0x85, 0xF6);
+	a.jcc(0x84, "done");
+	a.emit(0x8B, 0x46, RuneStatic.EquippedOffset);
+	a.emit(0x85, 0xC0);                         // EAX=set object
+	a.jcc(0x84, "done");
+
+	a.emit(0xBB); a.dword(st.slots);            // EBX=slot
+	a.emit(0x8B, 0x3D); a.dword(count);         // EDI=slots left
+	a.label("find");
+	a.emit(0x85, 0xFF);
+	a.jcc(0x84, "append");
+	a.emit(0x39, 0x43, 0x08);                   // CMP [EBX+8],EAX
+	a.jcc(0x84, "store");
+	a.emit(0x83, 0xC3, 0x0C, 0x4F);
+	a.jmp("find");
+	a.label("append");                          // EBX=&slots[count]
+	a.emit(0x8B, 0x3D); a.dword(count);
+	a.emit(0x81, 0xFF); a.dword(RuneStatic.Capacity);
+	a.jcc(0x83, "done");
+	a.emit(0x47, 0x89, 0x3D); a.dword(count);
+	a.label("store");
+	a.emit(0x89, 0x0B, 0x89, 0x53, 0x04, 0x89, 0x43, 0x08);
+	a.jmp("done");
+
+	a.label("remove");
+	a.emit(0xBE); a.dword(st.slots);            // ESI=read
+	a.emit(0xBB); a.dword(st.slots);            // EBX=write
+	a.emit(0x8B, 0x3D); a.dword(count);         // EDI=slots left
+	a.emit(0x33, 0xD2);                         // EDX=kept
+	a.label("scan");
+	a.emit(0x85, 0xFF);
+	a.jcc(0x84, "scanned");
+	a.emit(0x39, 0x0E);                         // CMP [ESI],ECX
+	a.jcc(0x85, "keep");
+	a.emit(0x8B, 0x46, 0x08);
+	a.emit(0x3B, 0x05); a.dword(interact);
+	a.jcc(0x85, "next");
+	a.emit(0xC7, 0x05); a.dword(interact); a.dword(0);
+	a.jmp("next");
+	a.label("keep");
+	a.emit(0x8B, 0x06, 0x89, 0x03);
+	a.emit(0x8B, 0x46, 0x04, 0x89, 0x43, 0x04);
+	a.emit(0x8B, 0x46, 0x08, 0x89, 0x43, 0x08);
+	a.emit(0x83, 0xC3, 0x0C, 0x42);
+	a.label("next");
+	a.emit(0x83, 0xC6, 0x0C, 0x4F);
+	a.jmp("scan");
+	a.label("scanned");
+	a.emit(0x89, 0x15); a.dword(count);
+	a.call(h.clampFirst);
+
+	a.label("done");
+	a.emit(0x58, 0x5F, 0x5E, 0x5B, 0x5D, 0xC2, 0x10, 0x00);
+	return a;
+};
+
+/// GetEquippedSet() for the preview of the pane (ECX=mgr): the set under the
+/// cursor while it is cached, else the stock set.
+CustomRuneSystem.buildPreview = function(st, h)
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0xA1); a.dword(st.at(RuneStatic.State.InteractPtr));
+	a.call(h.isCached);
+	a.emit(0x85, 0xC0);
+	a.jcc(0x85, "done");
+	a.emit(0x85, 0xC9);
+	a.jcc(0x84, "done");
+	a.emit(0x8B, 0x41, RuneStatic.EquippedOffset);
+	a.label("done");
+	a.emit(0xC3);
+	return a;
+};
+
+/// GetEquippedSet() for the button state (ESI=UIRuneSet_Info): the shown set
+/// while it is cached, else 0, so the button shows Unequip exactly for an
+/// equipped set.
+CustomRuneSystem.buildSelected = function(st, h)
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x33, 0xC0, 0x85, 0xF6);
+	a.jcc(0x84, "done");
+	a.emit(0x8B, 0x46, RuneStatic.InfoSelected);
+	a.call(h.isCached);
+	a.label("done");
+	a.emit(0xC3);
+	return a;
+};
+
+/// GetEquippedSet() for the unequip request (ECX=mgr, [EBP+8]=sender): the
+/// hovered row when the pane sent it, the shown set when the UIRuneSet_Info
+/// Unequip button did. Only a cached set qualifies; with a single cached set
+/// that set is used, otherwise 0 shows the native "no equipped Rune Set"
+/// message.
+CustomRuneSystem.buildUnequip = function(st, h)
+{
+	const a = ExtNameStaticAsm.asm();
+	const S = RuneStatic.State;
+	a.emit(0x8B, 0x45, 0x08);                   // EAX=sender
+	a.emit(0x3B, 0x05); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x85, "info");
+	a.emit(0xA1); a.dword(st.at(S.InteractPtr));
+	a.jmp("check");
+	a.label("info");
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "fallback");
+	a.emit(0x81, 0x38); a.dword(RuneStatic.InfoVtable); // CMP [EAX],UIRuneSet_Info
+	a.jcc(0x85, "none");
+	a.emit(0x8B, 0x40, RuneStatic.InfoSelected);
+	a.label("check");
+	a.call(h.isCached);
+	a.emit(0x85, 0xC0);
+	a.jcc(0x85, "done");
+	a.jmp("fallback");
+	a.label("none");
+	a.emit(0x33, 0xC0);
+	a.label("fallback");
+	a.emit(0x83, 0x3D); a.dword(st.at(S.Count)); a.emit(0x01);
+	a.jcc(0x85, "done");
+	a.emit(0xA1); a.dword(st.slotPtr);
+	a.label("done");
+	a.emit(0xC3);
+	return a;
+};
+
+/// Replaces MOV DWORD [EBP-84h],0 at 0x007E685F (ESI=set, AX=category):
+/// [EBP-84h] = set ID, AX = category | unequip_set_flag.
+CustomRuneSystem.buildUnequipId = function()
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x50, 0x8B, 0xCE);                   // PUSH EAX / ECX=set
+	a.call(RuneStatic.SetIdGetter);
+	a.emit(0x89, 0x85, 0x7C, 0xFF, 0xFF, 0xFF);
+	a.emit(0x58);
+	a.emit(0x0D); a.dword(RuneStatic.UnequipSetFlag);
+	a.emit(0xC3);
+	return a;
+};
+
+/// UIEquipRuneSetWnd::OnWheel(delta), thiscall, ret 4. A negative delta
+/// (wheel toward the user) scrolls one row down. A changed position clears
+/// the hovered set and invalidates the pane.
+CustomRuneSystem.buildWheel = function(st, rows)
+{
+	const a = ExtNameStaticAsm.asm();
+	const S = RuneStatic.State;
+	const first = st.at(S.First);
+	a.emit(0x8B, 0x15); a.dword(first);         // EDX=first
+	a.emit(0x83, 0x7C, 0x24, 0x04, 0x00);
+	a.jcc(0x8C, "down");
+	a.emit(0x4A);
+	a.jmp("clamp");
+	a.label("down");
+	a.emit(0x42);
+	a.label("clamp");
+	a.emit(0xA1); a.dword(st.at(S.Count));
+	a.emit(0x2D); a.dword(rows);
+	a.jcc(0x8D, "have_max");
+	a.emit(0x33, 0xC0);
+	a.label("have_max");
+	a.emit(0x3B, 0xD0);
+	a.jcc(0x8E, "below_max");
+	a.emit(0x8B, 0xD0);
+	a.label("below_max");
+	a.emit(0x85, 0xD2);
+	a.jcc(0x8D, "have_first");
+	a.emit(0x33, 0xD2);
+	a.label("have_first");
+	a.emit(0x3B, 0x15); a.dword(first);
+	a.jcc(0x84, "done");
+	a.emit(0x89, 0x15); a.dword(first);
+	a.emit(0xC7, 0x05); a.dword(st.at(S.InteractPtr)); a.dword(0);
+	a.emit(0x8B, 0x01, 0xFF, 0x90); a.dword(RuneStatic.InvalidateSlot);
+	a.label("done");
+	a.emit(0xC2, 0x04, 0x00);
+	return a;
+};
+
+/// DrawBitmap/TextOut call-site bridge: shift Y ([ESP+8]) by the current row
+/// offset when the caller is the pane being stacked.
+CustomRuneSystem.buildRowShift = function(st, targetVir)
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x3B, 0x0D); a.dword(st.at(RuneStatic.State.DrawPane));
+	a.jcc(0x85, "go");
+	a.emit(0xA1); a.dword(st.at(RuneStatic.State.DrawYOffset));
+	a.emit(0x01, 0x44, 0x24, 0x08);             // ADD [ESP+8],EAX
+	a.label("go");
+	a.jmp(targetVir);
+	return a;
+};
+
+/// Tooltip position bridge for the two LocalToScreen calls in the stock hover:
+/// the wrapper passes a row-local Y, so add the hovered row's offset to *y
+/// ([ESP+8]) when the caller is the stacked pane.
+CustomRuneSystem.buildTooltipShift = function(st)
+{
+	const S = RuneStatic.State;
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x3B, 0x0D); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x85, "go");
+	a.emit(0x8B, 0x44, 0x24, 0x08);             // EAX=&y
+	a.emit(0x8B, 0x15); a.dword(st.at(S.HoverYOffset));
+	a.emit(0x01, 0x10);                         // ADD [EAX],EDX
+	a.label("go");
+	a.jmp(RuneStatic.LocalToScreen);
+	return a;
+};
+
+/// Locked-rune overlay bridge. Replays the displaced MOV EAX,[ECX], shifts
+/// Y for the stacked pane's CDCBitmap, then tail-calls its +0x40 entry.
+CustomRuneSystem.buildOverlayShift = function(st)
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x8B, 0x01);
+	a.emit(0x3B, 0x0D); a.dword(st.at(RuneStatic.State.DrawSurface));
+	a.jcc(0x85, "go");
+	a.emit(0x8B, 0x15); a.dword(st.at(RuneStatic.State.DrawYOffset));
+	a.emit(0x01, 0x54, 0x24, 0x08);             // ADD [ESP+8],EDX
+	a.label("go");
+	a.emit(0xFF, 0x60, 0x40);                   // JMP [EAX+0x40]
+	return a;
+};
+
+/// Pane hover / tag-list click wrapper: thiscall(x, y), ret 8.
+/// On the stacked pane, select the visible row under Y, remember its set and
+/// pass a row-local Y. Expose the remembered set through [mgr+0x14] for the
+/// call.
+CustomRuneSystem.buildMouse = function(st, h, originalVir)
+{
+	const a = ExtNameStaticAsm.asm();
+	const S = RuneStatic.State;
+	const off = RuneStatic.EquippedOffset;
+	// [EBP-4] stock equipped set, [EBP-8] row height
+	a.emit(0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0xF1, 0x8B, 0x7D, 0x0C);       // ESI=this / EDI=y
+	a.emit(0x8B, 0x1D); a.dword(RuneStatic.RuneMgrPtr);
+	a.emit(0x33, 0xC0, 0x85, 0xDB);
+	a.jcc(0x84, "have_stock");
+	a.emit(0x8B, 0x43, off);
+	a.label("have_stock");
+	a.emit(0x89, 0x45, 0xFC);
+
+	a.emit(0x3B, 0x35); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x85, "swap");
+	a.call(h.visibleRows);
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "swap");
+	a.emit(0x8B, 0xC8);                         // ECX=visible rows
+	a.emit(0xA1); a.dword(st.at(S.PaneHeight));
+	a.emit(0x85, 0xC0);
+	a.jcc(0x85, "have_height");
+	a.emit(0xB8); a.dword(RuneStatic.DefaultRowHeight);
+	a.label("have_height");
+	a.emit(0x89, 0x45, 0xF8);
+	a.emit(0x8B, 0xC7, 0x33, 0xD2, 0xF7, 0x75, 0xF8); // EAX=y/height
+	a.emit(0x3B, 0xC1);
+	a.jcc(0x82, "row_ok");
+	a.emit(0x8D, 0x41, 0xFF);                   // clamp to the last row
+	a.label("row_ok");
+	a.emit(0x8B, 0xD0, 0x0F, 0xAF, 0x55, 0xF8); // EDX=row*height
+	a.emit(0x29, 0xD7);                         // EDI=row-local y
+	a.emit(0x89, 0x15); a.dword(st.at(S.HoverYOffset)); // tooltips: back to the row
+	a.call(h.rowPtr);
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "swap");
+	a.emit(0xA3); a.dword(st.at(S.InteractPtr));
+
+	a.label("swap");
+	a.emit(0x85, 0xDB);
+	a.jcc(0x84, "call_original");
+	a.emit(0xA1); a.dword(st.at(S.InteractPtr));
+	a.call(h.isCached);
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "call_original");
+	a.emit(0x89, 0x43, off);
+
+	a.label("call_original");
+	a.emit(0x57, 0xFF, 0x75, 0x08, 0x8B, 0xCE);
+	a.call(originalVir);
+	a.emit(0xC7, 0x05); a.dword(st.at(S.HoverYOffset)); a.dword(0);
+	a.emit(0x85, 0xDB);
+	a.jcc(0x84, "done");
+	a.emit(0x8B, 0x45, 0xFC, 0x89, 0x43, off);
+	a.label("done");
+	a.emit(0x5F, 0x5E, 0x5B, 0x8B, 0xE5, 0x5D, 0xC2, 0x08, 0x00);
+	return a;
+};
+
+/// drawBitmap(pane, x, y, name) stdcall: load a UI texture by its
+/// UI-relative name and draw it on the pane, like the stock list scrollbar.
+CustomRuneSystem.buildStripBitmap = function()
+{
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0x55, 0x8B, 0xEC, 0x56);
+	a.call(RuneStatic.ResourceManager);
+	a.emit(0x8B, 0xF0);                         // ESI=resource manager
+	a.emit(0xFF, 0x75, 0x14);
+	a.call(RuneStatic.TexturePath);
+	a.emit(0x83, 0xC4, 0x04);
+	a.emit(0x6A, 0x01);                         // DrawBitmap a4, as the list
+	a.emit(0x50, 0x8B, 0xCE);
+	a.call(RuneStatic.GetBitmap);               // EAX=bitmap (null is skipped)
+	a.emit(0x50, 0xFF, 0x75, 0x10, 0xFF, 0x75, 0x0C, 0x8B, 0x4D, 0x08);
+	a.call(RuneStatic.ImageDraw);
+	a.emit(0x5E, 0x5D, 0xC2, 0x10, 0x00);
+	return a;
+};
+
+/// indicator(pane) stdcall. With more cached sets than visible rows, draw a
+/// scroll column at the pane's right edge: track, both arrows and a thumb
+/// whose length and position follow the visible share and the scroll
+/// position. Nothing is drawn when every set fits.
+CustomRuneSystem.buildIndicator = function(st, bitmapVir, rows)
+{
+	const S = RuneStatic.State;
+	const T = RuneStatic.Strip;
+	const B = RuneStatic.StripBitmaps;
+	const a = ExtNameStaticAsm.asm();
+	const count = st.at(S.Count);
+	const bitmap = function(name, pushY)
+	{
+		a.emit(0x68); a.dword(B[name].vir);
+		pushY();
+		a.emit(0xFF, 0x75, 0xFC, 0x53);         // PUSH x / PUSH pane
+		a.call(bitmapVir);
+	};
+	// [EBP-4] x, [EBP-8] thumb top, [EBP-0Ch] thumb bottom cap
+	a.emit(0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x0C, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0x5D, 0x08);                   // EBX=pane
+	a.emit(0xA1); a.dword(count);
+	a.emit(0x3D); a.dword(rows);
+	a.jcc(0x8E, "done");
+	a.emit(0x8B, 0x43, 0x14, 0x83, 0xE8, T.width, 0x89, 0x45, 0xFC);
+
+	a.emit(0x68); a.dword(T.track);             // track
+	a.emit(0xFF, 0x73, 0x18, 0x6A, T.width, 0x6A, 0x00, 0xFF, 0x75, 0xFC, 0x8B, 0xCB);
+	a.call(RuneStatic.FillRect);
+	a.emit(0x68); a.dword(T.inner);
+	a.emit(0x8B, 0x43, 0x18, 0x83, 0xE8, 0x02, 0x50);
+	a.emit(0x6A, T.width - 2, 0x6A, 0x01, 0x8B, 0x45, 0xFC, 0x40, 0x50, 0x8B, 0xCB);
+	a.call(RuneStatic.FillRect);
+
+	bitmap("up", () => a.emit(0x6A, 0x01));
+	bitmap("down", () => a.emit(0x8B, 0x43, 0x18, 0x83, 0xE8, T.arrow + 1, 0x50));
+
+	a.emit(0x8B, 0x7B, 0x18, 0x83, 0xEF, 2 * (T.arrow + 1)); // EDI=track length
+	a.emit(0x8B, 0xC7, 0xB9); a.dword(rows);
+	a.emit(0x0F, 0xAF, 0xC1, 0x99, 0xF7, 0x3D); a.dword(count); // EAX=track*rows/count
+	a.emit(0x83, 0xF8, T.minThumb);
+	a.jcc(0x8D, "length_ok");
+	a.emit(0xB8); a.dword(T.minThumb);
+	a.label("length_ok");
+	a.emit(0x8B, 0xF0);                         // ESI=thumb length
+	a.emit(0x8B, 0xC7, 0x2B, 0xC6);             // EAX=free track
+	a.jcc(0x89, "free_ok");
+	a.emit(0x33, 0xC0);
+	a.label("free_ok");
+	a.emit(0x0F, 0xAF, 0x05); a.dword(st.at(S.First));
+	a.emit(0x99, 0x8B, 0x0D); a.dword(count);
+	a.emit(0x81, 0xE9); a.dword(rows);          // ECX=count-rows (>0)
+	a.emit(0xF7, 0xF9);
+	a.emit(0x83, 0xC0, T.arrow + 1, 0x89, 0x45, 0xF8);
+	a.emit(0x8D, 0x44, 0x30, 0x100 - T.cap, 0x89, 0x45, 0xF4);
+
+	bitmap("thumbTop", () => a.emit(0xFF, 0x75, 0xF8));
+	a.emit(0x8B, 0x7D, 0xF8, 0x83, 0xC7, T.cap);
+	a.label("middle");
+	a.emit(0x3B, 0x7D, 0xF4);
+	a.jcc(0x8D, "middle_done");
+	bitmap("thumbMid", () => a.emit(0x57));
+	a.emit(0x83, 0xC7, T.cap);
+	a.jmp("middle");
+	a.label("middle_done");
+	bitmap("thumbBottom", () => a.emit(0xFF, 0x75, 0xF4));
+
+	a.label("done");
+	a.emit(0x5F, 0x5E, 0x5B, 0x8B, 0xE5, 0x5D, 0xC2, 0x04, 0x00);
+	return a;
+};
+
+/// Pane OnLBtnDown/OnLBtnDblClk wrapper, thiscall(x, y), ret 8. While the
+/// scroll column is shown, a click on it scrolls one row (upper half up,
+/// lower half down) instead of previewing or unequipping the row under it.
+CustomRuneSystem.buildStripClick = function(st, rows, wheelVir, originalVir)
+{
+	const S = RuneStatic.State;
+	const a = ExtNameStaticAsm.asm();
+	a.emit(0xA1); a.dword(st.at(S.Count));
+	a.emit(0x3D); a.dword(rows);
+	a.jcc(0x8E, "original");
+	a.emit(0x3B, 0x0D); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x85, "original");
+	a.emit(0x8B, 0x41, 0x14, 0x83, 0xE8, RuneStatic.Strip.width);
+	a.emit(0x39, 0x44, 0x24, 0x04);             // x left of the column?
+	a.jcc(0x8C, "original");
+	a.emit(0x8B, 0x41, 0x18, 0xD1, 0xE8);       // EAX=height/2
+	a.emit(0x39, 0x44, 0x24, 0x08);
+	a.jcc(0x8C, "up");
+	a.emit(0x6A, 0x88);                         // wheel -120: down
+	a.jmp("scroll");
+	a.label("up");
+	a.emit(0x6A, 0x78);                         // wheel +120: up
+	a.label("scroll");
+	a.call(wheelVir);
+	a.emit(0xC2, 0x08, 0x00);
+	a.label("original");
+	a.jmp(originalVir);
+	return a;
+};
+
+/// UIEquipRuneSetWnd::OnDraw wrapper. With cached sets, resize the pane to
+/// visible rows * row height, push the controls below it down, and run the
+/// stock draw once per visible row with that row's set in [mgr+0x14], then
+/// the scroll column when more sets are cached than shown. With none, restore
+/// the captured single-row size/layout and draw once.
+CustomRuneSystem.buildDraw = function(st, h, layoutVir)
+{
+	const a = ExtNameStaticAsm.asm();
+	const S = RuneStatic.State;
+	const off = RuneStatic.EquippedOffset;
+	const callDraw = function()
+	{
+		a.emit(0x8B, 0xCE);
+		a.call(RuneStatic.PaneDraw);
+	};
+	const clear = function(offset)
+	{
+		a.emit(0xC7, 0x05); a.dword(st.at(offset)); a.dword(0);
+	};
+	// [EBP-4] stock equipped set, [EBP-8] visible rows, [EBP-0Ch] row height,
+	// [EBP-10h] row index
+	a.emit(0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x10, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0xF1, 0x85, 0xF6);             // ESI=this
+	a.jcc(0x84, "exit");
+	a.emit(0x83, 0x3D); a.dword(st.at(S.DrawDepth)); a.emit(0x00);
+	a.jcc(0x84, "enter");
+	callDraw();                                 // re-entered: stock draw only
+	a.jmp("exit");
+
+	a.label("enter");
+	a.emit(0xFF, 0x05); a.dword(st.at(S.DrawDepth));
+	a.emit(0x8B, 0x1D); a.dword(RuneStatic.RuneMgrPtr);
+	a.emit(0x85, 0xDB);
+	a.jcc(0x84, "single");
+	a.call(h.visibleRows);
+	a.emit(0x89, 0x45, 0xF8, 0x85, 0xC0);
+	a.jcc(0x84, "single");
+
+	a.emit(0x8B, 0x43, off, 0x89, 0x45, 0xFC);
+	a.emit(0x3B, 0x35); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x85, "row_current");
+	a.emit(0xA1); a.dword(st.at(S.PaneHeight));
+	a.emit(0x85, 0xC0);
+	a.jcc(0x85, "row_have");
+	a.label("row_current");
+	a.emit(0x8B, 0x46, 0x18);
+	a.label("row_have");
+	a.emit(0x85, 0xC0);
+	a.jcc(0x85, "row_ok");
+	a.emit(0xB8); a.dword(RuneStatic.DefaultRowHeight);
+	a.label("row_ok");
+	a.emit(0x89, 0x45, 0xF4);
+	a.emit(0x3B, 0x35); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x84, "pane_known");
+	a.emit(0x89, 0x35); a.dword(st.at(S.PaneSelf));
+	a.emit(0x8B, 0x4E, 0x14, 0x89, 0x0D); a.dword(st.at(S.PaneWidth));
+	a.emit(0xA3); a.dword(st.at(S.PaneHeight));
+	clear(S.LayoutCaptured);
+	a.label("pane_known");
+	a.emit(0x0F, 0xAF, 0x45, 0xF8);             // EAX=row height*rows
+	a.emit(0x39, 0x46, 0x18);
+	a.jcc(0x84, "size_ok");
+	a.emit(0x50, 0xFF, 0x76, 0x14, 0x8B, 0xCE);
+	a.call(RuneStatic.WindowResize);
+	a.label("size_ok");
+	a.emit(0x8B, 0x7E, 0x10, 0x85, 0xFF);       // EDI=parent
+	a.jcc(0x84, "rows");
+	a.emit(0x39, 0xB7); a.dword(RuneStatic.ParentPaneSlot);
+	a.jcc(0x85, "rows");
+	a.emit(0x8B, 0x45, 0xF4, 0x0F, 0xAF, 0x45, 0xF8, 0x2B, 0x45, 0xF4);
+	a.emit(0x50, 0x57);
+	a.call(layoutVir);
+
+	a.label("rows");
+	a.emit(0xC7, 0x45, 0xF0); a.dword(0);
+	a.label("row_loop");
+	a.emit(0x8B, 0x45, 0xF0);
+	a.call(h.rowPtr);
+	a.emit(0x89, 0x43, off);
+	a.emit(0x89, 0x35); a.dword(st.at(S.DrawPane));
+	a.emit(0x8B, 0x46, 0x24, 0xA3); a.dword(st.at(S.DrawSurface));
+	a.emit(0x8B, 0x45, 0xF0, 0x0F, 0xAF, 0x45, 0xF4);
+	a.emit(0xA3); a.dword(st.at(S.DrawYOffset));
+	callDraw();
+	clear(S.DrawYOffset);
+	clear(S.DrawSurface);
+	clear(S.DrawPane);
+	a.emit(0xFF, 0x45, 0xF0, 0x8B, 0x45, 0xF0, 0x3B, 0x45, 0xF8);
+	a.jcc(0x82, "row_loop");
+	a.emit(0x8B, 0x45, 0xFC, 0x89, 0x43, off);
+	a.emit(0x56);                               // scroll column on top
+	a.call(h.indicator);
+	a.jmp("leave");
+
+	a.label("single");
+	a.emit(0x3B, 0x35); a.dword(st.at(S.PaneSelf));
+	a.jcc(0x85, "single_draw");
+	a.emit(0xA1); a.dword(st.at(S.PaneHeight));
+	a.emit(0x85, 0xC0);
+	a.jcc(0x84, "single_draw");
+	a.emit(0x8B, 0x0D); a.dword(st.at(S.PaneWidth));
+	a.emit(0x85, 0xC9);
+	a.jcc(0x84, "single_draw");
+	a.emit(0x39, 0x46, 0x18);
+	a.jcc(0x84, "single_layout");
+	a.emit(0x50, 0x51, 0x8B, 0xCE);
+	a.call(RuneStatic.WindowResize);
+	a.label("single_layout");
+	a.emit(0x8B, 0x7E, 0x10, 0x85, 0xFF);
+	a.jcc(0x84, "single_draw");
+	a.emit(0x39, 0xB7); a.dword(RuneStatic.ParentPaneSlot);
+	a.jcc(0x85, "single_draw");
+	a.emit(0x6A, 0x00, 0x57);
+	a.call(layoutVir);
+	a.label("single_draw");
+	callDraw();
+
+	a.label("leave");
+	a.emit(0xFF, 0x0D); a.dword(st.at(S.DrawDepth));
+	a.label("exit");
+	a.emit(0x5F, 0x5E, 0x5B, 0x8B, 0xE5, 0x5D, 0xC3);
+	return a;
+};
+
+CustomRuneSystem.installVisuals = function(_, sites, rows)
+{
+	$$(_, 4, `Allocate the equipped Rune Set cache and pane state`);
+	const S = RuneStatic.State;
+	const size = S.Slots + S.SlotSize * RuneStatic.Capacity;
+	const [statePhy, stateVir] = Exe.Allocate(size, 0x10);
+	Exe.SetHex(statePhy, new Array(size).fill("00").join(" "));
+	const st = CustomRuneSystem.stateMap(stateVir);
+
+	$$(_, 5, `Emit the native rune caves`);
+	const alloc = CustomRuneSystem.allocateCode;
+	const isCached = alloc(CustomRuneSystem.buildIsCached(st));
+	const clampFirst = alloc(CustomRuneSystem.buildClampFirst(st, rows));
+	const visibleRows = alloc(CustomRuneSystem.buildVisibleRows(st, clampFirst.virAddr, rows));
+	const rowPtr = alloc(CustomRuneSystem.buildRowPtr(st));
+	const h = {
+		isCached: isCached.virAddr,
+		clampFirst: clampFirst.virAddr,
+		visibleRows: visibleRows.virAddr,
+		rowPtr: rowPtr.virAddr
+	};
+	const stripBitmap = alloc(CustomRuneSystem.buildStripBitmap());
+	h.indicator = alloc(CustomRuneSystem.buildIndicator(st, stripBitmap.virAddr, rows)).virAddr;
+	const layout = alloc(CustomRuneSystem.buildLayout(st));
+	const wheel = alloc(CustomRuneSystem.buildWheel(st, rows));
+	const caves = {
+		refresh: alloc(CustomRuneSystem.buildRefresh(st, h)),
+		preview: alloc(CustomRuneSystem.buildPreview(st, h)),
+		selected: alloc(CustomRuneSystem.buildSelected(st, h)),
+		unequip: alloc(CustomRuneSystem.buildUnequip(st, h)),
+		unequipId: alloc(CustomRuneSystem.buildUnequipId()),
+		wheel,
+		click: alloc(CustomRuneSystem.buildStripClick(st, rows, wheel.virAddr, RuneStatic.PaneClick)),
+		dblClick: alloc(CustomRuneSystem.buildStripClick(st, rows, wheel.virAddr, RuneStatic.PaneDblClick)),
+		image: alloc(CustomRuneSystem.buildRowShift(st, RuneStatic.ImageDraw)),
+		text: alloc(CustomRuneSystem.buildRowShift(st, RuneStatic.TextDraw)),
+		tooltip: alloc(CustomRuneSystem.buildTooltipShift(st)),
+		overlay: alloc(CustomRuneSystem.buildOverlayShift(st)),
+		draw: alloc(CustomRuneSystem.buildDraw(st, h, layout.virAddr)),
+		hover: alloc(CustomRuneSystem.buildMouse(st, h, RuneStatic.PaneHover)),
+		tagClick: alloc(CustomRuneSystem.buildMouse(st, h, RuneStatic.TagListClick))
+	};
+
+	$$(_, 6, `Redirect the verified call sites and vtable entries`);
+	for (const site of sites.calls)
+		Exe.SetHex(site.phy, CustomRuneSystem.rel32Hex(0xE8, site.vir, caves[site.bridge].virAddr));
+	Exe.SetHex(
+		sites.overlay.phy,
+		"56 " + CustomRuneSystem.rel32Hex(0xE8, sites.overlay.vir + 1, caves.overlay.virAddr)
+	);
+	Exe.SetHex(
+		sites.unequipId.phy,
+		CustomRuneSystem.rel32Hex(0xE8, sites.unequipId.vir, caves.unequipId.virAddr) +
+		" 90".repeat(sites.unequipId.size - 5)
+	);
+	for (const entry of sites.vtables)
+		Exe.SetUint32(entry.phy, caves[entry.bridge].virAddr);
+
+	if (typeof PatchDiagnostics !== "undefined" &&
+		typeof PatchDiagnostics.add === "function")
+	{
+		const vir = {};
+		for (const name in caves)
+			vir[name] = caves[name].virAddr;
+		PatchDiagnostics.add("CustomRuneSystem.QjsOnly", {
+			stateVir,
+			visibleRows: rows,
+			capacity: RuneStatic.Capacity,
+			helpers: h,
+			layoutVir: layout.virAddr,
+			caves: vir,
+			callSites: sites.calls.map(site => site.vir),
+			overlaySite: sites.overlay.vir,
+			unequipIdSite: sites.unequipId.vir,
+			vtableEntries: sites.vtables.map(entry => entry.entry),
+			dllImports: 0
+		});
+	}
+};
+
+CustomRuneSystem.validate = function()
+{
+	if (Exe.BuildDate !== RuneStatic.BuildDate ||
+		Exe.FindText("MSI_RUNESYSTEM_EQUIP_PUTERR", CASE_INSENSITIVE, false) <= 0 ||
+		Exe.FindText("bg_runeequip.bmp", CASE_INSENSITIVE, false) <= 0)
+		return false;
+	try
+	{
+		CustomRuneSystem.verifySites();
+		return true;
+	}
+	catch (error)
+	{
+		return false;
+	}
+};

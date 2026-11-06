@@ -448,6 +448,18 @@ CustomFont:
             author : Louis T Steinhil
             desc : Forces the 2025-07-16 client's multibyte codepage with a QJS-only static patch. Use 65001 for UTF-8; this patch does not add DLL imports or runtime hooks.
 
+RuneSystem:
+    title : RUNE SYSTEM
+    mutex : false
+    color : mediumseagreen
+
+    patches:
+        - CustomRuneSystem:
+            title : Custom Rune System
+            recommend : no
+            author : Louis T Steinhil
+            desc : QJS-only multiple equipped Rune Sets for the 2025-07-16 Ragexe and a map-server with the rAthena Rune Tablet patch (rune_tablet_max_equipped). Skips the stock equipped Rune Set guard, caches up to 255 server-refreshed sets by set ID, shows a prompted number of equipped-pane rows (1-4) that scroll with the mouse wheel or a scroll column shown while sets are hidden, on the Rune Tablet tab (the set list below shrinks to fit), makes hover, tooltips and preview row-aware, shows Equip/Unequip for the set in the detail panel, and unequips one set (0x0bd6 category|0x8000, set id). All logic is emitted into static EXE caves; no DLL, DLL import or runtime hook is required.
+
 IgnoreErrors:
     title : IGNORE ERRORS
     mutex : false
