@@ -48,7 +48,7 @@ CustomSpecials:
             title : Enable Druid classes (2026)
             recommend : no
             author : CrazyBebop
-            desc : Teaches this client Gravity's Druid line (Druid, Karnos, Alitea, their riding forms and the Werewolf/Wereraptor forms) the way the 2026 kRO clients know it, straight from data.grf with no Lua job files. Needs a server that has these jobs and a data.grf that carries their art. WARPGATE's English translation carries its five skill files, so a client that takes it answers No when the patch offers its own copies.
+            desc : Experimental (still in beta), fixes are added with each update. Teaches this client Gravity's Druid line (Druid, Karnos, Alitea, their riding forms and the Werewolf/Wereraptor forms) the way the 2026 kRO clients know it, straight from data.grf with no Lua job files. Needs a server that has these jobs and a data.grf that carries their art. WARPGATE's English translation carries its five skill files, so a client that takes it answers No when the patch offers its own copies.
 
         - QoL2026:
             title : Quality of Life Changes (2026)
