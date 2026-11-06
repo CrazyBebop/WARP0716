@@ -5,15 +5,18 @@ For a server on rAthena master, which does not have the Druid line. From the roo
     git apply --check EnableDruidClasses.master.patch
     git apply         EnableDruidClasses.master.patch
 then rebuild the servers. Already on datawulf's druid or codex/kro-alitea branch? Use the small
-EnableDruidClasses.server.patch instead; this file already contains it.
+EnableDruidClasses.server.patch instead (on codex/kro-alitea, then EnableDruidClasses.alitea.patch);
+this file already contains them.
 
 The Druid line's server code is datawulf's, open upstream as rathena/rathena#9765
 (https://github.com/datawulf/rathena, branch codex/kro-alitea). Its commits are by Atemo, Lemongrass3110, Muh, munkrej.
-WARP0716 only packages it, with its own two changes on top (EnableDruidClasses.server.patch: the
-transformation effect plays when the form starts; skill costs and ranges as kRO 2026-10-07).
+WARP0716 only packages it, with its own changes on top: EnableDruidClasses.server.patch (the
+transformation effect plays when the form starts; skill costs and ranges as kRO 2026-10-07) and
+EnableDruidClasses.alitea.patch (Nature Rage and Plume Piercer send the skill-used packet, so
+their effects show).
 
-Made from rAthena master d4b8e7b8f 2026-10-06 + datawulf codex/kro-alitea bce67cc07 2026-10-16 + EnableDruidClasses.server.patch 2397bdc76b242724.
-138 files changed, 10048 insertions(+), 35 deletions(-). rAthena and these changes are GNU GPL v3; so is this file.
+Made from rAthena master d4b8e7b8f 2026-10-06 + datawulf codex/kro-alitea bce67cc07 2026-10-16 + EnableDruidClasses.server.patch 2397bdc76b242724 + EnableDruidClasses.alitea.patch 755209afbd1e202c.
+138 files changed, 10060 insertions(+), 35 deletions(-). rAthena and these changes are GNU GPL v3; so is this file.
 Guide: https://warp.legacygamers.net/warp0716/EnableDruidClasses/
 
 diff --git a/conf/atcommands.yml b/conf/atcommands.yml
@@ -10596,15 +10599,16 @@ index 0000000000000000000000000000000000000000..a48b667363ecfba01850c4abd2306b91
 +};
 diff --git a/src/map/skills/druid/naturerage.cpp b/src/map/skills/druid/naturerage.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d15b8adcfb82d5c0f074e99c4ce7c8ba3e51cfc1
+index 0000000000000000000000000000000000000000..84a28066b509861e10592ae80e1d4077ce813fae
 --- /dev/null
 +++ b/src/map/skills/druid/naturerage.cpp
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,55 @@
 +// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
 +// For more information, see LICENCE in the main folder
 +
 +#include "naturerage.hpp"
 +
++#include "map/clif.hpp"
 +#include "map/map.hpp"
 +#include "map/pc.hpp"
 +#include "map/skill.hpp"
@@ -10650,6 +10654,8 @@ index 0000000000000000000000000000000000000000..d15b8adcfb82d5c0f074e99c4ce7c8ba
 +		status_change_start(src, src, SC_GROUND_GROW, 10000, 0, 0, stacks, 0, 10000, SCSTART_NOAVOID);
 +	}
 +
++	// The client plays Nature Rage's effect on the "skill used" packet (ZC_USE_SKILL), not on the damage.
++	clif_skill_nodamage(src, *target, getSkillId(), skill_lv);
 +	skill_attack(BF_MAGIC, src, src, target, getSkillId(), skill_lv, tick, flag);
 +}
 diff --git a/src/map/skills/druid/naturerage.hpp b/src/map/skills/druid/naturerage.hpp
@@ -10828,15 +10834,16 @@ index 0000000000000000000000000000000000000000..d7fd9bc740d8f388802446b27b4da7a3
 +};
 diff --git a/src/map/skills/druid/plumepiercer.cpp b/src/map/skills/druid/plumepiercer.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..296e5c4486db36c502092928e9c289327e19d388
+index 0000000000000000000000000000000000000000..3489b981d10fc97bdd10c065c85d8bb01c0f0898
 --- /dev/null
 +++ b/src/map/skills/druid/plumepiercer.cpp
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,27 @@
 +// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
 +// For more information, see LICENCE in the main folder
 +
 +#include "plumepiercer.hpp"
 +
++#include "map/clif.hpp"
 +#include "map/skill.hpp"
 +#include "map/status.hpp"
 +
@@ -10851,12 +10858,19 @@ index 0000000000000000000000000000000000000000..296e5c4486db36c502092928e9c28932
 +	skillratio += 5 * sstatus->con;
 +	RE_LVL_DMOD(100);
 +}
++
++void SkillPlumePiercer::splashSearch(block_list* src, block_list* target, uint16 skill_lv, t_tick tick, int32 flag) const {
++	// The client plays Plume Piercer's effect on the "skill used" packet (ZC_USE_SKILL), not on the damage.
++	clif_skill_nodamage(src, *target, getSkillId(), skill_lv);
++
++	SkillImplRecursiveDamageSplash::splashSearch(src, target, skill_lv, tick, flag);
++}
 diff --git a/src/map/skills/druid/plumepiercer.hpp b/src/map/skills/druid/plumepiercer.hpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..a63db540bdae64e2d387053f48df2b8d008b9a92
+index 0000000000000000000000000000000000000000..f88213e92186dcf875bb30d8c3b92061868ad9e6
 --- /dev/null
 +++ b/src/map/skills/druid/plumepiercer.hpp
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,14 @@
 +// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
 +// For more information, see LICENCE in the main folder
 +
@@ -10869,6 +10883,7 @@ index 0000000000000000000000000000000000000000..a63db540bdae64e2d387053f48df2b8d
 +	SkillPlumePiercer();
 +
 +	void calculateSkillRatio(const Damage* wd, const block_list* src, const block_list* target, uint16 skill_lv, int32& skillratio, int32 mflag) const override;
++	void splashSearch(block_list* src, block_list* target, uint16 skill_lv, t_tick tick, int32 flag) const override;
 +};
 diff --git a/src/map/skills/druid/primalclaw.cpp b/src/map/skills/druid/primalclaw.cpp
 new file mode 100644

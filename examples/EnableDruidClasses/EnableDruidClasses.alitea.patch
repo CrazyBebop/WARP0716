@@ -1,0 +1,53 @@
+diff --git a/src/map/skills/druid/naturerage.cpp b/src/map/skills/druid/naturerage.cpp
+index d15b8adcf..84a28066b 100644
+--- a/src/map/skills/druid/naturerage.cpp
++++ b/src/map/skills/druid/naturerage.cpp
+@@ -3,6 +3,7 @@
+ 
+ #include "naturerage.hpp"
+ 
++#include "map/clif.hpp"
+ #include "map/map.hpp"
+ #include "map/pc.hpp"
+ #include "map/skill.hpp"
+@@ -48,5 +49,7 @@ void SkillNatureRage::castendDamageId(block_list* src, block_list* target, uint1
+ 		status_change_start(src, src, SC_GROUND_GROW, 10000, 0, 0, stacks, 0, 10000, SCSTART_NOAVOID);
+ 	}
+ 
++	// The client plays Nature Rage's effect on the "skill used" packet (ZC_USE_SKILL), not on the damage.
++	clif_skill_nodamage(src, *target, getSkillId(), skill_lv);
+ 	skill_attack(BF_MAGIC, src, src, target, getSkillId(), skill_lv, tick, flag);
+ }
+diff --git a/src/map/skills/druid/plumepiercer.cpp b/src/map/skills/druid/plumepiercer.cpp
+index 296e5c448..3489b981d 100644
+--- a/src/map/skills/druid/plumepiercer.cpp
++++ b/src/map/skills/druid/plumepiercer.cpp
+@@ -3,6 +3,7 @@
+ 
+ #include "plumepiercer.hpp"
+ 
++#include "map/clif.hpp"
+ #include "map/skill.hpp"
+ #include "map/status.hpp"
+ 
+@@ -17,3 +18,10 @@ void SkillPlumePiercer::calculateSkillRatio(const Damage* wd, const block_list*
+ 	skillratio += 5 * sstatus->con;
+ 	RE_LVL_DMOD(100);
+ }
++
++void SkillPlumePiercer::splashSearch(block_list* src, block_list* target, uint16 skill_lv, t_tick tick, int32 flag) const {
++	// The client plays Plume Piercer's effect on the "skill used" packet (ZC_USE_SKILL), not on the damage.
++	clif_skill_nodamage(src, *target, getSkillId(), skill_lv);
++
++	SkillImplRecursiveDamageSplash::splashSearch(src, target, skill_lv, tick, flag);
++}
+diff --git a/src/map/skills/druid/plumepiercer.hpp b/src/map/skills/druid/plumepiercer.hpp
+index a63db540b..f88213e92 100644
+--- a/src/map/skills/druid/plumepiercer.hpp
++++ b/src/map/skills/druid/plumepiercer.hpp
+@@ -10,4 +10,5 @@ public:
+ 	SkillPlumePiercer();
+ 
+ 	void calculateSkillRatio(const Damage* wd, const block_list* src, const block_list* target, uint16 skill_lv, int32& skillratio, int32 mflag) const override;
++	void splashSearch(block_list* src, block_list* target, uint16 skill_lv, t_tick tick, int32 flag) const override;
+ };
