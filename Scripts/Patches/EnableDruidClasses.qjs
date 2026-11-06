@@ -5450,26 +5450,25 @@ EnableDruidClasses = function(_)
 		EnableDruidClasses.luaDir = Exe.GetSavedInput('$druidLuaDir') || System.DirPath(Warp.TgtExe);
 	}
 
-	$$(_, 10.2, `Offer the rAthena server patch that fits the server`)
-	/// rAthena master has no Druid line: it is datawulf's (rathena#9765). examples/EnableDruidClasses
-	/// carries two files: the small one for a server on datawulf's druid or codex/kro-alitea branch, and
-	/// one for plain master that packages that branch plus the small one
-	/// (tools/druid_re/make_druid_server_patches.py, re-cut before every release). WARP cannot run git, so
-	/// the operator applies it on the server; this only puts the right file in their hands.
+	$$(_, 10.2, `Offer the rAthena server patch (a fresh rAthena only)`)
+	/// rAthena master has no Druid line: its server code is datawulf's (rathena#9765). examples/EnableDruidClasses
+	/// carries ONE file, for a fresh rAthena (plain master): that code with our changes on top
+	/// (tools/druid_re/make_druid_server_patches.py, re-cut before every release). Since 2026-11-06 no file for
+	/// datawulf's own branches ships, and a server that applied an earlier copy gets an update file from the
+	/// guide. WARP cannot run git, so the operator applies it on the server; this only puts the file in their hands.
+	/// The choice keeps its 10-21 label so a saved answer still picks the file.
 	/// ★ A D_Choice accepted at its default comes back false, as does a headless build, so Skip is the
-	/// default and every unrecognised answer lands on it.
+	/// default and every unrecognised answer lands on it (an answer saved for the old datawulf-branch choice too).
 	const SERVER_PATCHES = {
 		"Plain rAthena master (adds the whole Druid line)": "EnableDruidClasses.master.patch",
-		"datawulf's druid or codex/kro-alitea branch": "EnableDruidClasses.server.patch",
 	};
 	const SKIP = "Skip, my server already has it";
 	EnableDruidClasses.serverPatch = null;
 	const pick = Warp.TestMode ? false : Exe.GetUserInput('$druidServerPatch', D_Choice, "rAthena server patch",
-		"The Druid line also needs your server to know it. Which rAthena does your server run? The "
-	  + "matching patch file is written to a folder you pick next, to apply on the server with "
-	  + "<b>git apply</b> and then rebuild it.<br><br>"
-	  + "<b>Plain rAthena master</b> has no Druid line yet: its file adds datawulf's (rathena#9765) "
-	  + "with ours on top. <b>datawulf's branch</b> gets only our two changes.",
+		"The Druid line also needs your server to know it. For a fresh rAthena (plain master), which has no "
+	  + "Druid line yet, the server patch is written to a folder you pick next, to apply on the server with "
+	  + "<b>git apply</b> and then rebuild it. It adds datawulf's Druid line (rathena#9765) with ours on top."
+	  + "<br><br>Already applied an earlier copy? Choose Skip: the guide has an update file for it.",
 		SKIP, {choices: [SKIP].concat(Object.keys(SERVER_PATCHES))});
 	if (SERVER_PATCHES[pick])
 	{

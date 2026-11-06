@@ -1,23 +1,20 @@
-EnableDruidClasses.master.patch: the Druid line (Druid, Karnos, Alitea) for plain rAthena master,
+EnableDruidClasses.master.patch: the Druid line (Druid, Karnos, Alitea) for a fresh rAthena,
 for WARP0716's "Enable Druid classes (2026)" client patch.
 
-For a server on rAthena master, which does not have the Druid line. From the root of the tree:
+Updated 2026-11-06. Check for further updates here: https://warp.legacygamers.net/warp0716/EnableDruidClasses/
+
+For a fresh rAthena (plain master), which does not have the Druid line. From the root of the tree:
     git apply --check EnableDruidClasses.master.patch
     git apply         EnableDruidClasses.master.patch
-then rebuild the servers. Already on datawulf's druid or codex/kro-alitea branch? Use the small
-EnableDruidClasses.server.patch instead (on codex/kro-alitea, then EnableDruidClasses.alitea.patch);
-this file already contains them.
+then rebuild the servers. Already applied an earlier copy of this file? The guide has an update
+file for it, or undo the old copy (git apply -R) and apply this one.
 
 The Druid line's server code is datawulf's, open upstream as rathena/rathena#9765
 (https://github.com/datawulf/rathena, branch codex/kro-alitea). Its commits are by Atemo, Lemongrass3110, Muh, munkrej.
-WARP0716 only packages it, with its own changes on top: EnableDruidClasses.server.patch (the
-transformation effect plays when the form starts; skill costs and ranges as kRO 2026-10-07) and
-EnableDruidClasses.alitea.patch (Nature Rage and Plume Piercer send the skill-used packet, so
-their effects show).
+WARP0716 packages it for a fresh rAthena, with its own changes on top: the transformation effect plays when the form starts; skill costs and ranges as kRO 2026-10-07; Nature Rage and Plume Piercer send the skill-used packet, so their effects show.
 
-Made from rAthena master d4b8e7b8f 2026-10-06 + datawulf codex/kro-alitea bce67cc07 2026-10-16 + EnableDruidClasses.server.patch 2397bdc76b242724 + EnableDruidClasses.alitea.patch 755209afbd1e202c.
+Made from rAthena master d4b8e7b8f 2026-10-06 + datawulf codex/kro-alitea bce67cc07 2026-10-16 + WARP0716's changes a953366965277bb5.
 138 files changed, 10060 insertions(+), 35 deletions(-). rAthena and these changes are GNU GPL v3; so is this file.
-Guide: https://warp.legacygamers.net/warp0716/EnableDruidClasses/
 
 diff --git a/conf/atcommands.yml b/conf/atcommands.yml
 index 9ff52bbf257cb4faa4d71274f5e43fe49cba0df6..7349f2f3a970489579f42937908c175bf22e7ac2 100644
