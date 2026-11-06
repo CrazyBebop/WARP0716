@@ -5,8 +5,16 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const source = fs.readFileSync(path.join(root, 'Scripts/Patches/AllowDualCustomWeaponSprites.qjs'), 'utf8');
-const alias = fs.readFileSync(path.join(root, 'Scripts/Patches/AllowDualWeaponSprites.qjs'), 'utf8');
+const source = fs.readFileSync(path.join(root, 'Scripts/Patches/AllowDualWeaponSprites.qjs'), 'utf8');
+const alias = fs.readFileSync(path.join(root, 'Scripts/Patches/AllowDualCustomWeaponSprites.qjs'), 'utf8');
+assert.match(source, /const DualWeaponStatic =/);
+assert.doesNotMatch(alias, /const DualWeaponStatic =|Exe\.(?:Allocate|Set)/);
+// Directory loading may evaluate the compatibility file before its owner.
+const earlyAlias = vm.createContext({RagexeClientProfile: {Id: 20250716}});
+vm.runInContext(alias, earlyAlias);
+assert.equal(vm.runInContext('typeof AllowDualCustomWeaponSprites', earlyAlias), 'function');
+vm.runInContext(source, earlyAlias);
+assert.equal(vm.runInContext('AllowDualCustomWeaponSprites.validate()', earlyAlias), true);
 let files = {}, active = new Set(), inputs = {}, reads = 0, closes = 0;
 let image = Buffer.alloc(0x5000);
 const context = vm.createContext({
@@ -38,6 +46,12 @@ const context = vm.createContext({
 vm.runInContext(source, context);
 vm.runInContext(alias, context);
 const run = expression => vm.runInContext(expression, context);
+assert.equal(run('AllowDualWeaponSprites.validate()'), true);
+assert.equal(run('AllowDualCustomWeaponSprites.validate()'), true);
+context.RagexeClientProfile.Id = 20260219;
+assert.equal(run('AllowDualWeaponSprites.validate()'), false);
+assert.equal(run('AllowDualCustomWeaponSprites.validate()'), false);
+context.RagexeClientProfile.Id = 20250716;
 const check = () => run('DualWeaponStatic.assertArchives()');
 const archive = 'dual_weapon_male_assets.grf';
 files['C:/client/' + archive] = '';
@@ -81,13 +95,17 @@ assert.throws(check, /using GRFsEmbedded or GRFsFromIni/);
 
 // Wrapper forwards each call/validation to the maintained implementation.
 let called = null;
-context.AllowDualCustomWeaponSprites = name => { called = name; return 73; };
-context.AllowDualCustomWeaponSprites.validate = () => true;
-assert.equal(run('AllowDualWeaponSprites("AllowDualWeaponSprites")'), 73);
-assert.equal(called, 'AllowDualWeaponSprites');
-assert.equal(run('AllowDualWeaponSprites.validate()'), true);
+context.AllowDualWeaponSprites = name => { called = name; return 73; };
+context.AllowDualWeaponSprites.validate = () => true;
+assert.equal(run('AllowDualCustomWeaponSprites("AllowDualCustomWeaponSprites")'), 73);
+assert.equal(called, 'AllowDualCustomWeaponSprites');
+assert.equal(run('AllowDualCustomWeaponSprites(null)'), 73);
+assert.equal(called, 'AllowDualCustomWeaponSprites');
+assert.equal(run('AllowDualCustomWeaponSprites.validate()'), true);
+context.AllowDualWeaponSprites.validate = () => false;
+assert.equal(run('AllowDualCustomWeaponSprites.validate()'), false);
 active = new Set(['AllowDualCustomWeaponSprites']);
 assert.throws(() => run('DualWeaponStatic.assertSingleOwner("AllowDualWeaponSprites")'), /Select only one/);
 active = new Set(['AllowDualWeaponSprites']);
 assert.throws(() => run('DualWeaponStatic.assertSingleOwner("AllowDualCustomWeaponSprites")'), /Select only one/);
-console.log('PASS legacy alias/validation, duplicate-owner rejection, embedded/INI mount order, missing list/GRF, reopened loader and malformed-loader checks; no files generated.');
+console.log('PASS canonical implementation/custom-name shim, either file-load order, validation forwarding, duplicate-owner rejection, embedded/INI mount order, missing files and reopened/malformed loaders; no files generated.');

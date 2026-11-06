@@ -75,16 +75,16 @@ CustomSpecials:
             desc : "2025-07-16 build-specific global HatEffect depth patch, live validated on 2026-07-14. It preserves every original HatEffect STR resource, animation, actor attachment, metadata, teardown, screen-space position, apparent scale, and RHW. During only the two generic HatEffect render methods, vertices at/below actor-anchor Y retain a floor-safe four-quantum contact-biased depth; upper vertices reconstruct Y-up reciprocal depth using projection-matrix +0x10/+0x14 and convert it through 0x00554040. Native world STR NPCs remain unchanged."
 
         - AllowDualWeaponSprites:
-            title : Dual / Off-Hand Weapons (Legacy Profile Name)
-            recommend : no
-            author : Louis T Steinhil
-            desc : "Compatibility entry for old profiles and saved sessions. Applies the same original-resource compositor. Select one dual-weapon name only; mount dual_weapon_male_assets.grf first."
-
-        - AllowDualCustomWeaponSprites:
             title : Dual / Off-Hand Daggers, Swords and Axes [TESTING]
             recommend : no
             author : Louis T Steinhil
             desc : "2025-07-16: original dual/off-hand daggers, one-handed swords and axes. Five male and five female Assassin-family body profiles cover all 24 mapped non-Drake views in the audited GRFs. Missing job resources require the 60-entry Inputs/DualWeaponRuntime/dual_weapon_male_assets.grf registered first in the actual embedded or INI loader. Existing accepted placements remain unchanged; added images use individual frame, axis and grip profiles. Other bodies/classes/views remain stock. Keep compositor.dwcp and legacy-support.dwls with the script. CPU execution/geometry verified; live acceptance tracked in examples/dual-wield-original-weapon-sprites.md."
+
+        - AllowDualCustomWeaponSprites:
+            title : Dual / Off-Hand Weapons (Compatibility Name)
+            recommend : no
+            author : Louis T Steinhil
+            desc : "Compatibility name for profiles and saved sessions using AllowDualCustomWeaponSprites. Forwards to canonical AllowDualWeaponSprites. Select one name only. Requires dual_weapon_male_assets.grf first in the active archive list."
 
         - AllowChatWhileBerserk:
             title : Allow Chatting While Berserk

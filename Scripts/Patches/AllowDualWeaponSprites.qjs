@@ -20,22 +20,1050 @@
 |**************************************************************************|
 *                                                                          *
 *   Author(s)     : Louis T Steinhil                                       *
-*   Created Date  : 2026-11-07                                             *
+*   Created Date  : 2026-07-12                                             *
 *   Last Modified : 2026-11-07                                             *
-*   Description   : Preserve legacy AllowDualWeaponSprites profiles on     *
-*                   2025-07-16. Forward to the original-resource compositor*
-*                   instead of silently skipping the historical patch name.*
+*   Description   : Retains original item SPR/ACT resources for dual and   *
+*                   off-hand-only equipment on 2025-07-16 Ragexe.          *
+*                   Resolves dagger/sword/axe classes from actual views,   *
+*                   rejects native fallback art, and composes original     *
+*                   layers using separate male/female body and animation   *
+*                   profiles. Stock equipment state and native channel     *
+*                   5/6 resources stay intact. Channel 5 is the combined   *
+*                   weapon; channel 6 is its overlay. Neither channel      *
+*                   represents a physical hand. Both hands prepare         *
+*                   before drawing. Actual item views and requested Lua    *
+*                   resource suffixes are verified. New readable           *
+*                   compositor: CustomDLL/DualWeapon/compositor.c          *
+*                   Payload: Inputs/DualWeaponRuntime/compositor.dwcp      *
+*                   (build with tools). The frozen depth helper remains    *
+*                   active; legacy capture is not injected. The new path   *
+*                   derives ownership from current stock ACT/SPR +         *
+*                   palette, without the legacy capture ring or its        *
+*                   hard-coded pair28 fingerprint. 2026 is unsupported.    *
+*                   Five male and five female Assassin-family bodies       *
+*                   cover 24 mapped non-Drake dagger, sword and axe        *
+*                   views. Missing job filenames require the bundled       *
+*                   60-entry compatibility GRF. Native solo80/dual88       *
+*                   timelines remain distinct; other bodies stay stock     *
+*                   Readable source and generated data replace the old     *
+*                   inline hex blobs. Keep compositor.dwcp and             *
+*                   legacy-support.dwls beside build.json. See PR #69      *
+*                   for install scope and reproducible build commands.     *
 *   Evidence      : github.com/CrazyBebop/WARP0716/pull/69                 *
-*   Verifier      : tools/test_dual_weapon_requirements.cjs                *
+*   Verifier      : tools/test_dual_weapon_requirements.cjs;               *
+*                   tools/build_dual_weapon_runtime.py --check             *
 *                                                                          *
 \**************************************************************************/
 
+
+const DualWeaponStatic = {
+	Profiles: {
+		20250716: {
+			Name: "2025-07-16 Ragexe",
+			EquipUpdate: 0x00D403A0,
+			EquipStolen: "55 8B EC 6A FF",
+			ActFrameCall: 0x00D36EE4,
+			ActFrameCallBytes: "E8 C7 85 9D FF",
+			ActGetFrame: 0x0070F4B0,
+			LayerGetCall: 0x00605CD9,
+			LayerGetCallBytes: "E8 B2 96 10 00",
+			LayerGet: 0x0070F390,
+			ItemToWeaponView: 0x00D8A1D0,
+			ItemToWeaponViewBytes: "55 8B EC 56 8B 75 08",
+			ResourceAddRef: 0x00A8E800,
+			ResourceRelease: 0x00A8F910,
+			SupportsPose: true,
+			PairMapper: 0x00D39130,
+			PairMapperBytes: "55 8B EC 8B 55 08",
+			ViewToWeaponClass: 0x00D5DDB0,
+			ViewToWeaponClassBytes: "55 8B EC 6A FF 68 DD 54 F3 00",
+			ItemWeaponSuffix: 0x00D60DE0,
+			ItemWeaponSuffixBytes: "55 8B EC 6A FF 68 4D 58 F3 00",
+			ActorGender: 0x260,
+			ActorMainItem: 0x440,
+			ActorOffItem: 0x444,
+			ActorSprBegin: 0x4AC,
+			ActorSprEnd: 0x4B0,
+			ActorActBegin: 0x4B8,
+			ActorActEnd: 0x4BC
+		},
+		20260219: {
+			Name: "2026-02-19 Ragexe",
+			SupportsPose: false
+		}
+	},
+	ActiveBuildDate: 0
+};
+
+DualWeaponStatic.selectProfile = function()
+{
+	const profileId = typeof RagexeClientProfile !== "undefined" ? RagexeClientProfile.Id : Exe.BuildDate;
+	const profile = DualWeaponStatic.Profiles[profileId];
+	if (!profile)
+		throw Error(`DualWeaponStatic does not support client profile ${profileId}`);
+	if (DualWeaponStatic.ActiveBuildDate === profileId)
+		return profile;
+
+	for (const key in profile)
+		DualWeaponStatic[key] = profile[key];
+	DualWeaponStatic.ActiveBuildDate = profileId;
+	return profile;
+};
+
+DualWeaponStatic.hexNorm = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+DualWeaponStatic.assertBytes = function(label, vir, expected)
+{
+	const phy = Exe.Vir2Phy(vir, CODE);
+	if (phy < 0)
+		throw Error(`DualWeaponStatic: ${label} is not mapped`);
+
+	const size = DualWeaponStatic.hexNorm(expected).split(" ").length;
+	const actual = DualWeaponStatic.hexNorm(Exe.GetHex(phy, size));
+	if (actual !== DualWeaponStatic.hexNorm(expected))
+		throw Error(`DualWeaponStatic: ${label} mismatch, got ${actual}`);
+	return phy;
+};
+
+// Minimal label-aware x86 emitter. Relative branches are resolved only after
+// Exe.Allocate returns the final virtual address of the code cave.
+DualWeaponStatic.asm = function()
+{
+	const bytes = [];
+	const labels = {};
+	const fixups = [];
+
+	const put32 = function(out, pos, value)
+	{
+		const v = value >>> 0;
+		out[pos] = v & 0xFF;
+		out[pos + 1] = (v >>> 8) & 0xFF;
+		out[pos + 2] = (v >>> 16) & 0xFF;
+		out[pos + 3] = (v >>> 24) & 0xFF;
+	};
+
+	return {
+		bytes,
+		emit: function(...values)
+		{
+			for (const value of values)
+				bytes.push(value & 0xFF);
+		},
+		dword: function(value)
+		{
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			put32(bytes, pos, value);
+		},
+		label: function(name)
+		{
+			if (Object.prototype.hasOwnProperty.call(labels, name))
+				throw Error(`DualWeaponStatic: duplicate label ${name}`);
+			labels[name] = bytes.length;
+		},
+		rel32: function(opcode, target)
+		{
+			bytes.push(opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		call: function(target) { this.rel32(0xE8, target); },
+		jmp: function(target) { this.rel32(0xE9, target); },
+		jcc: function(opcode, target)
+		{
+			bytes.push(0x0F, opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		finish: function(baseVir)
+		{
+			const out = bytes.slice();
+			for (const fixup of fixups)
+			{
+				if (typeof fixup.target === "string" &&
+					!Object.prototype.hasOwnProperty.call(labels, fixup.target))
+					throw Error(`DualWeaponStatic: unresolved label ${fixup.target}`);
+				const targetVir = typeof fixup.target === "string"
+					? baseVir + labels[fixup.target]
+					: fixup.target;
+				if (typeof targetVir !== "number")
+					throw Error(`DualWeaponStatic: unresolved label ${fixup.target}`);
+				const nextVir = baseVir + fixup.pos + 4;
+				put32(out, fixup.pos, targetVir - nextVir);
+			}
+			return out.map(value => value.toString(16).padStart(2, "0")).join(" ");
+		}
+	};
+};
+
+DualWeaponStatic.buildEquipHook = function(
+	trampolineVir,
+	stateReadyVir,
+	statePageVir,
+	stateSize,
+	virtualProtectIat,
+	actorRegistryVir,
+	viewRegistryVir
+)
+{
+	// VirtualProtect affects whole VA pages, regardless of the allocator's
+	// physical alignment. Never let data protection remove trampoline EXECUTE.
+	if ((statePageVir & 0xFFF) !== 0 || stateSize <= 0 || (stateSize & 0xFFF) !== 0 ||
+		stateReadyVir < statePageVir || stateReadyVir + 4 > statePageVir + stateSize ||
+		(trampolineVir < statePageVir + stateSize && trampolineVir + 10 > statePageVir))
+		throw Error("DualWeaponStatic: state protection must own isolated VA pages");
+	const a = DualWeaponStatic.asm();
+	let unique = 0;
+	const local = function(offset) { return offset & 0xFF; };
+
+	const original = function(kind)
+	{
+		if (kind === "current")
+			a.emit(0x57, 0x53);
+		else if (kind === "offAsMain")
+			a.emit(0x6A, 0x00, 0x57);
+		else if (kind === "mainOnly")
+			a.emit(0x6A, 0x00, 0x53);
+		else
+			throw Error(`DualWeaponComplete: unknown stock call ${kind}`);
+		a.emit(0x8B, 0xCE);
+		a.call(trampolineVir);
+	};
+
+	const requireWeaponItem = function(register, failLabel)
+	{
+		a.emit(register === "main" ? 0x53 : 0x57);
+		a.call(DualWeaponStatic.ItemToWeaponView);
+		a.emit(0x85, 0xC0);
+		a.jcc(0x8E, failLabel);
+		a.emit(0x89, 0x45, local(register === "main" ? -64 : -68));
+		// GetRealWeaponId(view), RET 4: expands item-specific Lua view IDs to
+		// the native 1..23 single-weapon classes. D39130 only knows the old
+		// dagger/sword/axe ItemId ranges and cannot classify other weapons.
+		a.emit(0x50);
+		a.call(DualWeaponStatic.ViewToWeaponClass);
+		// Original dual art exists for dagger, one-hand sword and one-hand axe.
+		// Keep expanded item views, but do not admit other base weapon classes.
+		const allowed = "supported_weapon_type_" + unique++;
+		a.emit(0x83, 0xF8, 0x01); a.jcc(0x84, allowed);
+		a.emit(0x83, 0xF8, 0x02); a.jcc(0x84, allowed);
+		a.emit(0x83, 0xF8, 0x06); a.jcc(0x85, failLabel);
+		a.label(allowed);
+		a.emit(0x89, 0x45, local(register === "main" ? -48 : -52));
+	};
+
+	const loadSlots = function(failLabel)
+	{
+		a.emit(0x8B, 0x86); a.dword(DualWeaponStatic.ActorSprBegin);
+		a.emit(0x85, 0xC0); a.jcc(0x84, failLabel);
+		a.emit(0x8B, 0x8E); a.dword(DualWeaponStatic.ActorSprEnd);
+		a.emit(0x3B, 0xC8); a.jcc(0x82, failLabel);
+		a.emit(0x2B, 0xC8, 0x83, 0xF9, 0x1C); a.jcc(0x82, failLabel);
+		a.emit(0x8B, 0x96); a.dword(DualWeaponStatic.ActorActBegin);
+		a.emit(0x85, 0xD2); a.jcc(0x84, failLabel);
+		a.emit(0x8B, 0x8E); a.dword(DualWeaponStatic.ActorActEnd);
+		a.emit(0x3B, 0xCA); a.jcc(0x82, failLabel);
+		a.emit(0x2B, 0xCA, 0x83, 0xF9, 0x1C); a.jcc(0x82, failLabel);
+	};
+
+	const requireOriginalWeaponNames = function(register, failLabel)
+	{
+		loadSlots(failLabel);
+		// CResource stores its inline filename at decimal 20 (0x14).
+		// The native solo loader may silently substitute sword art for a mace.
+		// Hold no new references until both requested weapon names match.
+		a.emit(0x8B, 0x48, 0x14, 0x89, 0x4D, local(-72));
+		a.emit(0x8B, 0x4A, 0x14, 0x89, 0x4D, local(-76));
+		a.emit(register === "main" ? 0x53 : 0x57);
+		a.call(DualWeaponStatic.ItemWeaponSuffix);
+		// D60DE0 returns a Lua-owned char*. Consume it immediately in pure
+		// bounded comparisons, before another native/Lua call can run.
+		a.emit(0x89, 0x45, local(-80));
+		for (const [pointer, extension] of [[-76, 0x7463612E], [-72, 0x7270732E]])
+		{
+			a.emit(0x68); a.dword(extension); // .act / .spr, little-endian
+			a.emit(0xFF, 0x75, local(-80), 0xFF, 0x75, local(pointer));
+			a.call("resource_suffix_matches");
+			a.emit(0x85, 0xC0); a.jcc(0x84, failLabel);
+		}
+	};
+
+	const retainPointer = function(register, destination, failLabel, optional = false)
+	{
+		if (register === "ecx")
+			a.emit(0x89, 0x4D, local(destination));
+		else
+			a.emit(0x89, 0x45, local(destination));
+		a.emit(0x85, register === "ecx" ? 0xC9 : 0xC0);
+		const skip = optional ? "optional_resource_" + unique++ : failLabel;
+		a.jcc(0x84, skip);
+		if (register === "eax")
+			a.emit(0x8B, 0xC8);
+		a.call(DualWeaponStatic.ResourceAddRef);
+		if (optional) a.label(skip);
+	};
+
+	const captureWeaponChannels = function(
+		spr5Local, act5Local, spr6Local, act6Local, failLabel
+	)
+	{
+		loadSlots(failLabel);
+		a.emit(0x8B, 0x48, 0x14); retainPointer("ecx", spr5Local, failLabel);
+		a.emit(0x8B, 0x86); a.dword(DualWeaponStatic.ActorActBegin);
+		a.emit(0x8B, 0x48, 0x14); retainPointer("ecx", act5Local, failLabel);
+		a.emit(0x8B, 0x86); a.dword(DualWeaponStatic.ActorSprBegin);
+		a.emit(0x8B, 0x48, 0x18); retainPointer("ecx", spr6Local, failLabel, true);
+		a.emit(0x8B, 0x86); a.dword(DualWeaponStatic.ActorActBegin);
+		a.emit(0x8B, 0x48, 0x18); retainPointer("ecx", act6Local, failLabel, true);
+	};
+
+	const captureStockActs = function(failLabel)
+	{
+		loadSlots(failLabel);
+		a.emit(0x8B, 0x4A, 0x14); retainPointer("ecx", -36, failLabel);
+		a.emit(0x8B, 0x86); a.dword(DualWeaponStatic.ActorActBegin);
+		a.emit(0x8B, 0x48, 0x18); retainPointer("ecx", -40, failLabel, true);
+	};
+
+	const releaseLocal = function(offset)
+	{
+		const skip = `release_local_${unique++}`;
+		a.emit(0x8B, 0x4D, local(offset), 0x85, 0xC9);
+		a.jcc(0x84, skip);
+		a.call(DualWeaponStatic.ResourceRelease);
+		a.emit(0xC7, 0x45, local(offset)); a.dword(0);
+		a.label(skip);
+	};
+
+	const callPairMapper = function(mainKind, offKind, destination)
+	{
+		a.emit(offKind === "main" ? 0x53 : offKind === "off" ? 0x57 : 0x6A);
+		if (offKind === "zero") a.emit(0x00);
+		a.emit(mainKind === "main" ? 0x53 : mainKind === "off" ? 0x57 : 0x6A);
+		if (mainKind === "zero") a.emit(0x00);
+		a.call(DualWeaponStatic.PairMapper);
+		a.emit(0x89, 0x45, local(destination));
+	};
+
+	const clearRow = function()
+	{
+		a.emit(0x8B, 0x45, local(-56));
+		a.emit(0xC7, 0x00); a.dword(0);
+		for (const rowOffset of [0x04, 0x08, 0x0C, 0x10, 0x14, 0x18, 0x1C, 0x20, 0x24, 0x28])
+		{
+			const skip = `old_row_release_${unique++}`;
+			a.emit(0x8B, 0x45, local(-56), 0x8B, 0x48, rowOffset, 0x85, 0xC9);
+			a.jcc(0x84, skip);
+			a.call(DualWeaponStatic.ResourceRelease);
+			a.label(skip);
+		}
+		a.emit(0x8B, 0x45, local(-56));
+		for (let rowOffset = 0x04; rowOffset <= 0x38; rowOffset += 4)
+		{
+			a.emit(0xC7, 0x40, rowOffset); a.dword(0);
+		}
+	};
+
+	const publish = function()
+	{
+		const fields = [
+			[-20, 0x04], [-24, 0x08], [-28, 0x0C], [-32, 0x10],
+			[-4, 0x14], [-8, 0x18], [-12, 0x1C], [-16, 0x20],
+			[-36, 0x24], [-40, 0x28], [-44, 0x2C], [-48, 0x30], [-52, 0x34]
+		];
+		a.emit(0x8B, 0x45, local(-56));
+		for (const [source, destination] of fields)
+		{
+			a.emit(0x8B, 0x4D, local(source), 0x89, 0x48, destination);
+		}
+		a.emit(0x8B, 0x8E); a.dword(DualWeaponStatic.ActorGender);
+		a.emit(0x89, 0x48, 0x38);
+		for (const offset of [-4, -8, -12, -16, -20, -24, -28, -32, -36, -40])
+		{
+			a.emit(0xC7, 0x45, local(offset)); a.dword(0);
+		}
+		// Keep actual per-item view identities outside the legacy 60-byte ABI.
+		a.emit(0x8B, 0xD6, 0xC1, 0xEA, 0x04, 0x81, 0xE2); a.dword(255);
+		a.emit(0xC1, 0xE2, 0x03, 0x81, 0xC2); a.dword(viewRegistryVir);
+		a.emit(0x8B, 0x4D, local(-64), 0x89, 0x0A);
+		a.emit(0x8B, 0x4D, local(-68), 0x89, 0x4A, 0x04);
+		a.emit(0x89, 0x30);
+	};
+
+	// Locals own off ch5/ch6, main ch5/ch6, stock ACT5/ACT6,
+	// pair/main/off types, registry row, and VirtualProtect scratch.
+	a.emit(0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x60, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0xF1, 0x8B, 0x5D, 0x08, 0x8B, 0x7D, 0x0C);
+	for (const offset of [-4, -8, -12, -16, -20, -24, -28, -32, -36, -40, -44, -48, -52, -56, -60, -64, -68])
+	{
+		a.emit(0xC7, 0x45, local(offset)); a.dword(0);
+	}
+
+	original("current");
+	a.emit(0x8B, 0x9E); a.dword(DualWeaponStatic.ActorMainItem);
+	a.emit(0x8B, 0xBE); a.dword(DualWeaponStatic.ActorOffItem);
+
+	// Prepare the bounded registry page only once.
+	a.emit(0x83, 0x3D); a.dword(stateReadyVir); a.emit(0x01);
+	a.jcc(0x84, "state_ready");
+	a.emit(0x8D, 0x45, local(-60), 0x50);
+	a.emit(0x6A, 0x04, 0x68); a.dword(stateSize);
+	a.emit(0x68); a.dword(statePageVir);
+	a.emit(0xFF, 0x15); a.dword(virtualProtectIat);
+	a.emit(0x85, 0xC0); a.jcc(0x84, "done");
+	a.emit(0xC7, 0x05); a.dword(stateReadyVir); a.dword(1);
+	a.label("state_ready");
+
+	// 256 direct-mapped rows, 60 bytes each. Collision leaves both actors stock.
+	a.emit(0x8B, 0xC6, 0xC1, 0xE8, 0x04, 0x25); a.dword(0x00FF);
+	a.emit(0x6B, 0xC0, 0x3C, 0x05); a.dword(actorRegistryVir);
+	a.emit(0x89, 0x45, local(-56));
+	a.emit(0x39, 0x30); a.jcc(0x84, "clear_old_row");
+	a.emit(0x83, 0x38, 0x00); a.jcc(0x85, "done");
+	a.jmp("row_ready");
+	a.label("clear_old_row"); clearRow();
+	a.label("row_ready");
+
+	// Retain an off-hand weapon even when the main hand is empty.
+	a.emit(0x85, 0xFF); a.jcc(0x84, "done");
+	requireWeaponItem("off", "done");
+	a.emit(0x85, 0xDB); a.jcc(0x84, "capture_resources");
+	requireWeaponItem("main", "done");
+	// Preserve the legacy combined code for the accepted pair28 path only.
+	// Other recognized classes still own their retained original resources.
+	callPairMapper("main", "off", -44);
+	a.label("capture_resources");
+	captureStockActs("failed");
+
+	// Load each item as a stock solo-main weapon only to retain its complete
+	// channel-5/channel-6 resources. These temporary states are never published.
+	original("offAsMain");
+	requireOriginalWeaponNames("off", "failed");
+	captureWeaponChannels(-4, -8, -12, -16, "failed");
+	a.emit(0x85, 0xDB); a.jcc(0x84, "restore_current");
+	original("mainOnly");
+	requireOriginalWeaponNames("main", "failed");
+	captureWeaponChannels(-20, -24, -28, -32, "failed");
+	a.label("restore_current");
+
+	// Restore the requested stock dual state before the actor row becomes visible.
+	original("current");
+	a.emit(0x39, 0x9E); a.dword(DualWeaponStatic.ActorMainItem); a.jcc(0x85, "failed");
+	a.emit(0x39, 0xBE); a.dword(DualWeaponStatic.ActorOffItem); a.jcc(0x85, "failed");
+	publish();
+	a.jmp("done");
+
+	a.label("failed");
+	for (const offset of [-4, -8, -12, -16, -20, -24, -28, -32, -36, -40])
+		releaseLocal(offset);
+	original("current");
+
+	a.label("done");
+	a.emit(0x5F, 0x5E, 0x5B, 0x8B, 0xE5, 0x5D, 0xC2, 0x08, 0x00);
+
+	// BOOL __stdcall matches(CResource*, const char* suffix, DWORD extension).
+	// Both scans include their terminator in the 240-byte bound. Only ASCII
+	// A..Z is folded; CP949 multibyte filename bytes remain exact.
+	a.label("resource_suffix_matches");
+	a.emit(0x55, 0x8B, 0xEC, 0x53, 0x56, 0x57);
+	a.emit(0x8B, 0x75, 0x08, 0x85, 0xF6); a.jcc(0x84, "suffix_no_match");
+	a.emit(0x83, 0xC6, 0x14, 0x8B, 0x7D, 0x0C, 0x85, 0xFF);
+	a.jcc(0x84, "suffix_no_match");
+	a.emit(0x31, 0xC9);
+	a.label("suffix_length");
+	a.emit(0x81, 0xF9); a.dword(240); a.jcc(0x83, "suffix_no_match");
+	a.emit(0x80, 0x3C, 0x0F, 0x00); a.jcc(0x84, "suffix_length_ready");
+	a.emit(0x41); a.jmp("suffix_length");
+	a.label("suffix_length_ready");
+	a.emit(0x85, 0xC9); a.jcc(0x84, "suffix_no_match");
+	a.emit(0x8B, 0xD9, 0x31, 0xD2);
+	a.label("resource_name_length");
+	a.emit(0x81, 0xFA); a.dword(240); a.jcc(0x83, "suffix_no_match");
+	a.emit(0x80, 0x3C, 0x16, 0x00); a.jcc(0x84, "resource_name_length_ready");
+	a.emit(0x42); a.jmp("resource_name_length");
+	a.label("resource_name_length_ready");
+	a.emit(0x8D, 0x43, 0x04, 0x3B, 0xD0); a.jcc(0x82, "suffix_no_match");
+	a.emit(0x2B, 0xD0, 0x03, 0xF2, 0x31, 0xC9);
+	a.label("suffix_compare");
+	a.emit(0x0F, 0xB6, 0x04, 0x0E, 0x8A, 0x14, 0x0F);
+	// CP949 trail bytes can be ASCII letters. Fold only standalone ASCII,
+	// never the second byte of a multibyte character.
+	a.emit(0x3C, 0x80); a.jcc(0x83, "suffix_multibyte_compare");
+	a.emit(0x80, 0xFA, 0x80); a.jcc(0x83, "suffix_multibyte_compare");
+	a.emit(0x3C, 0x41); a.jcc(0x82, "suffix_name_folded");
+	a.emit(0x3C, 0x5A); a.jcc(0x87, "suffix_name_folded");
+	a.emit(0x04, 0x20);
+	a.label("suffix_name_folded");
+	a.emit(0x8A, 0x14, 0x0F, 0x80, 0xFA, 0x41); a.jcc(0x82, "suffix_expected_folded");
+	a.emit(0x80, 0xFA, 0x5A); a.jcc(0x87, "suffix_expected_folded");
+	a.emit(0x80, 0xC2, 0x20);
+	a.label("suffix_expected_folded");
+	a.emit(0x3A, 0xC2); a.jcc(0x85, "suffix_no_match");
+	a.emit(0x41, 0x3B, 0xCB); a.jcc(0x82, "suffix_compare");
+	a.jmp("suffix_compare_done");
+	a.label("suffix_multibyte_compare");
+	a.emit(0x3A, 0xC2); a.jcc(0x85, "suffix_no_match");
+	a.emit(0x41, 0x3B, 0xCB); a.jcc(0x83, "suffix_no_match");
+	a.emit(0x8A, 0x04, 0x0E, 0x3A, 0x04, 0x0F); a.jcc(0x85, "suffix_no_match");
+	a.emit(0x41, 0x3B, 0xCB); a.jcc(0x82, "suffix_compare");
+	a.label("suffix_compare_done");
+	a.emit(0x8B, 0x5D, 0x10, 0xBA); a.dword(4);
+	a.label("suffix_extension_compare");
+	a.emit(0x0F, 0xB6, 0x04, 0x0E, 0x3C, 0x41); a.jcc(0x82, "suffix_extension_folded");
+	a.emit(0x3C, 0x5A); a.jcc(0x87, "suffix_extension_folded");
+	a.emit(0x04, 0x20);
+	a.label("suffix_extension_folded");
+	a.emit(0x3A, 0xC3); a.jcc(0x85, "suffix_no_match");
+	a.emit(0x41, 0xC1, 0xEB, 0x08, 0x4A); a.jcc(0x85, "suffix_extension_compare");
+	a.emit(0xB8); a.dword(1); a.jmp("suffix_match_done");
+	a.label("suffix_no_match");
+	a.emit(0x31, 0xC0);
+	a.label("suffix_match_done");
+	a.emit(0x5F, 0x5E, 0x5B, 0x5D, 0xC2, 0x0C, 0x00);
+	return a;
+};
+
+// Keep character depth projection independent of weapon placement.
+DualWeaponStatic.buildScopedDepthDrawThunk = function(
+	trampolineVir, scopeVir
+)
+{
+	const a = DualWeaponStatic.asm();
+	a.emit(0x55, 0x8B, 0xEC, 0x56, 0x8B, 0xF1);
+	// Save the previous synchronous scope for fail-closed nesting behavior.
+	a.emit(0xFF, 0x35); a.dword(scopeVir + 0x08);
+	a.emit(0xFF, 0x35); a.dword(scopeVir + 0x04);
+	a.emit(0xFF, 0x35); a.dword(scopeVir + 0x00);
+	// Publish the exact actor and packet before activating custom mode 2.
+	a.emit(0x89, 0x35); a.dword(scopeVir + 0x04);
+	a.emit(0x8B, 0x45, 0x08, 0xA3); a.dword(scopeVir + 0x08);
+	a.emit(0xC7, 0x05); a.dword(scopeVir); a.dword(2);
+	for (const offset of [0x1C, 0x18, 0x14, 0x10, 0x0C, 0x08])
+		a.emit(0xFF, 0x75, offset);
+	a.emit(0x8B, 0xCE);
+	a.call(trampolineVir);
+	// Clear active first, then restore any previous scope snapshot.
+	a.emit(0xC7, 0x05); a.dword(scopeVir); a.dword(0);
+	a.emit(0x58, 0xA3); a.dword(scopeVir + 0x00);
+	a.emit(0x58, 0xA3); a.dword(scopeVir + 0x04);
+	a.emit(0x58, 0xA3); a.dword(scopeVir + 0x08);
+	a.emit(0x5E, 0x5D, 0xC2, 0x18, 0x00);
+	return a;
+};
+
+DualWeaponStatic.buildVertexDepthBridge = function(
+	helperVir, scopeVir, resumeVir
+)
+{
+	const a = DualWeaponStatic.asm();
+	// No downstream flags or XMM state are live, but preserve the full integer
+	// contract around the freestanding helper. ESI is the completed 4x0x20 quad.
+	a.emit(0x9C, 0x60);
+	a.emit(0x68); a.dword(scopeVir);
+	a.emit(0x57, 0x56, 0xFF, 0x75, 0xD8);
+	a.call(helperVir);
+	a.emit(0x61, 0x9D);
+	// Replay the exact stolen instruction from 0x00C4A647.
+	a.emit(0xA1); a.dword(0x012515F8);
+	a.jmp(resumeVir);
+	return a;
+};
+
+DualWeaponStatic.buildFinalDrawWrapper = function(
+	coreVir, contextVir, trampolineVir, scopedThunkVir, scopeVir
+)
+{
+	const a = DualWeaponStatic.asm();
+	a.emit(0x55, 0x8B, 0xEC, 0x56, 0x8B, 0xF1);
+	// Each outer draw starts stock. The current RB node begins four bytes before
+	// DrawPacket, so priority 1..5 maps to envelope slots 0..4 at traversal time.
+	// This deliberately does not use the stale insertion-time capture channel.
+	a.emit(0xC7, 0x05); a.dword(scopeVir); a.dword(0);
+	a.emit(0x8B, 0x45, 0x08, 0x85, 0xC0); a.jcc(0x84, "invoke");
+	a.emit(0x8B, 0x48, 0xFC, 0x83, 0xE9, 0x01);
+	a.emit(0x83, 0xF9, 0x04); a.jcc(0x87, "invoke");
+	a.emit(0x89, 0x35); a.dword(scopeVir + 0x04);
+	a.emit(0xA3); a.dword(scopeVir + 0x08);
+	a.emit(0x89, 0x0D); a.dword(scopeVir + 0x0C);
+	a.emit(0xC7, 0x05); a.dword(scopeVir); a.dword(1);
+	a.label("invoke");
+	a.emit(0x68); a.dword(scopedThunkVir);
+	a.emit(0x68); a.dword(contextVir);
+	for (const offset of [0x1C, 0x18, 0x14, 0x10, 0x0C, 0x08])
+		a.emit(0xFF, 0x75, offset);
+	a.emit(0x56);
+	a.call(coreVir);
+	a.emit(0x85, 0xC0);
+	a.jcc(0x85, "handled");
+	a.emit(0x8B, 0xCE, 0x5E, 0x5D);
+	a.jmp(trampolineVir);
+	a.label("handled");
+	a.emit(0xC7, 0x05); a.dword(scopeVir); a.dword(0);
+	a.emit(0x5E, 0x5D, 0xC2, 0x18, 0x00);
+	return a;
+};
+
+DualWeaponStatic.buildEquipEntry = function(targetVir)
+{
+	const a = DualWeaponStatic.asm();
+	a.jmp(targetVir);
+	return a;
+};
+
+
+DualWeaponStatic.writeHexChunked = function(phy, hex)
+{
+	const bytes = hex.split(" ");
+	for (let offset = 0; offset < bytes.length; offset += 0x1000)
+		Exe.SetHex(phy + offset, bytes.slice(offset, offset + 0x1000).join(" "));
+};
+
+DualWeaponStatic.writeZeroesChunked = function(phy, size)
+{
+	const full = "00 ".repeat(0x1000).trim();
+	for (let offset = 0; offset < size; offset += 0x1000)
+	{
+		const count = Math.min(0x1000, size - offset);
+		Exe.SetHex(
+			phy + offset,
+			count === 0x1000 ? full : "00 ".repeat(count).trim()
+		);
+	}
+};
+
+DualWeaponStatic.OwnedAllocations = [];
+DualWeaponStatic.allocateChecked = function(size, alignment)
+{
+	const allocation = typeof RagexeAllocationStatic !== "undefined"
+		? RagexeAllocationStatic.allocate(size, alignment) : Exe.Allocate(size, alignment);
+	if (!allocation)
+		throw Error("DualWeaponStatic: allocation result is invalid");
+	const phy = allocation[0];
+	const vir = allocation[1];
+	if (!Number.isInteger(phy) || !Number.isInteger(vir) || phy < 0x400 ||
+		vir < 0x00400000 || phy > 0x0FFFFFFF || vir > 0x0FFFFFFF)
+		throw Error(
+			"DualWeaponStatic: allocation vir=" + vir +
+			" phy=" + phy + " size=" + size + " is outside safe bounds"
+		);
+	for (const owned of DualWeaponStatic.OwnedAllocations)
+	{
+		if (phy < owned[1] && phy + size > owned[0])
+			throw Error("DualWeaponStatic: allocation overlaps an owned range");
+	}
+	DualWeaponStatic.OwnedAllocations.push([phy, phy + size]);
+	return allocation;
+};
+
+
+// Exe.Allocate alignment can align the file offset while leaving the VA
+// unaligned (the crashing build returned state VA 0x01E5F400). Reserve enough
+// padding to align the VA ourselves; retain ownership of the entire reservation
+// so no later code allocation can share a page changed to PAGE_READWRITE.
+DualWeaponStatic.allocateStatePages = function(size)
+{
+	if (!Number.isInteger(size) || size <= 0 || (size & 0xFFF) !== 0)
+		throw Error("DualWeaponStatic: state size must be a positive page multiple");
+	const [phy, vir] = DualWeaponStatic.allocateChecked(size + 0xFFF, 0x10);
+	const padding = (0x1000 - (vir & 0xFFF)) & 0xFFF;
+	return [phy + padding, vir + padding];
+};
+
+// Versioned payload produced by tools/build_dual_weapon_compositor.py.
+// BinFile is read-only. All relocations are checked before any hook is installed.
+DualWeaponStatic.readAssetBytes = function(name)
+{
+	const file = new BinFile(Warp.Path + "/Inputs/DualWeaponRuntime/" + name, "r");
+	if (!file.Valid) throw Error("DualWeaponStatic: " + name + " is missing; update the complete repository");
+	const data = (file.ReadHex().match(/[0-9A-Fa-f]{2}/g) || []).map(x => parseInt(x, 16));
+	file.Close();
+	return data;
+};
+
+DualWeaponStatic.verifyAssetCRC = function(data, start, expected)
+{
+	let crc = 0xFFFFFFFF;
+	for (let i = start; i < data.length; ++i) {
+		crc ^= data[i];
+		for (let bit = 0; bit < 8; ++bit)
+			crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+	}
+	if (((crc ^ 0xFFFFFFFF) >>> 0) !== expected)
+		throw Error("DualWeaponStatic: asset CRC mismatch");
+};
+
+// DWLS v2 contains only the protected depth helper and its relocations.
+// Version 1 remains readable for older WARP installations. The retired capture
+// core and guide are never injected. Rebuild with build_dual_weapon_runtime.py.
+DualWeaponStatic.readLegacyAssets = function()
+{
+	const data = DualWeaponStatic.readAssetBytes("legacy-support.dwls");
+	const u32 = o => (data[o] | data[o+1]<<8 | data[o+2]<<16 | data[o+3]<<24) >>> 0;
+	const version = u32(4);
+	if (data.length < 48 || u32(0) !== 0x534C5744 ||
+		(version !== 1 && version !== 2) || u32(40) || u32(44))
+		throw Error("DualWeaponStatic: invalid legacy asset header");
+	const cn=u32(8), ce=u32(12), cr=u32(16), hn=u32(20), he=u32(24), hr=u32(28), rn=u32(32);
+	const relocStart=48+cn+hn+rn;
+	if ((version === 1 ? (!cn || ce >= cn) : (cn || ce || cr || rn)) ||
+		cn>0x200000 || !hn || hn>0x10000 || rn>0x100000 || he>=hn ||
+		cr>4096 || hr>4096 || relocStart+8*(cr+hr)!==data.length)
+		throw Error("DualWeaponStatic: invalid legacy asset dimensions");
+	DualWeaponStatic.verifyAssetCRC(data, 48, u32(36));
+	const hex = (start, length) => data.slice(start, start+length).map(x => x.toString(16).padStart(2,"0")).join(" ");
+	const relocations = function(start, count, length) {
+		const result=[], seen=new Set();
+		for (let i=0; i<count; i++) {
+			const offset=u32(start+i*8), target=u32(start+i*8+4);
+			if (offset+4>length || target>=length || seen.has(offset))
+				throw Error("DualWeaponStatic: invalid legacy asset relocation");
+			seen.add(offset); result.push([offset,target]);
+		}
+		return result;
+	};
+	return {
+		core:{hex:hex(48,cn),entry:ce,relocs:relocations(relocStart,cr,cn)},
+		helper:{hex:hex(48+cn,hn),entry:he,relocs:relocations(relocStart+cr*8,hr,hn)},
+		rigHex:hex(48+cn+hn,rn)
+	};
+};
+
+DualWeaponStatic.readCompositor = function()
+{
+	const data = DualWeaponStatic.readAssetBytes("compositor.dwcp");
+	const u32 = function(o) {
+		return (data[o] | data[o+1]<<8 | data[o+2]<<16 | data[o+3]<<24) >>> 0;
+	};
+	if (data.length < 32 || u32(0) !== 0x50435744 || u32(4) !== 1)
+		throw Error("DualWeaponStatic: invalid compositor header");
+	const codeBytes=u32(8), entry=u32(12), count=u32(16), rigBytes=u32(20), gripBytes=u32(24);
+	const begin=32+count*4, rig=begin+codeBytes, grip=rig+rigBytes;
+	// Ten independent body profiles plus all supported weapon images exceed
+	// the former 1 MiB cap. Keep an explicit 2 MiB bound and all CRC/reloc guards.
+	if (codeBytes > 0x200000 || count > 4096 || entry >= codeBytes || grip+gripBytes !== data.length)
+		throw Error("DualWeaponStatic: invalid compositor dimensions");
+	DualWeaponStatic.verifyAssetCRC(data, 32, u32(28));
+	const relocs=[];
+	for (let i=0; i<count; ++i) {
+		const offset=u32(32+i*4);
+		if (offset+4>codeBytes || u32(begin+offset)>=codeBytes)
+			throw Error("DualWeaponStatic: invalid compositor relocation");
+		relocs.push([offset,u32(begin+offset)]);
+	}
+	return {data:data.slice(begin), codeBytes, entry, relocs, rigOffset:codeBytes, gripOffset:codeBytes+rigBytes};
+};
+
+// Both historical profile names remain catalogued. Only one owns binary tags;
+// selecting both is a clear error rather than a duplicate hook installation.
+DualWeaponStatic.assertSingleOwner = function(patchName)
+{
+	const other = patchName === "AllowDualWeaponSprites"
+		? "AllowDualCustomWeaponSprites" : "AllowDualWeaponSprites";
+	if (Warp.GetPatchState(other))
+		throw Error("Select only one dual-weapon patch name; " + other + " is already applied");
+};
+
+DualWeaponStatic.readArchiveList = function(path, embedded)
+{
+	const file = new TextFile(path, "r");
+	if (!file.Valid)
+		throw Error("DualWeaponStatic: archive list is not readable: " + path);
+	const names = [];
+	let section = false;
+	try
+	{
+		while (!file.AtEnd())
+		{
+			const line = file.ReadLine().trim();
+			if (!embedded && /^\[/.test(line))
+			{
+				section = /^\[data\]$/i.test(line);
+				continue;
+			}
+			// Mirror MultiGRFs.embedList's actual single-digit parser. Runtime
+			// INI mode instead follows GetPrivateProfileString's [Data] section.
+			const match = line.match(embedded ? /^(\d)\s*=\s*(.*)/ : /^(\d)\s*=\s*(.*)$/);
+			if (match && (embedded || section)) names[Number(match[1])] = match[2].trim();
+		}
+	}
+	finally
+	{
+		file.Close();
+	}
+	return names.filter(name => name);
+};
+
+DualWeaponStatic.assertArchiveNames = function(names, source)
+{
+	const name = "dual_weapon_male_assets.grf";
+	if (!names.length || names[0].toLowerCase().replace(/\\/g, "/").replace(/^\.\//, "") !== name)
+		throw Error("DualWeaponStatic: mount " + name + " first (key 0) in " + source +
+			"; DATA.INI does not override an embedded GRF list");
+};
+
+DualWeaponStatic.assertArchives = function()
+{
+	const root = System.DirPath(Warp.TgtExe);
+	let names, source;
+	if (Warp.GetPatchState("GRFsEmbedded"))
+	{
+		source = Exe.GetSavedInput("$inpMultGRF");
+		if (!source) throw Error("DualWeaponStatic: cannot verify the active embedded GRF list");
+		names = DualWeaponStatic.readArchiveList(source, true);
+	}
+	else if (Warp.GetPatchState("GRFsFromIni"))
+	{
+		const ini = Exe.GetSavedInput("$dataINI");
+		if (!ini) throw Error("DualWeaponStatic: cannot verify the active runtime INI filename");
+		source = root + "/" + ini;
+		names = DualWeaponStatic.readArchiveList(source, false);
+	}
+	else
+	{
+		// Already-patched sources can contain an embedded loader. Decode its
+		// actual CALL-over-string/AddPak chain, not an unrelated name string.
+		const site = Exe.Vir2Phy(0x00DB98B6, CODE);
+		if (site < 0 || Exe.GetUint8(site) !== 0xE8)
+			throw Error("DualWeaponStatic: unrecognized archive loader call site");
+		let call = Exe.Phy2Vir(site) + 5 + Exe.GetInt32(site + 1);
+		if (call === 0x00A88890)
+			throw Error("DualWeaponStatic: mount dual_weapon_male_assets.grf first using GRFsEmbedded " +
+				"or GRFsFromIni before applying the dual-weapon patch");
+		names = [];
+		source = "the existing embedded GRF loader";
+		for (let i = 0; i < 10; ++i)
+		{
+			const phy = Exe.Vir2Phy(call);
+			if (phy < 0) break;
+			if (Exe.GetUint8(phy) === 0xC3 && names.length)
+			{
+				DualWeaponStatic.assertArchiveNames(names, source);
+				break;
+			}
+			if (Exe.GetUint8(phy) !== 0xE8) break;
+			const length = Exe.GetInt32(phy + 1);
+			const suffix = Exe.Vir2Phy(call + 5 + length);
+			if (length < 2 || length > 128 || suffix < 0 ||
+				Exe.GetUint8(suffix) !== 0xB9 || Exe.GetUint32(suffix + 1) !== 0x0159D410 ||
+				Exe.GetUint8(suffix + 5) !== 0xE8) break;
+			const addPak = call + 15 + length + Exe.GetInt32(suffix + 6);
+			if (addPak !== 0x00A88890) break;
+			if (Exe.GetUint8(phy + 4 + length) !== 0) break;
+			names.unshift(Exe.GetText(phy + 5, length - 1));
+			call += 15 + length;
+		}
+		const end = Exe.Vir2Phy(call);
+		if (!names.length || end < 0 || Exe.GetUint8(end) !== 0xC3)
+			throw Error("DualWeaponStatic: cannot verify this archive loader; reapply GRFsEmbedded " +
+				"or GRFsFromIni with dual_weapon_male_assets.grf at key 0");
+	}
+	DualWeaponStatic.assertArchiveNames(names, source);
+	const archive = new BinFile(root + "/" + names[0], "r");
+	if (!archive.Valid)
+		throw Error("DualWeaponStatic: copy dual_weapon_male_assets.grf into the target client directory: " + root);
+	archive.Close();
+};
+
 AllowDualWeaponSprites = function(_)
 {
-	return AllowDualCustomWeaponSprites(_ || "AllowDualWeaponSprites");
+	const profile = DualWeaponStatic.selectProfile();
+	if (!profile.SupportsPose)
+		throw Error("DualWeaponStatic: " + profile.Name + " has no dual-weapon compositor");
+	const compositor = DualWeaponStatic.readCompositor();
+	const legacy = DualWeaponStatic.readLegacyAssets();
+	DualWeaponStatic.assertSingleOwner(_ || "AllowDualWeaponSprites");
+	DualWeaponStatic.assertArchives();
+	if (typeof RagexeAllocationStatic !== "undefined")
+		RagexeAllocationStatic.prepare();
+	const equipPhy = DualWeaponStatic.assertBytes(
+		"equipment entry", profile.EquipUpdate, profile.EquipStolen
+	);
+	const finalDrawVir = 0x00C4A0D0;
+	const finalDrawPhy = DualWeaponStatic.assertBytes(
+		"final native sprite draw", finalDrawVir,
+		"55 8B EC 83 EC 50"
+	);
+	const vertexDepthHookVir = 0x00C4A647;
+	const vertexDepthHookPhy = DualWeaponStatic.assertBytes(
+		"completed sprite quad depth boundary", vertexDepthHookVir,
+		"A1 F8 15 25 01"
+	);
+	DualWeaponStatic.assertBytes(
+		"item-to-weapon-view entry", profile.ItemToWeaponView,
+		profile.ItemToWeaponViewBytes
+	);
+	DualWeaponStatic.assertBytes(
+		"pair mapper entry", profile.PairMapper, profile.PairMapperBytes
+	);
+	DualWeaponStatic.assertBytes(
+		"view-to-weapon-class entry", profile.ViewToWeaponClass, profile.ViewToWeaponClassBytes
+	);
+	DualWeaponStatic.assertBytes(
+		"item weapon-name suffix entry", profile.ItemWeaponSuffix, profile.ItemWeaponSuffixBytes
+	);
+
+	DualWeaponStatic.assertBytes("ACT action vector", 0x0070F2E3, "8B B1 10 01 00 00");
+	DualWeaponStatic.assertBytes("ACT layer vector", 0x0070F394, "8B 71 20");
+	DualWeaponStatic.assertBytes("SPR image kind/index", 0x00605D1D, "8B 46 20 8B 4E 08 83 C0 6C");
+	DualWeaponStatic.assertBytes("native weapon palette", 0x006060E7, "8D 81 10 01 00 00");
+
+	const [equipTrampolinePhy, equipTrampolineVir] =
+		DualWeaponStatic.allocateChecked(10, 0x10);
+	const equipTrampoline = DualWeaponStatic.asm();
+	equipTrampoline.emit(0x55, 0x8B, 0xEC, 0x6A, 0xFF);
+	equipTrampoline.jmp(profile.EquipUpdate + 5);
+	Exe.SetHex(equipTrampolinePhy, equipTrampoline.finish(equipTrampolineVir));
+
+	const [drawTrampolinePhy, drawTrampolineVir] =
+		DualWeaponStatic.allocateChecked(11, 0x10);
+	const drawTrampoline = DualWeaponStatic.asm();
+	drawTrampoline.emit(0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x50);
+	drawTrampoline.jmp(finalDrawVir + 6);
+	Exe.SetHex(drawTrampolinePhy, drawTrampoline.finish(drawTrampolineVir));
+
+	const virtualProtectIat = Exe.FindFunc("VirtualProtect", "kernel32.dll");
+	if (virtualProtectIat < 0)
+		throw Error("DualWeaponStatic: VirtualProtect IAT missing");
+	const stateSize = 0x5000;
+	const [statePhy, stateVir] =
+		DualWeaponStatic.allocateStatePages(stateSize);
+	DualWeaponStatic.writeZeroesChunked(statePhy, stateSize);
+	const registryVir = stateVir + 0x1000;
+	const equipCode = DualWeaponStatic.buildEquipHook(
+		equipTrampolineVir, stateVir, stateVir, stateSize,
+		virtualProtectIat, registryVir, stateVir + 0x400
+	);
+	const [equipCodePhy, equipCodeVir] =
+		DualWeaponStatic.allocateChecked(equipCode.bytes.length, 0x10);
+	Exe.SetHex(equipCodePhy, equipCode.finish(equipCodeVir));
+
+	const [resourceCorePhy, resourceCoreVir] = DualWeaponStatic.allocateChecked(compositor.data.length, 0x10);
+	for (const [offset, target] of compositor.relocs) {
+		const value=(resourceCoreVir+target)>>>0;
+		for (let shift=0; shift<32; shift+=8) compositor.data[offset+(shift>>>3)]=(value>>>shift)&255;
+	}
+	DualWeaponStatic.writeHexChunked(resourceCorePhy, compositor.data.map(x => x.toString(16).padStart(2,"0")).join(" "));
+	// Retain the 21-DWORD ABI. Unused legacy capture/debug/calibration slots are zero.
+	const contextValues = [
+		registryVir, 0, 0, 0, 0, 0x38, 0x3C, 256, 0, 0, 0,
+		profile.ActorMainItem, profile.ActorOffItem, 0, 0, 0, 0,
+		resourceCoreVir + compositor.rigOffset, stateVir + 0x400,
+		0, resourceCoreVir + compositor.gripOffset
+	];
+	const contextBytes = [];
+	for (const value of contextValues)
+	{
+		for (let shift = 0; shift < 32; shift += 8)
+			contextBytes.push((value >>> shift) & 0xFF);
+	}
+	const [contextPhy, contextVir] =
+		DualWeaponStatic.allocateChecked(contextBytes.length, 0x10);
+	Exe.SetHex(contextPhy, contextBytes.map(value =>
+		value.toString(16).padStart(2, "0")).join(" "));
+
+	const equipEntryCode = DualWeaponStatic.buildEquipEntry(equipCodeVir);
+	const [equipEntryPhy, equipEntryVir] =
+		DualWeaponStatic.allocateChecked(equipEntryCode.bytes.length, 0x10);
+	Exe.SetHex(equipEntryPhy, equipEntryCode.finish(equipEntryVir));
+
+	const helperBytes = legacy.helper.hex.split(" ").length;
+	const [helperPhy, helperVir] =
+		DualWeaponStatic.allocateChecked(helperBytes, 0x10);
+	const helperData = legacy.helper.hex.split(" ");
+	for (const relocation of legacy.helper.relocs)
+	{
+		const value = (helperVir + relocation[1]) >>> 0;
+		for (let shift = 0; shift < 32; shift += 8)
+			helperData[relocation[0] + (shift >>> 3)] =
+				((value >>> shift) & 0xFF).toString(16).padStart(2, "0");
+	}
+	DualWeaponStatic.writeHexChunked(helperPhy, helperData.join(" "));
+
+	const characterDepthCacheSize = 0x88 * 256;
+	const [characterDepthCachePhy, characterDepthCacheVir] =
+		DualWeaponStatic.allocateChecked(characterDepthCacheSize, 0x10);
+	DualWeaponStatic.writeZeroesChunked(characterDepthCachePhy, characterDepthCacheSize);
+	// The frozen helper checks these callback/message pointers before logging.
+	// Zero leaves its proven depth arithmetic intact and disables diagnostics.
+	const scopeValues = [
+		0, 0, 0, 0, characterDepthCacheVir, 0x39D31F68, 0x38D1B717,
+		0x38D1B717, 0, 0, 0, 0, 0
+	];
+	const scopeBytes = [];
+	for (const value of scopeValues)
+	{
+		for (let shift = 0; shift < 32; shift += 8)
+			scopeBytes.push((value >>> shift) & 0xFF);
+	}
+	const [scopePhy, scopeVir] =
+		DualWeaponStatic.allocateChecked(scopeBytes.length, 0x10);
+	Exe.SetHex(scopePhy, scopeBytes.map(value =>
+		value.toString(16).padStart(2, "0")).join(" "));
+	const scopedThunk = DualWeaponStatic.buildScopedDepthDrawThunk(
+		drawTrampolineVir, scopeVir
+	);
+	const [scopedThunkPhy, scopedThunkVir] =
+		DualWeaponStatic.allocateChecked(scopedThunk.bytes.length, 0x10);
+	Exe.SetHex(scopedThunkPhy, scopedThunk.finish(scopedThunkVir));
+	const depthBridge = DualWeaponStatic.buildVertexDepthBridge(
+		helperVir + legacy.helper.entry, scopeVir,
+		vertexDepthHookVir + 5
+	);
+	const [depthBridgePhy, depthBridgeVir] =
+		DualWeaponStatic.allocateChecked(depthBridge.bytes.length, 0x10);
+	Exe.SetHex(depthBridgePhy, depthBridge.finish(depthBridgeVir));
+
+	const drawCode = DualWeaponStatic.buildFinalDrawWrapper(
+		resourceCoreVir + compositor.entry, contextVir, drawTrampolineVir,
+		scopedThunkVir, scopeVir
+	);
+	const [drawCodePhy, drawCodeVir] =
+		DualWeaponStatic.allocateChecked(drawCode.bytes.length, 0x10);
+	Exe.SetHex(drawCodePhy, drawCode.finish(drawCodeVir));
+
+	Exe.SetJMP(finalDrawPhy, drawCodeVir, 1);
+	Exe.SetJMP(vertexDepthHookPhy, depthBridgeVir, 0);
+	Exe.SetJMP(equipPhy, equipEntryVir, 0);
+	if (typeof PatchDiagnostics !== "undefined" &&
+		typeof PatchDiagnostics.add === "function")
+	{
+		PatchDiagnostics.add("AllowDualCustomWeaponSprites.AuthoredRig", {
+			build: profile.Name,
+			mode: "authored-physical-hand-rig",
+			minimumState: "authored",
+			stockSlotsPreserved: true,
+			textureCreation: false,
+			dllDependency: false,
+			diagnostic: false,
+			depthMode: "character-front-envelope-per-final-vertex",
+			depthHookVir: vertexDepthHookVir,
+			depthScopeVir: scopeVir,
+			depthCacheVir: characterDepthCacheVir,
+
+			resourceCoreVir,
+			resourceCoreEntry: resourceCoreVir + compositor.entry,
+			offHandOnly: true
+		});
+	}
+	return true;
 };
 
 AllowDualWeaponSprites.validate = function()
 {
-	return AllowDualCustomWeaponSprites.validate();
+	try
+	{
+		const profile = DualWeaponStatic.selectProfile();
+		return profile.SupportsPose &&
+			(typeof RagexeAllocationStatic === "undefined" ||
+			RagexeAllocationStatic.isPrepared());
+	}
+	catch (error)
+	{
+		return false;
+	}
 };

@@ -6,8 +6,8 @@ For **2025-07-16 Ragexe 175220998**, this patch preserves original dagger, one-h
 
 | File | Purpose |
 |---|---|
-| `Scripts/Patches/AllowDualCustomWeaponSprites.qjs` | Validates the client, owns resources, loads the bundles and installs three hooks |
-| `Scripts/Patches/AllowDualWeaponSprites.qjs` | Compatibility shim for old profiles and saved sessions; select only one name |
+| `Scripts/Patches/AllowDualWeaponSprites.qjs` | Canonical implementation: validates the client, owns resources, loads the bundles and installs three hooks |
+| `Scripts/Patches/AllowDualCustomWeaponSprites.qjs` | Compatibility shim for profiles using the newer name; select only one name |
 | `Patches/Special.yml` | Registers the same exported patch name |
 | `Inputs/DualWeaponRuntime/compositor.dwcp` | Compiled weapon compositor and placement data |
 | `Inputs/DualWeaponRuntime/legacy-support.dwls` | Rebuildable 1,452-byte v2 bundle containing only the unchanged depth helper |
@@ -19,6 +19,11 @@ For **2025-07-16 Ragexe 175220998**, this patch preserves original dagger, one-h
 Keep the directory structure when installing into WARP. Copy the GRF into the client directory and register it at highest priority in the loader the EXE actually uses. The example INI requires the named base archives to exist. With GRFsEmbedded, select the matching archive list when repatching; DATA.INI alone does not change the embedded list.
 
 Apply to a source with stock dual-weapon hook bytes, preserving other patch selections through the WARP session. Occupied hooks are rejected.
+
+The full implementation retains the original `AllowDualWeaponSprites` name.
+`AllowDualCustomWeaponSprites` forwards application/validation only; it contains no
+renderer or allocator. Existing profiles using either name remain valid without
+rewriting them. Both entries share the same implementation and emitted bytes.
 
 Before allocating or writing dual-weapon hooks, the patch now checks the active
 embedded/INI configuration and requires the compatibility GRF at highest priority
@@ -81,6 +86,12 @@ The [detailed reference](https://github.com/YlenXWalker/WARP0716/blob/f2a3a710f9
 
 Verified results:
 
+- Canonical-name follow-up: seven real-WARP cases compare the prior/current
+  implementation, both selectable names, reversed IDs/invocation, runtime INI,
+  and duplicate selections. All successful EXEs match the pre-move hashes and
+  retain their selected `.epi` names. The 602-case emitted-x86 owner suite and
+  native owner/trampoline permissions pass unchanged; Node tests cover either
+  script-load order and validation forwarding.
 - Fresh 2026-11-07 checks: exact source rebuild/check-only regressions, both
   profile-name `.epi` identities with identical EXEs, runtime INI and embedded
   loader cases, explicit missing/wrong-priority/duplicate-name failures, and raw
