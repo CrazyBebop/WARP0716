@@ -6,8 +6,7 @@ CustomDLL/DualWeapon/*.h text eol=lf
 Inputs/DualWeaponAuthored/**/*.dwr3 binary
 Inputs/DualWeaponAuthored/**/*.dwc2 binary
 Inputs/DualWeaponRuntime/*.json text eol=lf
-tools/*dual_weapon_runtime*.py text eol=lf
-tools/test_dual_weapon_requirements.cjs text eol=lf
+tools/build_dual_weapon_runtime.py text eol=lf
 Inputs/DualWeaponRuntime/*.dwcp binary
 Inputs/DualWeaponRuntime/*.dwls binary
 Inputs/DualWeaponRuntime/*.grf binary

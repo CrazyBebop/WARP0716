@@ -61,9 +61,10 @@ Git history, or a download from the source snapshot.
 python -m pip install -r tools/requirements-dual-weapon.txt
 python tools/build_dual_weapon_runtime.py --check
 python tools/build_dual_weapon_runtime.py --write
-node tools/test_dual_weapon_requirements.cjs
-python tools/test_dual_weapon_runtime_build.py
 ```
+
+The two optional regression runners are retained in the immutable
+[pre-cleanup tooling snapshot](https://github.com/YlenXWalker/WARP0716/tree/b8451c88d6a6a371e2bfa0e8b6dd8a22870edf49/tools). They are not build or patch-time dependencies. The current package keeps the complete source rebuild and `--check` path requested in [the maintainer review](https://github.com/CrazyBebop/WARP0716/pull/69#issuecomment-6330606195).
 
 Use **MSVC toolset 14.51.36231 Hostx64/x86**, `cl` **19.51.36260** and linker
 **14.51.36260.0**. `--tool-dir` locates that same toolset elsewhere.
@@ -84,7 +85,14 @@ bundle and broader authoring/evidence history remain recoverable at
 
 The [detailed reference](https://github.com/YlenXWalker/WARP0716/blob/f2a3a710f96fd8f1f705d8f7fd5ab19462a321a7/docs/dual-wield-original-weapon-sprites.md) records the view list, native ABI, coordinates, frames, directions, angles, donors, hashes, commands and earlier GIF previews.
 
-Verified results:
+Packaging validation on **2026-11-11**: both payloads rebuild byte-for-byte after
+removing the optional runners. The cleaned package applies through real WARP with
+the expected EPI identities and no skipped patches; the installed native
+owner/trampoline protection fixture and QJS style/encoding checks pass. The
+prerequisite, check-only, stale-payload and source-pin regressions also passed
+before their runners were removed. No renderer, artwork or payload bytes changed.
+
+Historical validation recorded before the 2026-11-11 packaging cleanup:
 
 - Single-name removal: seven real-WARP cases cover the prior/current original
   name, reversed IDs/invocation, runtime INI, and missing-GRF/wrong-priority/
@@ -92,19 +100,7 @@ Verified results:
   original `.epi` identity. The 602-case emitted-x86 owner suite and native
   owner/trampoline permissions pass unchanged. Source tests require the removed
   wrapper/catalog/export to be absent.
-- Prior canonical-name follow-up (before wrapper removal): seven real-WARP cases compare the prior/current
-  implementation, both selectable names, reversed IDs/invocation, runtime INI,
-  and duplicate selections. All successful EXEs match the pre-move hashes and
-  retain their selected `.epi` names. The 602-case emitted-x86 owner suite and
-  native owner/trampoline permissions pass unchanged; Node tests cover either
-  script-load order and validation forwarding.
-- Fresh 2026-11-07 checks: exact source rebuild/check-only regressions, both
-  profile-name `.epi` identities with identical EXEs, runtime INI and embedded
-  loader cases, explicit missing/wrong-priority/duplicate-name failures, and raw
-  reopened embedded inputs with the existing scoped PE-header repair. Successful
-  clients were checked for the exact relocated DWCP/helper bytes and executed
-  through the native owner/trampoline page-protection fixture.
-- Fresh native equipment/resource regression: **602 cases**, with the exact same
+- Native equipment/resource regression: **602 cases**, with the exact same
   emitted owner x86 hash as the accepted baseline.
 - The following larger artwork/geometry counts are historical (2026-09-07), not
   freshly rerun by this packaging/prerequisite revision:
