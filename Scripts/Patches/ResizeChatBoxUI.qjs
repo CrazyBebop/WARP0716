@@ -1,0 +1,100 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (c) roFoundry  2026                                          *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the           *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Cross                                                  *
+*   Created Date  : 2026-11-10                                             *
+*   Last Modified : 2026-11-12                                             *
+*                                                                          *
+*   Description   : Unlocks the adjustment of the Chat Box UI width.       *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Shortens the MAIN chat window (chat bar) width.
+///
+///        The client creates the main chat window in the window manager as
+///            Resize(600, M_CHATWNDHEIGHT)
+///        (PUSH [EDI+38h] / PUSH 258h / CALL CUIComponent::Resize). Draw code and
+///        the text area are derived from the window's own width, but several
+///        children are NOT, so they are patched along with it:
+///          - the chat INPUT BOX is created as a fixed 460x16 control (PUSH 1CCh)
+///            at x=110. Left alone it keeps running out to x=570, so long
+///            messages are typed on top of the buttons / outside the bar.
+///            -> width = WIDTH - 140 (stock: 600 - 140 = 460)
+///          - the two round buttons at the right end of the input line are
+///            placed at x = 586 and 572, both when the window is created and
+///            on every re-layout.   -> WIDTH - 14 and WIDTH - 28
+///
+///        Stock width = 600. Detached chat windows (ChatSubWnd_*) keep their own
+///        saved size and are not affected.
+///
+ResizeChatBoxUI = function(_)
+{
+	$$(_, 1.1, `Find the chat window creation Resize(600, M_CHATWNDHEIGHT)`)
+	// PUSH [EDI+38h] | PUSH 258h | CALL Resize | PUSH [EBP-14h]
+	const wAddr = Exe.FindHex("FF 77 38 68 58 02 00 00 E8 ?? ?? ?? ?? FF 75 EC");
+	if (wAddr < 0)
+		throw Error("Chat window Resize(600,h) pattern not found");
+	const W_OFF = 4; // imm32 of PUSH 258h
+
+	$$(_, 1.2, `Find the chat input box creation Resize(460, 16)`)
+	// PUSH 10h | PUSH 1CCh | MOV [EDI+0BCh],EAX | CALL Resize
+	const eAddr = Exe.FindHex("6A 10 68 CC 01 00 00 89 87 BC 00 00 00 E8");
+	if (eAddr < 0)
+		throw Error("Chat input box Resize(460,16) pattern not found");
+	const E_OFF = 3; // imm32 of PUSH 1CCh
+
+	$$(_, 1.3, `Find the two round buttons at the right end of the input line (re-layout)`)
+	// ADD EAX,7 | MOV EDX,[ECX] | PUSH EAX | PUSH <x> | CALL [EDX+10h]   (x = 24Ah / 23Ch)
+	const b1Addr = Exe.FindHex("83 C0 07 8B 11 50 68 4A 02 00 00 FF 52 10");
+	if (b1Addr < 0)
+		throw Error("Chat right button #1 (x=586) pattern not found");
+
+	const b2Addr = Exe.FindHex("83 C0 07 8B 11 50 68 3C 02 00 00 FF 52 10");
+	if (b2Addr < 0)
+		throw Error("Chat right button #2 (x=572) pattern not found");
+	const B_OFF = 7; // imm32 of PUSH <x>
+
+	$$(_, 1.4, `Find the same two button positions in the window creation code`)
+	// MOV [EBP-2Ch],24Ah | MOV [EBP-28h],EAX      and      MOV [EBP-24h],23Ch | MOV [EBP-20h],EAX
+	const c1Addr = Exe.FindHex("C7 45 D4 4A 02 00 00 89 45 D8");
+	if (c1Addr < 0)
+		throw Error("Chat button #1 creation position (x=586) not found");
+
+	const c2Addr = Exe.FindHex("C7 45 DC 3C 02 00 00 89 45 E0");
+	if (c2Addr < 0)
+		throw Error("Chat button #2 creation position (x=572) not found");
+	const C_OFF = 3; // imm32 of MOV [EBP-xx],imm32
+
+	$$(_, 2.1, `Ask for the new width`)
+	const wIn = Exe.GetUserInput('$ChatBarWidth', D_Uint32, "Chat Bar Width",
+		"Width (in pixels) of the main chat window.\nStock = 600. Recommended 400 - 550.",
+		450, {min: 320, max: 1200});
+	// WARP returns false when the value is left at its default -> keep 450
+	const w = (typeof wIn === 'number') ? wIn : 450;
+
+	$$(_, 3, `Patch the width, the input box width and the right-hand button positions`)
+	Exe.SetInt32(wAddr  + W_OFF, w);        // chat window width
+	Exe.SetInt32(eAddr  + E_OFF, w - 140);  // chat input box width (stock 460 @ 600)
+	Exe.SetInt32(b1Addr + B_OFF, w - 14);   // button #1 x (layout)
+	Exe.SetInt32(b2Addr + B_OFF, w - 28);   // button #2 x (layout)
+	Exe.SetInt32(c1Addr + C_OFF, w - 14);   // button #1 x (creation)
+	Exe.SetInt32(c2Addr + C_OFF, w - 28);   // button #2 x (creation)
+
+	return true;
+};
