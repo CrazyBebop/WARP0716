@@ -1,0 +1,115 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2025-07-16                                             *
+*   Last Modified : 2026-09-15                                             *
+*                                                                          *
+*   Description   : Shared x86 byte assembler, extracted unchanged from    *
+*                   CustomExtName for independently packaged text features.*
+*                   Emits static EXE code; installs no feature or hook.    *
+*                                                                          *
+\**************************************************************************/
+
+ExtNameStaticAsm = {ApiVersion: 1, Version: "1.0.0"};
+
+ExtNameStaticAsm.hexNorm = function(hex)
+{
+	return (hex || "").replace(/\s+/g, " ").trim().toUpperCase();
+};
+
+ExtNameStaticAsm.bytesToHex = function(bytes)
+{
+	return bytes.map(value => (value & 0xFF).toString(16).padStart(2, "0")).join(" ");
+};
+
+ExtNameStaticAsm.asm = function()
+{
+	const bytes = [];
+	const labels = {};
+	const fixups = [];
+	const put32 = function(out, pos, value)
+	{
+		const v = value >>> 0;
+		out[pos] = v & 0xFF;
+		out[pos + 1] = (v >>> 8) & 0xFF;
+		out[pos + 2] = (v >>> 16) & 0xFF;
+		out[pos + 3] = (v >>> 24) & 0xFF;
+	};
+
+	return {
+		bytes,
+		emit: function(...values)
+		{
+			for (const value of values)
+				bytes.push(value & 0xFF);
+		},
+		dword: function(value)
+		{
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			put32(bytes, pos, value);
+		},
+		label: function(name)
+		{
+			if (Object.prototype.hasOwnProperty.call(labels, name))
+				throw Error(`ExtNameStaticAsm: duplicate label ${name}`);
+			labels[name] = bytes.length;
+		},
+		rel32: function(opcode, target)
+		{
+			bytes.push(opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		call: function(target) { this.rel32(0xE8, target); },
+		jmp: function(target) { this.rel32(0xE9, target); },
+		jcc: function(opcode, target)
+		{
+			bytes.push(0x0F, opcode);
+			const pos = bytes.length;
+			bytes.push(0, 0, 0, 0);
+			fixups.push({pos, target});
+		},
+		finish: function(baseVir)
+		{
+			const out = bytes.slice();
+			for (const fixup of fixups)
+			{
+				if (typeof fixup.target === "string" &&
+					!Object.prototype.hasOwnProperty.call(labels, fixup.target))
+					throw Error(`ExtNameStaticAsm: unresolved label ${fixup.target}`);
+				const targetVir = typeof fixup.target === "string"
+					? baseVir + labels[fixup.target]
+					: fixup.target;
+				put32(out, fixup.pos, targetVir - (baseVir + fixup.pos + 4));
+			}
+			return ExtNameStaticAsm.bytesToHex(out);
+		}
+	};
+};
+
+ExtNameStaticAsm.assertCode = function(label, virAddr, expectedHex)
+{
+	const phyAddr = Exe.Vir2Phy(virAddr, CODE);
+	if (phyAddr < 0)
+		throw Error(`ExtNameStaticAsm: ${label} is not mapped`);
+	const expected = ExtNameStaticAsm.hexNorm(expectedHex);
+	const actual = ExtNameStaticAsm.hexNorm(
+		Exe.GetHex(phyAddr, expected.split(" ").length)
+	);
+	if (actual !== expected)
+		throw Error(`ExtNameStaticAsm: ${label} mismatch, got ${actual}`);
+	return phyAddr;
+};

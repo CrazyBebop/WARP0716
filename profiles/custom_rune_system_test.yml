@@ -1,0 +1,9 @@
+from: "2025-07-16_Ragexe_175220998_clientinfo/2025-07-16_Ragexe_175220998_clientinfo.exe"
+to: "Outputs/custom_rune_system_test.exe"
+inputs:
+    $runeVisibleRows:
+        data: '03000000'
+        display: 3
+        type: 2
+patches:
+    - CustomRuneSystem
