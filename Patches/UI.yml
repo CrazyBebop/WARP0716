@@ -230,6 +230,12 @@ CustomUI:
             author : Stingor
             desc : "Sets the color and opacity of the 1:1 whisper (private message) chat window background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Leave a field unchanged to keep its default. Default is black at 40% opacity (0x66)."
 
+        - ResizeChatBoxUI:
+            title : Adjust ChatBoxUI Width
+            recommend : no
+            author : Cross
+            desc : Adjusts the default ChatBoxUI width.
+
         - NoEquipPreview:
             title : Disable equipment preview
             recommend : no
