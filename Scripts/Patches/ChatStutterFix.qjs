@@ -1,0 +1,196 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-10-29                                             *
+*   Last Modified : 2026-11-07                                             *
+*   Description   : Remove pre-wrap and both history tag-check copies.     *
+*                   Guard native tag grammar; retain native wrapping,      *
+*                   ITEML/NAVIL routing and ChatItemIcons on 2025-07-16.   *
+*   Research      : SCIEL and ICE research; gidzdlcrz history-site         *
+*                   proposal derived from ICE (PR #75 comment).            *
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/75                 *
+*   Verifier      : PR #75 head 75c29434: external build/native test kit.  *
+*                                                                          *
+\**************************************************************************/
+ChatStutterFix = function(_)
+{
+	if (!ChatStutterFix.validate()) throw Error("ChatStutterFix requires 2025-07-16 Ragexe");
+	const n = ChatPerformanceNative, nt = Exe.GetUint32(0x3C);
+	if (Exe.GetUint16(nt + 4) !== 0x14C || Exe.GetUint32(nt + 52) !== 0x400000 ||
+		(Exe.GetUint16(nt + 94) & 0x40)) throw Error("ChatStutterFix requires the fixed-base x86 profile");
+	// Whole balanced preprocessing and native helper guards are filled from
+	// the pinned input, not another client's addresses or branch distances.
+	n.assertCode("Chat balanced preprocessing", 0x83D452,
+		"83 EC 18 8B CC 89 65 EC 8D 42 01 89 45 08 C7 01 00 00 00 00 " +
+		"C7 41 10 00 00 00 00 C7 41 14 0F 00 00 00 8A 02 42 84 C0 75 " +
+		"F9 2B 55 08 52 56 E8 BB 44 CB FF C6 45 FC 01 C6 45 FC 00 8B " +
+		"CB E8 DC DA FB FF 8B 4D F0 84 C0 74 14");
+	n.assertCode("Native tag classification", 0x7FAF70,
+		"55 8B EC 6A FF 68 5D 25 E9 00 64 A1 00 00 00 00 50 53 56 57 " +
+		"A1 24 B9 22 01 33 C5 50 8D 45 F4 64 A3 00 00 00 00 C7 45 FC " +
+		"00 00 00 00 BA 28 2C 20 01 83 3D 3C 2C 20 01 10 8D 4D 08 FF " +
+		"35 38 2C 20 01 0F 43 15 28 2C 20 01 83 7D 1C 10 8B 75 08 8B " +
+		"7D 18 0F 43 CE 52 6A 00 57 51 0F 93 C3 E8 AE A7 D7 FF 83 C4 " +
+		"14 83 F8 FF 0F 85 9D 00 00 00 83 3D 54 2C 20 01 10 8D 45 08 " +
+		"FF 35 50 2C 20 01 B9 40 2C 20 01 0F 43 0D 40 2C 20 01 84 DB " +
+		"51 6A 00 0F 45 C6 57 50 E8 77 A7 D7 FF 83 C4 14 83 F8 FF 75 " +
+		"6A 83 3D 64 2B 20 01 10 8D 45 08 FF 35 60 2B 20 01 B9 50 2B " +
+		"20 01 0F 43 0D 50 2B 20 01 84 DB 51 6A 00 0F 45 C6 57 50 E8 " +
+		"44 A7 D7 FF 83 C4 14 83 F8 FF 75 37 83 3D 7C 2B 20 01 10 8D " +
+		"45 08 FF 35 78 2B 20 01 B9 68 2B 20 01 0F 43 0D 68 2B 20 01 " +
+		"84 DB 51 6A 00 0F 45 C6 57 50 E8 11 A7 D7 FF 83 C4 14 83 F8 " +
+		"FF 75 04 32 DB EB 02 B3 01 C7 45 FC FF FF FF FF 8D 4D 08 E8 " +
+		"64 58 CF FF 8A C3 8B 4D F4 64 89 0D 00 00 00 00 59 5F 5E 5B " +
+		"8B E5 5D C2 18 00");
+	n.assertCode("Native allocation-free byte search", 0x575780,
+		"55 8B EC 8B 55 0C 53 8B 5D 18 56 57 3B DA 0F 87 BB 00 00 00 " +
+		"8B 75 10 8B CA 2B CB 3B F1 0F 87 AC 00 00 00 85 DB 75 07 5F " +
+		"8B C6 5E 5B 5D C3 8B 4D 08 42 8B C1 03 CE 8B 75 14 2B C3 03 " +
+		"C2 89 45 18 2B C1 50 0F BE 16 52 51 89 55 0C E8 A5 25 89 00 " +
+		"8B F8 83 C4 0C 85 FF 74 76 0F 1F 80 00 00 00 00 8B CE 8B D7 " +
+		"8B F3 83 EE 04 72 16 0F 1F 44 00 00 8B 02 3B 01 75 10 83 C2 " +
+		"04 83 C1 04 83 EE 04 73 EF 83 FE FC 74 51 8A 02 3A 01 75 27 " +
+		"83 FE FD 74 46 8A 42 01 3A 41 01 75 1A 83 FE FE 74 39 8A 42 " +
+		"02 3A 41 02 75 0D 83 FE FF 74 2C 8A 42 03 3A 41 03 74 24 8B " +
+		"45 18 47 2B C7 50 FF 75 0C 57 E8 32 25 89 00 8B 75 14 8B F8 " +
+		"83 C4 0C 85 FF 75 91 5F 5E 83 C8 FF 5B 5D C3 2B 7D 08 8B C7 " +
+		"5F 5E 5B 5D C3");
+	n.assertCode("Chat direct append continuation", 0x83D49B,
+		"FF 75 10 8B 01 FF 75 0C 56 FF 90 E4 00 00 00 E9 C7 00 00 00");
+	n.assertCode("Chat native-wrap continuation", 0x83D4AF, "57 8D 45 E0 50 56 E8 66 65 1E 00");
+	n.assertCode("Chat append cleanup ABI", 0x83D60D, "C2 0C 00");
+	// Complete preflight: no hook is written unless all three sites match.
+	for (const site of ChatStutterFix.HistorySites)
+		n.assertCode("Chat history " + site.name, site.address, site.original);
+	n.assertCode("History tag-aware fallback", 0x8663C4, "E8 A7 4B F9 FF 84 C0 75 0D 56 8B CF E8 BB 79 FD FF E9 C2 02 00 00");
+	const matcherCode = ChatStutterFix.matcher();
+	const [matcherPhy, matcherVir] = Exe.Allocate(matcherCode.bytes.length, 16);
+	Exe.SetHex(matcherPhy, matcherCode.finish(matcherVir));
+	const a = n.asm();
+	a.emit(0x9C, 0x60, 0x85, 0xF6); // Preserve flags/registers; null replays stock.
+	a.jcc(0x84, "stock");
+	a.emit(0x56); a.call(matcherVir);
+	a.emit(0x85, 0xC0); a.jcc(0x84, "wrap");
+	a.emit(0x61, 0x9D, 0x8B, 0x4D, 0xF0); a.jmp(0x83D49B);
+	a.label("wrap");
+	a.emit(0x61, 0x9D, 0x8B, 0x4D, 0xF0); a.jmp(0x83D4AF);
+	a.label("stock");
+	a.emit(0x61, 0x9D, 0x83, 0xEC, 0x18, 0x8B, 0xCC); a.jmp(0x83D457);
+	AutoHook(Exe.Vir2Phy(0x83D452), n.bytesToHex(a.bytes),
+		{postProc: (_, address) => a.finish(address)});
+	const historyCode = ChatStutterFix.historyProbe(matcherVir);
+	const [historyPhy, historyVir] = Exe.Allocate(historyCode.bytes.length, 16);
+	Exe.SetHex(historyPhy, historyCode.finish(historyVir));
+	for (const site of ChatStutterFix.HistorySites)
+	{
+		const h = n.asm();
+		// Replay the original callee-saved global receiver load, then omit
+		// only the by-value temporary and its consumed EH ownership state.
+		h.emit(0x8B, site.globalLoad); h.dword(0x131ED60);
+		h.emit(0xC7, 0x45, 0xFC, 0xFF, 0xFF, 0xFF, 0xFF, 0x9C, 0x60);
+		h.emit(site.messagePush); h.call(historyVir);
+		h.emit(0x85, 0xC0); h.jcc(0x84, "plain");
+		h.emit(0x61, 0x9D, 0x8B, 0xCF); h.jmp(site.tagged);
+		h.label("plain");
+		h.emit(0x61, 0x9D, 0x8B, 0xCF); h.jmp(site.plain);
+		const length = site.original.split(" ").length;
+		if (h.bytes.length > length) throw Error("Chat history bridge exceeds its owned block");
+		Exe.SetHex(Exe.Vir2Phy(site.address, CODE), h.finish(site.address) + " 90".repeat(length - h.bytes.length));
+	}
+	return true;
+};
+
+ChatStutterFix.matcher = function()
+{
+	const a = ChatPerformanceNative.asm();
+	a.emit(0x55, 0x8B, 0xEC, 0x53, 0x56, 0x57, 0x8B, 0x75, 8, 0x8B, 0xFE);
+	a.label("length"); a.emit(0x80, 0x3F, 0); a.jcc(0x84, "length_done");
+	a.emit(0x47); a.jmp("length");
+	a.label("length_done"); a.emit(0x2B, 0xFE);
+	for (const tag of [0x01202C28, 0x01202C40, 0x01202B50, 0x01202B68])
+	{
+		a.emit(0xBB); a.dword(tag);
+		a.emit(0x83, 0x7B, 20, 16); a.jcc(0x82, "inline_" + tag);
+		a.emit(0x8B, 0x1B);
+		a.label("inline_" + tag);
+		a.emit(0xFF, 0x35); a.dword(tag + 16);
+		a.emit(0x53, 0x6A, 0, 0x57, 0x56); a.call(0x575780);
+		a.emit(0x83, 0xC4, 20, 0x83, 0xF8, 0xFF); a.jcc(0x85, "hit");
+	}
+	a.emit(0x33, 0xC0); a.jmp("done");
+	a.label("hit"); a.emit(0xB8); a.dword(1);
+	a.label("done"); a.emit(0x5F, 0x5E, 0x5B, 0x8B, 0xE5, 0x5D, 0xC2, 4, 0);
+	return a;
+};
+
+ChatStutterFix.historyProbe = function(exactMatcher)
+{
+	const a = ChatPerformanceNative.asm();
+	a.emit(0x55, 0x8B, 0xEC);
+	for (const tag of [0x01202C28, 0x01202C40, 0x01202B50, 0x01202B68])
+	{
+		a.emit(0x83, 0x3D); a.dword(tag + 16); a.emit(0);
+		a.jcc(0x84, "exact");
+		a.emit(0xB9); a.dword(tag);
+		a.emit(0x83, 0x79, 20, 16); a.jcc(0x82, "inline_" + tag);
+		a.emit(0x8B, 0x09);
+		a.label("inline_" + tag);
+		a.emit(0x80, 0x39, 0x3C); a.jcc(0x85, "exact");
+	}
+	a.emit(0x8B, 0x55, 8);
+	a.label("scan"); a.emit(0x8A, 0x02, 0x42, 0x84, 0xC0);
+	a.jcc(0x84, "plain");
+	a.emit(0x3C, 0x3C); a.jcc(0x85, "scan");
+	a.emit(0xB8); a.dword(1); a.jmp("done");
+	a.label("plain"); a.emit(0x33, 0xC0); a.jmp("done");
+	a.label("exact"); a.emit(0xFF, 0x75, 8); a.call(exactMatcher);
+	a.label("done"); a.emit(0x8B, 0xE5, 0x5D, 0xC2, 4, 0);
+	return a;
+};
+
+ChatStutterFix.validate = () => Exe.BuildDate === 20250716;
+
+ChatStutterFix.HistorySites = [
+	{
+		name: "site1", address: 0x83D73A,
+		globalLoad: 0x1D, messagePush: 0x56,
+		tagged: 0x83D78C, plain: 0x83D79C,
+		original:
+			"8B 1D 60 ED 31 01 83 EC 18 8B CC 89 65 E8 8B D6 " +
+			"89 01 89 41 10 8D 42 01 C7 41 14 0F 00 00 00 89 " +
+			"45 08 0F 1F 40 00 8A 02 42 84 C0 75 F9 2B 55 08 " +
+			"52 56 E8 CF 41 CB FF C7 45 FC 00 00 00 00 C7 45 " +
+			"FC FF FF FF FF 8B CB E8 EA D7 FB FF 8B CF 84 C0 " +
+			"74 10"
+	},
+	{
+		name: "site2", address: 0x83DA71,
+		globalLoad: 0x35, messagePush: 0x53,
+		tagged: 0x83DAC1, plain: 0x83DAD8,
+		original:
+			"8B 35 60 ED 31 01 83 EC 18 8B D4 89 65 CC 8B CB " +
+			"89 02 89 42 10 8D 41 01 C7 42 14 0F 00 00 00 89 " +
+			"45 D0 8A 01 41 84 C0 75 F9 2B 4D D0 51 53 8B CA " +
+			"E8 9A 3E CB FF C7 45 FC 02 00 00 00 C7 45 FC FF " +
+			"FF FF FF 8B CE E8 B5 D4 FB FF 8B CF 84 C0 74 17"
+	}
+];

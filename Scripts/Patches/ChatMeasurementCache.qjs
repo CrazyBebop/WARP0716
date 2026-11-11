@@ -1,0 +1,130 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 Louis T Steinhil                                    *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Louis T Steinhil                                       *
+*   Created Date  : 2026-10-29                                             *
+*   Last Modified : 2026-11-07                                             *
+*   Description   : Cache native chat measurements on 2025-07-16 Ragexe.   *
+*                   Reuse exact native widths, retaining original wrapping,*
+*                   tag routing and ChatItemIcons. SCIEL & ICE design.     *
+*   Research      : SCIEL and ICE supplied the chat performance            *
+*                   research and design information used by this port.     *
+*   Evidence      : github.com/CrazyBebop/WARP0716/pull/75                 *
+*   Verifier      : PR #75 head 75c29434: external build/native test kit.  *
+*                                                                          *
+\**************************************************************************/
+
+ChatMeasurementCache = function(_)
+{
+	if (!ChatMeasurementCache.validate()) throw Error("ChatMeasurementCache requires 2025-07-16 Ragexe");
+	const n = ChatPerformanceNative;
+	const nt = Exe.GetUint32(0x3C);
+	if (Exe.GetUint16(nt + 4) !== 0x14C || Exe.GetUint32(nt + 52) !== 0x400000 ||
+		(Exe.GetUint16(nt + 94) & 0x40)) throw Error("ChatMeasurementCache requires the fixed-base x86 profile");
+	// These reads verify the complete displaced block, its style arguments,
+	// result reload and SEH cleanup. ChatItemIcons' entry hooks are independent.
+	n.assertCode("Chat glyph measurement", 0xA23BA9,
+		"8B 45 BC 8D 8D 3C FF FF FF FF 70 24 E8 06 08 B2 FF C7 45 FC 01 00 00 00 " +
+		"8D 8D 3C FF FF FF 6A 00 6A 00 6A 0C 6A 00 E8 8C 33 B2 FF 8D 45 84 50 " +
+		"8B 45 C4 8D 8D 3C FF FF FF 56 50 E8 98 30 B2 FF 8B 75 84 C7 45 FC FF FF FF FF " +
+		"8D 8D 3C FF FF FF E8 F3 0A B2 FF 8B 45 C4");
+	n.assertCode("Chat fragment arguments", 0x83DE96,
+		"6A 00 6A 00 6A 0C 6A 00 6A 00 FF 75 D0 8B CE C7 45 E8 00 00 00 00 " +
+		"C7 45 EC 0F 00 00 00 C6 45 D8 00 E8 D4 3D 1E 00");
+	n.assertCode("Native width ABI", 0xA21D33, "C2 18 00");
+	n.assertCode("Native splitter ABI", 0xA240DA, "C2 0C 00");
+	n.assertCode("Native font dependencies", 0x546F60,
+		"55 8B EC 8B 55 08 53 8A 1D A4 B8 59 01 56 8B F1 85 D2 75 5B 0F BE C3");
+	for (const vt of [0x102D280, 0x102D370, 0x102D460])
+		if (Exe.GetUint32(Exe.Vir2Phy(vt + 0xD8)) !== 0x83DD90)
+			throw Error("ChatMeasurementCache history class profile changed");
+	const read = path =>
+	{
+		const file = new BinFile(path, "r");
+		if (!file.Valid) throw Error("ChatMeasurementCache: missing " + path);
+		const hex = file.ReadHex();
+		file.Close();
+		return (hex.match(/[0-9a-fA-F]{2}/g) || []).map(v => parseInt(v, 16));
+	};
+	const u32 = (b, o) => (b[o] | b[o + 1] << 8 | b[o + 2] << 16 | b[o + 3] << 24) >>> 0;
+	const put = (b, o, v) =>
+	{
+		for (let i = 0; i < 4; ++i) b[o + i] = v >>> (i * 8) & 255;
+	};
+	const path = Warp.Path + "/Inputs/ChatMeasurementCache/runtime";
+	const bytes = read(path + ".bin"), meta = JSON.parse(String.fromCharCode(...read(path + ".json")));
+	const size = u32(bytes, 8), count = u32(bytes, 12), api = u32(bytes, 16), stateSize = u32(bytes, 20);
+	const start = 32 + count * 4;
+	let crc = 0xFFFFFFFF;
+	for (let i = 32; i < bytes.length; ++i)
+	{
+		crc ^= bytes[i];
+		for (let j = 0; j < 8; ++j) crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+	}
+	const layout = [38596, 104, 5428, 8, 268, 524, 8, 21720, 21724, 21828, 108, 112, 116, 1140];
+	if (bytes.length < 32 || u32(bytes, 0) !== 0x43434D43 || u32(bytes, 4) !== 1 ||
+		u32(bytes, 24) !== 20250716 || meta.version !== 1 || meta.client !== 20250716 ||
+		size > 131072 || count > 1024 || start + size !== bytes.length || size !== meta.size ||
+		stateSize !== layout[0] || JSON.stringify(layout) !== JSON.stringify(meta.layout) ||
+		api !== meta.exports.ChatCacheApi || api + 4 > size || ((crc ^ 0xFFFFFFFF) >>> 0) !== u32(bytes, 28))
+		throw Error("ChatMeasurementCache: invalid payload");
+	for (const name of ["ChatCacheLayout", "_ChatGlyphWidth@16", "@ChatFragmentWidth@32"])
+		if (!Number.isInteger(meta.exports[name]) || meta.exports[name] < 0 || meta.exports[name] >= size)
+			throw Error("ChatMeasurementCache: missing export " + name);
+	if (meta.exports.ChatCacheLayout + 56 > size) throw Error("ChatMeasurementCache: invalid layout export");
+	const code = bytes.slice(start);
+	for (let i = 0; i < layout.length; ++i)
+		if (u32(code, meta.exports.ChatCacheLayout + i * 4) !== layout[i])
+			throw Error("ChatMeasurementCache: layout mismatch");
+	// Complete, independently owned state reservation. No borrowed native slack,
+	// per-draw allocation or retained pointers to temporary text buffers.
+	const [phy, vir] = Exe.Allocate(size, 0x1000);
+	const stateVir = n.allocateBytes(new Array((stateSize + 4095) & ~4095).fill(0), 0x1000);
+	for (let i = 0; i < count; ++i)
+	{
+		const offset = u32(bytes, 32 + i * 4);
+		if (offset + 4 > size || u32(code, offset) >= size) throw Error("ChatMeasurementCache: invalid relocation");
+		put(code, offset, u32(code, offset) + vir);
+	}
+	put(code, api, stateVir);
+	for (let i = 0; i < code.length; i += 4096)
+		Exe.SetHex(phy + i, n.bytesToHex(code.slice(i, i + 4096)));
+	const glyph = vir + meta.exports["_ChatGlyphWidth@16"], fragment = vir + meta.exports["@ChatFragmentWidth@32"];
+	const a = n.asm();
+	a.emit(0x9C, 0x60, 0x6A, 0); // flags, pushad, output width
+	a.emit(0x8D, 0x04, 0x24, 0x50, 0x56, 0xFF, 0x75, 0xC4, 0xFF, 0x75, 0xBC);
+	a.call(glyph);
+	a.emit(0x85, 0xC0); a.jcc(0x84, "native");
+	a.emit(0x58, 0x89, 0x44, 0x24, 4); // replace saved ESI with native width
+	a.emit(0x8B, 0x45, 0xC4, 0x89, 0x44, 0x24, 28); // accepted path's EAX text reload
+	a.emit(0x61, 0x9D); a.jmp(0xA23C00);
+	a.label("native"); a.emit(0x83, 0xC4, 4, 0x61, 0x9D);
+	a.emit(0x8B, 0x45, 0xBC, 0x8D, 0x8D, 0x3C, 0xFF, 0xFF, 0xFF, 0xFF, 0x70, 0x24);
+	a.jmp(0xA23BB5);
+	// AutoHook owns allocation and all rel32 transfers. The preceding full-byte
+	// guards reject conflicting inputs before either native hook is written.
+	AutoHook(Exe.Vir2Phy(0xA23BA9), n.bytesToHex(a.bytes),
+		{postProc: (_, address) => a.finish(address), nops: 7, snap: 0x1000});
+	Exe.SetCALL(Exe.Vir2Phy(0x83DEB7), fragment, 0);
+	return true;
+};
+
+ChatMeasurementCache.validate = () => Exe.BuildDate === 20250716;

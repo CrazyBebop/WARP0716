@@ -505,3 +505,19 @@ MessageBox:
             recommend : no
             author : Andrei Karas (4144)
             desc : Completely disables all message box popups in the client. No error, warning, or info dialogs will appear. Use with caution -- errors will be silently ignored and may cause unexpected behavior.
+
+ChatPerformance:
+    title : CHAT PERFORMANCE
+    mutex : false
+    patches:
+        - ChatMeasurementCache:
+            title : Native Chat Measurement Cache
+            recommend : no
+            author : Louis T Steinhil
+            desc : Caches native glyph and fragment widths on the fixed-base 2025-07-16 client. Preserves native wrapping, colors and item-link routing. Bounded cache with native fallback. Based on research by SCIEL and ICE; no runtime DLL or receive hook.
+
+        - ChatStutterFix:
+            title : Native Chat Preprocessing Stutter Fix
+            recommend : no
+            author : Louis T Steinhil
+            desc : Avoids the temporary string used for native chat tag classification on the fixed-base 2025-07-16 client. Retains the original four tag searches and native direct/wrapped continuations. Based on research by SCIEL and ICE; no byte-length wrapping bypass.
