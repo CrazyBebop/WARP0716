@@ -34,6 +34,8 @@
 # Text orientation & other settings #
 #===================================#
 
+# 2026-10-27: newer patch titles and descriptions added by the WARP0716 maintainers (machine-assisted translation; corrections from native speakers welcome).
+
 RTL: no
 
 #============================#
@@ -209,10 +211,6 @@ actions:
        title: "โหลดส่วนขยาย"
        tooltip: "โหลดรายการส่วนขยายด้วยส่วนขยายที่กำหนดไว้ทั้งหมด"
  
-    saveResolution:
-       title: "บันทึกขนาดหน้าต่าง"
-       tooltip: "บันทึกขนาดหน้าต่างปัจจุบันเป็นค่าเริ่มต้น"
- 
     pro2Session:
        title: "แปลงโปรไฟล์เป็นไฟล์เซสชั่น"
        tooltip: "แปลงโปรไฟล์ NEMO เป็นไฟล์เซสชั่นเพื่อใช้ใน WARP"
@@ -227,7 +225,7 @@ actions:
     
     saveResolution:
         title: "บันทึกความละเอียด"
-        tooltip: "บันทึกความละเอียดปัจจุบันของม้านั่งทดสอบโดยค่าเริ่มต้น"
+        tooltip: "บันทึกความละเอียดปัจจุบันของหน้าต่าง Tester เป็นค่าเริ่มต้น"
     
     keepTestInputs:
         title: "เก็บอินพุตทดสอบไว้"
@@ -484,7 +482,7 @@ translations:
       replace: เซสชั่น
     
     - find: Patches
-      replace: ปะ
+      replace: แพทช์
     
     - find: Find
       replace: หา
@@ -497,3 +495,2493 @@ translations:
 
     - find: None
       replace: ไม่มีอะไร
+
+    # --- Added 2026-10-27: patches and wording newer than this pack (machine-assisted; corrections welcome) ---
+
+    # ===== Character.yml =====
+
+    # CustomChar (group title)
+    - find: CHARACTER CUSTOMIZATION
+      replace: การปรับแต่งตัวละคร
+
+    # OfficialPal (title)
+    - find: Use official cloth palettes
+      replace: ใช้พาเลตต์สีชุดของทางการ
+
+    # OfficialPal (desc)
+    - find: Forces the client to use Gravity's official cloth color palettes on all langtypes. <b>WARNING:</b> Incompatible with the 'Enable Custom Jobs' patch.
+      replace: บังคับให้ไคลเอ็นท์ใช้พาเลตต์สีชุดของทางการจาก Gravity ในทุก langtype <b>คำเตือน:</b> ใช้ร่วมกับแพทช์ 'Enable Custom Jobs' ไม่ได้
+
+    # NoGMSprite (title)
+    - find: Disable GM sprite
+      replace: ปิดใช้งาน GM sprite
+
+    # NoGMSprite (desc)
+    - find: Hides the special GM sprite (the yellow character) while keeping all GM functionality intact, including the yellow name color and admin right-click menu. GMs appear as their normal job class.
+      replace: ซ่อน GM sprite แบบพิเศษ (ตัวละครสีเหลือง) โดยที่ฟังก์ชันของ GM ทั้งหมดยังใช้งานได้ตามเดิม รวมถึงชื่อสีเหลืองและเมนูคลิกขวาของแอดมิน GM จะแสดงเป็นอาชีพปกติของตัวเอง
+
+    # RestoreGMWeaponTrail (title)
+    - find: Restore GM weapon trails
+      replace: นำ weapon trail ของ GM กลับมา
+
+    # RestoreGMWeaponTrail (desc)
+    - find: Gives back the weapon-trail sprites (the blade gleam drawn while attacking) to accounts listed under &lt;admin&gt; in clientinfo. The client stores 0 in that layer for GM accounts, leaving it without its sprite, so the renderer drops it entirely. <b>Disable GM sprite</b> only covers the two name-list functions and leaves these call sites untouched, so it is required here and gets selected automatically. Bug reported by Monsii.
+      replace: คืน sprite ของ weapon trail (แสงวาบของอาวุธที่วาดขณะโจมตี) ให้กับบัญชีที่อยู่ใน &lt;admin&gt; ของ clientinfo ไคลเอ็นท์จะเก็บค่า 0 ไว้ในเลเยอร์นั้นสำหรับบัญชี GM ทำให้เลเยอร์นั้นไม่มี sprite และตัวเรนเดอร์จะตัดทิ้งไปทั้งหมด แพทช์ <b>Disable GM sprite</b> ครอบคลุมเพียงสองฟังก์ชันรายชื่อเท่านั้นและไม่ได้แตะจุดเรียกใช้เหล่านี้ จึงจำเป็นต้องใช้ร่วมกันและจะถูกเลือกให้อัตโนมัติ บั๊กนี้รายงานโดย Monsii
+
+    # ShowBGEmblem (title)
+    - find: Enable Emblem hover for BG [Experimental]
+      replace: เปิดใช้งานการแสดงตรากิลด์เหนือตัวละครใน BG [ทดลอง]
+
+    # ShowBGEmblem (desc)
+    - find: Displays guild emblems above characters in Battleground maps, the same way they appear during Guild vs Guild (WoE). Helps identify team members in BG. Experimental -- may have visual quirks.
+      replace: แสดงตรากิลด์เหนือตัวละครในแมพ Battleground แบบเดียวกับที่แสดงในช่วง Guild vs Guild (WoE) ช่วยให้แยกแยะสมาชิกทีมใน BG ได้ง่ายขึ้น ยังอยู่ในขั้นทดลอง อาจมีความผิดปกติด้านภาพบ้าง
+
+    # RestoreModelCulling (title)
+    - find: Restore model culling
+      replace: นำ model culling กลับมา
+
+    # RestoreModelCulling (desc)
+    - find: Makes 3D models (buildings, walls, objects) that block your view of the player character turn transparent. Improves visibility in areas with large obstructing models.
+      replace: ทำให้โมเดล 3D (อาคาร กำแพง วัตถุ) ที่บังมุมมองตัวละครของผู้เล่นกลายเป็นโปร่งใส ช่วยให้มองเห็นได้ดีขึ้นในบริเวณที่มีโมเดลขนาดใหญ่บดบัง
+
+    # Intravision (title)
+    - find: Always see hidden/cloaked objects
+      replace: มองเห็นวัตถุที่ซ่อนตัว/Cloaking เสมอ
+
+    # Intravision (desc)
+    - find: Makes hidden and cloaked characters/objects always visible as dark silhouettes, as if the player permanently has the Intravision buff. Useful for GMs or testing -- gives an unfair advantage in PvP.
+      replace: ทำให้ตัวละคร/วัตถุที่ซ่อนตัวหรือ Cloaking มองเห็นได้เสมอเป็นเงาสีเข้ม เหมือนผู้เล่นมีบัฟ Intravision ติดตัวตลอดเวลา เหมาะสำหรับ GM หรือการทดสอบ แต่จะทำให้ได้เปรียบอย่างไม่เป็นธรรมใน PvP
+
+    # CustomQSDelay (title)
+    - find: Customize Quick Switch delay
+      replace: ปรับแต่งดีเลย์ของ Quick Switch
+
+    # CustomQSDelay (desc)
+    - find: Changes the cooldown delay (in ticks) for the quick equipment swap feature. Lower values allow faster gear switching; higher values enforce a longer wait between swaps.
+      replace: เปลี่ยนดีเลย์คูลดาวน์ (หน่วยเป็น tick) ของฟีเจอร์สลับอุปกรณ์ด่วน ค่าต่ำจะสลับอุปกรณ์ได้เร็วขึ้น ส่วนค่าสูงจะต้องรอนานขึ้นระหว่างการสลับแต่ละครั้ง
+
+    # AllowPL2Leave (title)
+    - find: Allow party leader to leave
+      replace: อนุญาตให้หัวหน้าปาร์ตี้ออกจากปาร์ตี้ได้
+
+    # AllowPL2Leave (desc)
+    - find: Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists. On rAthena, a leader who leaves disbands the party.
+      replace: อนุญาตให้หัวหน้าปาร์ตี้ออกจากปาร์ตี้ได้เมื่อไม่มีสมาชิกคนอื่นอยู่ในแมพเดียวกัน โดยค่าเริ่มต้น ไคลเอ็นท์จะไม่ให้หัวหน้าออกจากปาร์ตี้ขณะที่ปาร์ตี้ยังคงอยู่ บน rAthena หัวหน้าที่ออกจากปาร์ตี้จะทำให้ปาร์ตี้ถูกยุบ
+
+    # AllowSkillSpam (title)
+    - find: Allow spam skills by hotkey
+      replace: อนุญาตให้สแปมสกิลด้วยคีย์ลัด
+
+    # AllowSkillSpam (desc)
+    - find: Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations. Optionally switched on and off in game with a slash command (default /skillspam, starts off).
+      replace: ร่ายสกิลได้อย่างรวดเร็วด้วยการกดคีย์ลัดค้างไว้ แทนที่จะต้องกดซ้ำหลายครั้ง ยกเลิกคูลดาวน์ฝั่งไคลเอ็นท์ระหว่างการกดคีย์ลัดแต่ละครั้ง สามารถเลือกให้เปิด/ปิดในเกมได้ด้วยคำสั่ง slash (ค่าเริ่มต้นคือ /skillspam และเริ่มต้นแบบปิดไว้)
+
+    # AllowGuildInClan (title)
+    - find: Allow guild activities in clan
+      replace: อนุญาตให้ทำกิจกรรมกิลด์ขณะอยู่ในแคลน
+
+    # AllowGuildInClan (desc)
+    - find: Removes the client-side restriction that blocks guild features (creating/joining guilds, GvG, etc.) while the player is a member of a clan. Allows both memberships to coexist.
+      replace: ยกเลิกข้อจำกัดฝั่งไคลเอ็นท์ที่บล็อกฟีเจอร์กิลด์ (การสร้าง/เข้าร่วมกิลด์ GvG ฯลฯ) ขณะที่ผู้เล่นเป็นสมาชิกของแคลน ทำให้เป็นสมาชิกได้ทั้งสองอย่างพร้อมกัน
+
+    # CustomAFStopDelay (title)
+    - find: Customize auto follow stop delay
+      replace: ปรับแต่งดีเลย์การหยุด auto follow
+
+    # CustomAFStopDelay (desc)
+    - find: Changes the delay before auto-follow stops after the target moves out of range. Lower values make the character stop sooner; higher values keep following longer.
+      replace: เปลี่ยนดีเลย์ก่อนที่ auto follow จะหยุดเมื่อเป้าหมายเคลื่อนที่ออกนอกระยะ ค่าต่ำจะทำให้ตัวละครหยุดเร็วขึ้น ส่วนค่าสูงจะติดตามต่อไปได้นานขึ้น
+
+    # ShowGvGDamage (title)
+    - find: Show Damage for GvG
+      replace: แสดงดาเมจใน GvG
+
+    # ShowGvGDamage (desc)
+    - find: Shows damage numbers on Guild vs Guild (WoE) maps. By default, the client hides all damage digits during GvG to reduce visual clutter, but this makes it hard to gauge effectiveness.
+      replace: แสดงตัวเลขดาเมจในแมพ Guild vs Guild (WoE) โดยค่าเริ่มต้น ไคลเอ็นท์จะซ่อนตัวเลขดาเมจทั้งหมดระหว่าง GvG เพื่อลดความรกของหน้าจอ แต่ทำให้ประเมินประสิทธิภาพการโจมตีได้ยาก
+
+    # Allow65kHairs (title)
+    - find: Allow 65k Hair Styles
+      replace: อนุญาตทรงผมได้ถึง 65k แบบ
+
+    # Allow65kHairs (desc)
+    - find: Removes the hard-coded hair style limit, allowing the client to load any hair sprite by number. Supports up to 65535 styles.
+      replace: ยกเลิกขีดจำกัดจำนวนทรงผมที่ hardcode ไว้ ทำให้ไคลเอ็นท์โหลด sprite ผมหมายเลขใดก็ได้ รองรับได้สูงสุด 65535 ทรง
+
+    # MoreBodyStyles (title)
+    - find: More Body Styles (alternate outfits)
+      replace: Body Style เพิ่มเติม (ชุดทางเลือก)
+
+    # MoreBodyStyles (desc)
+    - find: Lets a job have more alternate outfits than the one the client knows. List each extra outfit as outfit id = job id, costume; its sprites load from costume_<N>. The server must know the outfit id (job enum, script constant, AlternateOutfits, and on rAthena a Jobs entry of its own in job_stats, or @bodystyle answers Appearance changed and nothing changes). Stock outfits are unchanged.
+      replace: ให้อาชีพหนึ่งมีชุดทางเลือกได้มากกว่าชุดเดียวที่ไคลเอ็นท์รู้จัก ระบุชุดเพิ่มเติมแต่ละชุดในรูปแบบ outfit id = job id, costume โดย sprite ของชุดจะโหลดจาก costume_<N> เซิร์ฟเวอร์ต้องรู้จัก outfit id นั้นด้วย (job enum, script constant, AlternateOutfits และบน rAthena ต้องมี Jobs entry ของตัวเองใน job_stats ไม่เช่นนั้น @bodystyle จะตอบว่า Appearance changed แต่ไม่มีอะไรเปลี่ยน) ชุดเดิมของเกมจะไม่ถูกเปลี่ยนแปลง
+
+    # CustomAutoFollow (group title)
+    - find: AUTO FOLLOW CUSTOMIZATION
+      replace: การปรับแต่ง Auto Follow
+
+    # NoAutoFollow (title)
+    - find: Disable auto follow
+      replace: ปิดใช้งาน auto follow
+
+    # NoAutoFollow (desc)
+    - find: Completely disables the Shift+Right-Click auto-follow feature. Use on servers where auto-follow is considered an exploit or is not desired.
+      replace: ปิดใช้งานฟีเจอร์ auto follow ที่ใช้ Shift+คลิกขวา อย่างสมบูรณ์ ใช้กับเซิร์ฟเวอร์ที่ถือว่า auto follow เป็นการใช้ช่องโหว่หรือไม่ต้องการให้ใช้
+
+    # DecrAFDelay (title)
+    - find: Decrease auto follow delay
+      replace: ลดดีเลย์ auto follow
+
+    # DecrAFDelay (desc)
+    - find: Reduces the initial delay before auto-follow starts moving after Shift+Right-Click. Lower values make the character begin following sooner.
+      replace: ลดดีเลย์ช่วงแรกก่อนที่ auto follow จะเริ่มเคลื่อนที่หลังจากกด Shift+คลิกขวา ค่าต่ำจะทำให้ตัวละครเริ่มติดตามได้เร็วขึ้น
+
+    # CustomAura (group title)
+    - find: AURA CUSTOMIZATION
+      replace: การปรับแต่งออร่า
+
+    # CustomAuraSprites (title)
+    - find: Customize Aura sprites
+      replace: ปรับแต่ง sprite ของออร่า
+
+    # CustomAuraSprites (desc)
+    - find: Separates aura sprites from warp portal effects by using dedicated files (aurafloat.tga and auraring.bmp in 'data\\texture\\effect'). Prevents high-level character auras from visually interfering with warp portals.
+      replace: แยก sprite ของออร่าออกจากเอฟเฟกต์ warp portal โดยใช้ไฟล์เฉพาะ (aurafloat.tga และ auraring.bmp ใน 'data\\texture\\effect') ป้องกันไม่ให้ออร่าของตัวละครเลเวลสูงแสดงผลซ้อนทับกับ warp portal
+
+    # CustomAuraLimits (title)
+    - find: Customize Aura display limits
+      replace: ปรับแต่งเงื่อนไขการแสดงออร่า
+
+    # CustomAuraLimits (desc)
+    - find: Customizes which character classes and levels display the standard aura effect. Set minimum levels and allowed job classes for aura visibility to match your server's progression system.
+      replace: กำหนดว่าอาชีพและเลเวลใดบ้างที่จะแสดงเอฟเฟกต์ออร่ามาตรฐาน ตั้งค่าเลเวลขั้นต่ำและอาชีพที่อนุญาตให้แสดงออร่า ให้ตรงกับระบบความก้าวหน้าของเซิร์ฟเวอร์ของคุณ
+
+    # CustomChatColor (group title)
+    - find: <font color="#9F00EF">CHA</font><font color="#5F00FF">T CO</font><font color="blue">LOR </font><font color="green">CUS</font><font color="yellow">TOM</font><font color="orange">IZA</font><font color="red">TION</font>
+      replace: <font color="#9F00EF">การ</font><font color="#5F00FF">ปรับ</font><font color="blue">แต่ง</font><font color="green">สี</font><font color="yellow">ข้อ</font><font color="orange">ความ</font><font color="red">แชท</font>
+
+    # CustomGMColor (title)
+    - find: Customize chat color (GM)
+      replace: ปรับแต่งสีแชท (GM)
+
+    # CustomGMColor (desc)
+    - find: Changes the color of GM chat messages to a custom hex value. Default is ffff00 (yellow). Use to make GM announcements stand out in your preferred color.
+      replace: เปลี่ยนสีข้อความแชทของ GM เป็นค่า hex ที่กำหนดเอง ค่าเริ่มต้นคือ ffff00 (สีเหลือง) ใช้เพื่อให้ประกาศของ GM โดดเด่นด้วยสีที่คุณต้องการ
+
+    # CustomGuildColor (title)
+    - find: Customize chat color (Guild)
+      replace: ปรับแต่งสีแชท (กิลด์)
+
+    # CustomGuildColor (desc)
+    - find: Changes the color of guild chat messages to a custom hex value. Default is b4ffb4 (light green).
+      replace: เปลี่ยนสีข้อความแชทกิลด์เป็นค่า hex ที่กำหนดเอง ค่าเริ่มต้นคือ b4ffb4 (สีเขียวอ่อน)
+
+    # CustomPartyColor (title)
+    - find: Customize chat color (Party - Others)
+      replace: ปรับแต่งสีแชท (ปาร์ตี้ - ผู้อื่น)
+
+    # CustomPartyColor (desc)
+    - find: Changes the color of party chat messages from other members to a custom hex value. Default is ffc8c8 (pinkish).
+      replace: เปลี่ยนสีข้อความแชทปาร์ตี้จากสมาชิกคนอื่นเป็นค่า hex ที่กำหนดเอง ค่าเริ่มต้นคือ ffc8c8 (สีชมพูอ่อน)
+
+    # CustomPartyColorSelf (title)
+    - find: Customize chat color (Party - Self)
+      replace: ปรับแต่งสีแชท (ปาร์ตี้ - ตัวเอง)
+
+    # CustomPartyColorSelf (desc)
+    - find: Changes the color of your own party chat messages to a custom hex value. Default is ffc800 (orange).
+      replace: เปลี่ยนสีข้อความแชทปาร์ตี้ของคุณเองเป็นค่า hex ที่กำหนดเอง ค่าเริ่มต้นคือ ffc800 (สีส้ม)
+
+    # CustomPublicColor (title)
+    - find: Customize chat color (Public - Others)
+      replace: ปรับแต่งสีแชท (สาธารณะ - ผู้อื่น)
+
+    # CustomPublicColor (desc)
+    - find: Changes the color of public chat messages from other players to a custom hex value. Default is ffffff (white).
+      replace: เปลี่ยนสีข้อความแชทสาธารณะจากผู้เล่นคนอื่นเป็นค่า hex ที่กำหนดเอง ค่าเริ่มต้นคือ ffffff (สีขาว)
+
+    # CustomPublicColorSelf (title)
+    - find: Customize chat color (Public - Self)
+      replace: ปรับแต่งสีแชท (สาธารณะ - ตัวเอง)
+
+    # CustomPublicColorSelf (desc)
+    - find: Changes the color of your own public chat messages to a custom hex value. Default is 00ff00 (green).
+      replace: เปลี่ยนสีข้อความแชทสาธารณะของคุณเองเป็นค่า hex ที่กำหนดเอง ค่าเริ่มต้นคือ 00ff00 (สีเขียว)
+
+    # SkipCheatCheck (group title)
+    - find: SKIP CHEATER CHECK
+      replace: ข้ามการตรวจสอบผู้แอบอ้าง
+
+    # SkipInFriendList (title)
+    - find: Skip Friend list cheat check
+      replace: ข้ามการตรวจสอบผู้แอบอ้างจากรายชื่อเพื่อน
+
+    # SkipInFriendList (desc)
+    - find: Disables the "possible impersonation" warning when receiving a PM from someone whose name resembles a friend on your list. The warning is meant to detect name spoofing but causes false positives.
+      replace: ปิดใช้งานคำเตือน "อาจเป็นการแอบอ้าง" เมื่อได้รับ PM จากผู้ที่มีชื่อคล้ายกับเพื่อนในรายชื่อของคุณ คำเตือนนี้มีไว้ตรวจจับการปลอมชื่อ แต่มักเตือนผิดพลาด
+
+    # SkipInGuildList (title)
+    - find: Skip Guild Member cheat check
+      replace: ข้ามการตรวจสอบผู้แอบอ้างจากสมาชิกกิลด์
+
+    # SkipInGuildList (desc)
+    - find: Disables the "possible impersonation" warning when receiving a PM from someone whose name resembles a guild member. Same as the friend list version but for guild members.
+      replace: ปิดใช้งานคำเตือน "อาจเป็นการแอบอ้าง" เมื่อได้รับ PM จากผู้ที่มีชื่อคล้ายกับสมาชิกกิลด์ ทำงานเหมือนกับแพทช์สำหรับรายชื่อเพื่อน แต่ใช้กับสมาชิกกิลด์
+
+    # WalkDelay (group title)
+    - find: WALK DELAY
+      replace: ดีเลย์การเดิน
+
+    # CustomWalkDelay (title)
+    - find: Walk Delay (Reforged)
+      replace: ดีเลย์การเดิน (Reforged)
+
+    # CustomWalkDelay (desc)
+    - find: "Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0."
+      replace: "กำหนดดีเลย์ระหว่างการคลิกเดินแต่ละครั้ง หน่วยเป็นมิลลิวินาที ค่าเริ่มต้นของไคลเอ็นท์คือ 600 และค่าที่ต่ำลงจะทำให้การเคลื่อนที่ตอบสนองไวขึ้น <b>อย่าตั้งต่ำกว่า 10</b> ที่ค่าต่ำมากๆ ตัวละครจะเดินขึ้นไปบนช่องของ NPC ขณะที่กล่องข้อความหรือหน้าต่างร้านค้าของ NPC นั้นยังเปิดอยู่ (GitHub issue #39) ค่า 10 เป็นค่าต่ำสุดที่ยืนยันแล้วว่าใช้งานได้ ค่า 0 ยังใช้ได้และจะทำงานเหมือนแพทช์ <i>Remove Walk Delay</i> แบบแยกตัวเดิมทุกประการ รวมถึงบั๊กนั้นด้วย แพทช์นี้ใช้แทนทั้ง <i>Remove Walk Delay</i> และ <i>Customize Walk Delay</i> ซึ่งจริงๆ แล้วเป็นการตั้งค่าเดียวกัน การลบดีเลย์ก็คือการตั้งค่านี้เป็น 0 นั่นเอง"
+
+    # ResButtonVis (group title)
+    - find: RESURRECT BUTTON VISIBILITY
+      replace: การแสดงปุ่มชุบชีวิต
+
+    # HideResButton (title)
+    - find: Skip Resurrection button
+      replace: ไม่แสดงปุ่มชุบชีวิต
+
+    # HideResButton (desc)
+    - find: Hides the Token of Ziegfried resurrection button when the player dies, even if one is in inventory. Use on servers where self-resurrection is not desired or the token has been repurposed.
+      replace: ซ่อนปุ่มชุบชีวิตด้วย Token of Ziegfried เมื่อผู้เล่นตาย แม้จะมีไอเทมนี้อยู่ในกระเป๋า ใช้กับเซิร์ฟเวอร์ที่ไม่ต้องการให้ชุบชีวิตตัวเองได้ หรือนำ Token ไปใช้เพื่อจุดประสงค์อื่น
+
+    # ShowResButton (title)
+    - find: Always show Resurrection button
+      replace: แสดงปุ่มชุบชีวิตเสมอ
+
+    # ShowResButton (desc)
+    - find: Always shows the Token of Ziegfried resurrection button on death regardless of the map type. By default, the button is hidden on certain map types like PvP or GvG maps.
+      replace: แสดงปุ่มชุบชีวิตด้วย Token of Ziegfried เสมอเมื่อตาย ไม่ว่าจะอยู่ในแมพประเภทใด โดยค่าเริ่มต้น ปุ่มนี้จะถูกซ่อนในแมพบางประเภท เช่น แมพ PvP หรือ GvG
+
+    # ===== Client.yml =====
+
+    # ResizeHealthBar (group title)
+    - find: RESIZE HP BAR
+      replace: ปรับขนาดแถบ HP
+
+    # ResizePlayerBar (title)
+    - find: Resize Player HP/SP bar
+      replace: ปรับขนาดแถบ HP/SP ของผู้เล่น
+
+    # ResizePlayerBar (desc)
+    - find: Changes the width of your own character's HP and SP bars to a custom size. Useful for making health bars easier to read at a glance.
+      replace: เปลี่ยนความกว้างของแถบ HP และ SP ของตัวละครคุณเป็นขนาดที่กำหนดเอง เหมาะสำหรับทำให้แถบพลังชีวิตอ่านได้ง่ายขึ้นในแวบเดียว
+
+    # ResizeNormalBar (title)
+    - find: Resize Normal mob HP bar
+      replace: ปรับขนาดแถบ HP ของมอนสเตอร์ปกติ
+
+    # ResizeNormalBar (desc)
+    - find: Changes the width of the HP bar displayed above regular monsters to a custom size.
+      replace: เปลี่ยนความกว้างของแถบ HP ที่แสดงเหนือมอนสเตอร์ทั่วไปเป็นขนาดที่กำหนดเอง
+
+    # ResizeMiniBossBar (title)
+    - find: Resize Mini-Boss mob HP bar
+      replace: ปรับขนาดแถบ HP ของมอนสเตอร์ Mini-Boss
+
+    # ResizeMiniBossBar (desc)
+    - find: Changes the width of the HP bar displayed above Mini-Boss monsters to a custom size. Helpful for distinguishing Mini-Bosses from regular mobs.
+      replace: เปลี่ยนความกว้างของแถบ HP ที่แสดงเหนือมอนสเตอร์ Mini-Boss เป็นขนาดที่กำหนดเอง ช่วยให้แยก Mini-Boss ออกจากมอนสเตอร์ทั่วไปได้ง่ายขึ้น
+
+    # ResizeBossBar (title)
+    - find: Resize Boss mob HP bar
+      replace: ปรับขนาดแถบ HP ของมอนสเตอร์ Boss
+
+    # ResizeBossBar (desc)
+    - find: Changes the width of the HP bar displayed above Boss (MVP) monsters to a custom size. Helpful for distinguishing Bosses from regular mobs.
+      replace: เปลี่ยนความกว้างของแถบ HP ที่แสดงเหนือมอนสเตอร์ Boss (MVP) เป็นขนาดที่กำหนดเอง ช่วยให้แยก Boss ออกจากมอนสเตอร์ทั่วไปได้ง่ายขึ้น
+
+    # AllianceChatHotkeySelector (title)
+    - find: Alliance Chat Hotkey Selector
+      replace: เลือกสัญลักษณ์ลัดของ Alliance Chat
+
+    # AllianceChatHotkeySelector (desc)
+    - find: Allows you to choose a custom symbol to trigger Alliance Chat instead of the default '#'. This is useful to avoid conflicts with GM command symbols such as @ or !.
+      replace: ให้คุณเลือกสัญลักษณ์ที่กำหนดเองสำหรับเรียกใช้ Alliance Chat แทนค่าเริ่มต้น '#' เหมาะสำหรับหลีกเลี่ยงการชนกับสัญลักษณ์คำสั่ง GM เช่น @ หรือ !
+
+    # DisableEffect (group title)
+    - find: DISABLE EFFECT
+      replace: ปิดใช้งานเอฟเฟกต์
+
+    # NoEarthQuake (title)
+    - find: Disable Quake skill effect
+      replace: ปิดใช้งานเอฟเฟกต์สกิล Quake
+
+    # NoEarthQuake (desc)
+    - find: Disables the screen-shaking Earthquake skill effect. Prevents motion sickness and visual discomfort caused by this skill.
+      replace: ปิดใช้งานเอฟเฟกต์หน้าจอสั่นของสกิล Earthquake ป้องกันอาการเวียนหัวและความไม่สบายตาที่เกิดจากสกิลนี้
+
+    # NoBlindness (title)
+    - find: Disable Blind skills effect
+      replace: ปิดใช้งานเอฟเฟกต์ของสกิล Blind
+
+    # NoBlindness (desc)
+    - find: Disables the Blind status effect that darkens the entire screen. Prevents the disorienting black-screen visual when blinded.
+      replace: ปิดใช้งานเอฟเฟกต์สถานะ Blind ที่ทำให้หน้าจอมืดทั้งหมด ป้องกันภาพหน้าจอดำที่ทำให้สับสนเมื่อติดสถานะ Blind
+
+    # RestoreSongsEffect (title)
+    - find: Restore Bard/Dancer Song Effects (Old Song Patch)
+      replace: นำเอฟเฟกต์เพลงของ Bard/Dancer กลับมา (Old Song Patch)
+
+    # RestoreSongsEffect (desc)
+    - find: Restores the visual ground effects for Bard and Dancer song skills. Otherwise known as the Restore Old Song patch. These effects were removed in newer clients but this patch reconstructs them using LandProtector's rendering code.
+      replace: นำเอฟเฟกต์บนพื้นของสกิลเพลงของ Bard และ Dancer กลับมา หรือที่รู้จักกันในชื่อแพทช์ Restore Old Song เอฟเฟกต์เหล่านี้ถูกนำออกในไคลเอ็นท์รุ่นใหม่ แต่แพทช์นี้สร้างขึ้นใหม่โดยใช้โค้ดเรนเดอร์ของ LandProtector
+
+    # EnableSlashCmd (group title)
+    - find: SLASH COMMANDS
+      replace: คำสั่ง Slash
+
+    # EnableWho (title)
+    - find: Always enable '/who' command
+      replace: เปิดใช้งานคำสั่ง '/who' เสมอ
+
+    # EnableWho (desc)
+    - find: Enables the <b>/w</b> and <b>/who</b> commands on all langtypes to show the current number of online players. Normally restricted to certain service regions.
+      replace: เปิดใช้งานคำสั่ง <b>/w</b> และ <b>/who</b> ในทุก langtype เพื่อแสดงจำนวนผู้เล่นที่ออนไลน์อยู่ในขณะนั้น ปกติจะใช้ได้เฉพาะในบางภูมิภาคของเซอร์วิสเท่านั้น
+
+    # EnableShowName (title)
+    - find: Always enable '/showname' command
+      replace: เปิดใช้งานคำสั่ง '/showname' เสมอ
+
+    # EnableShowName (desc)
+    - find: Enables the <b>/showname</b> command on all langtypes, allowing players to toggle the display of character names, party names, and guild names above sprites.
+      replace: เปิดใช้งานคำสั่ง <b>/showname</b> ในทุก langtype ให้ผู้เล่นเปิด/ปิดการแสดงชื่อตัวละคร ชื่อปาร์ตี้ และชื่อกิลด์เหนือ sprite ได้
+
+    # EnableUnknCmds (title)
+    - find: Allow unknown '/command's [Experimental]
+      replace: อนุญาต '/command' ที่ไม่รู้จัก [ทดลอง]
+
+    # EnableUnknCmds (desc)
+    - find: Sends unrecognized '<b>/command</b>' inputs to the server instead of showing "Invalid command". Allows server-side slash commands (like custom scripts) to work through the chat box.
+      replace: ส่งข้อความ '<b>/command</b>' ที่ไคลเอ็นท์ไม่รู้จักไปยังเซิร์ฟเวอร์ แทนการแสดงข้อความ "Invalid command" ทำให้คำสั่ง slash ฝั่งเซิร์ฟเวอร์ (เช่น สคริปต์ที่กำหนดเอง) ใช้งานผ่านช่องแชทได้
+
+    # NoSkillChatter (group title)
+    - find: SKILL CHATTER REMOVAL
+      replace: นำข้อความพูดจากสกิลออก
+
+    # NoDancerScream (title)
+    - find: Remove Dancer's Scream chatter
+      replace: นำข้อความสุ่มจากสกิล Scream ของ Dancer ออก
+
+    # NoDancerScream (desc)
+    - find: Removes the random chat messages that appear when the Dancer's Scream skill is used (loaded from dc_scream.txt). Reduces chat spam in busy areas.
+      replace: นำข้อความแชทแบบสุ่มที่ปรากฏเมื่อใช้สกิล Scream ของ Dancer ออก (โหลดจาก dc_scream.txt) ช่วยลดข้อความแชทที่รกในพื้นที่ที่มีผู้เล่นหนาแน่น
+
+    # NoBardFrostJoke (title)
+    - find: Remove Bard's Frost Joke chatter
+      replace: นำข้อความสุ่มจากสกิล Frost Joke ของ Bard ออก
+
+    # NoBardFrostJoke (desc)
+    - find: Removes the random chat messages that appear when the Bard's Frost Joke skill is used (loaded from ba_frostjoke.txt). Reduces chat spam in busy areas.
+      replace: นำข้อความแชทแบบสุ่มที่ปรากฏเมื่อใช้สกิล Frost Joke ของ Bard ออก (โหลดจาก ba_frostjoke.txt) ช่วยลดข้อความแชทที่รกในพื้นที่ที่มีผู้เล่นหนาแน่น
+
+    # ResizeBox (group title)
+    - find: RESIZE BOX
+      replace: ปรับขนาดช่องข้อความ
+
+    # ResizeChatBox (title)
+    - find: Resize Chat Box
+      replace: ปรับขนาดช่องแชท
+
+    # ResizeChatBox (desc)
+    - find: Increases the character limit in the Main/Battle chat input box from <b>70</b> to a custom value. Most servers use 234 to allow longer messages.
+      replace: เพิ่มจำนวนตัวอักษรสูงสุดในช่องพิมพ์แชท Main/Battle จาก <b>70</b> เป็นค่าที่กำหนดเอง เซิร์ฟเวอร์ส่วนใหญ่ใช้ 234 เพื่อให้พิมพ์ข้อความได้ยาวขึ้น
+
+    # ResizeChatRoomBox (title)
+    - find: Resize Chat Room Box
+      replace: ปรับขนาดช่องพิมพ์ในห้องแชท
+
+    # ResizeChatRoomBox (desc)
+    - find: Increases the character limit in chat room input boxes from <b>70</b> to a custom value. Most servers use 234 to allow longer messages.
+      replace: เพิ่มจำนวนตัวอักษรสูงสุดในช่องพิมพ์ของห้องแชทจาก <b>70</b> เป็นค่าที่กำหนดเอง เซิร์ฟเวอร์ส่วนใหญ่ใช้ 234 เพื่อให้พิมพ์ข้อความได้ยาวขึ้น
+
+    # ResizePMBox (title)
+    - find: Resize PM Box
+      replace: ปรับขนาดช่อง PM
+
+    # ResizePMBox (desc)
+    - find: Increases the character limit in the PM (whisper) input box from <b>70</b> to a custom value. Most servers use 234 to allow longer private messages.
+      replace: เพิ่มจำนวนตัวอักษรสูงสุดในช่องพิมพ์ PM (กระซิบ) จาก <b>70</b> เป็นค่าที่กำหนดเอง เซิร์ฟเวอร์ส่วนใหญ่ใช้ 234 เพื่อให้พิมพ์ข้อความส่วนตัวได้ยาวขึ้น
+
+    # ResizeNpcBox (title)
+    - find: Resize NPC Dialog Box
+      replace: ปรับขนาดช่องพิมพ์ในหน้าต่างสนทนา NPC
+
+    # ResizeNpcBox (desc)
+    - find: Increases the maximum character limit for NPC dialog input fields to a custom value (between 2052 and 4096). Useful for servers with NPCs that accept longer text input.
+      replace: เพิ่มจำนวนตัวอักษรสูงสุดของช่องพิมพ์ในหน้าต่างสนทนา NPC เป็นค่าที่กำหนดเอง (ระหว่าง 2052 ถึง 4096) เหมาะสำหรับเซิร์ฟเวอร์ที่มี NPC ซึ่งรับข้อความที่ยาวขึ้น
+
+    # RouletteVis (group title)
+    - find: ROULETTE VISIBILITY
+      replace: การแสดง Roulette
+
+    # ShowRoulette (title)
+    - find: Show Roulette icon
+      replace: แสดงไอคอน Roulette
+
+    # ShowRoulette (desc)
+    - find: Restores the Roulette icon that Gravity removed in newer clients. Use this if your server has Roulette functionality enabled.
+      replace: นำไอคอน Roulette ที่ Gravity นำออกในไคลเอ็นท์รุ่นใหม่กลับมา ใช้แพทช์นี้หากเซิร์ฟเวอร์ของคุณเปิดใช้งานระบบ Roulette
+
+    # CashShop (group title)
+    - find: CASH SHOP CUSTOMIZATION
+      replace: การปรับแต่ง Cash Shop
+
+    # MoveShopIcon (title)
+    - find: Move Cash Shop icon
+      replace: ย้ายไอคอน Cash Shop
+
+    # MoveShopIcon (desc)
+    - find: Repositions the Cash Shop icon to custom screen coordinates. Positive values offset from the top-left corner; negative values offset from the bottom-right corner.
+      replace: ย้ายไอคอน Cash Shop ไปยังพิกัดบนหน้าจอที่กำหนดเอง ค่าบวกจะวัดระยะจากมุมซ้ายบน ส่วนค่าลบจะวัดระยะจากมุมขวาล่าง
+
+    # ZeroCinShop (title)
+    - find: Enforce 0 C in Cash Shop
+      replace: บังคับแสดง 0 C ใน Cash Shop
+
+    # ZeroCinShop (desc)
+    - find: Forces the <b>C</b> (cash point) field to display 0 instead of random garbage values in the Cash Shop. Fixes a display bug on servers that do not use Gravity's cash point system.
+      replace: บังคับให้ช่อง <b>C</b> (cash point) ใน Cash Shop แสดงเป็น 0 แทนค่าขยะแบบสุ่ม แก้บั๊กการแสดงผลบนเซิร์ฟเวอร์ที่ไม่ได้ใช้ระบบ cash point ของ Gravity
+
+    # EquipPreview (group title)
+    - find: SHOP EQ PREVIEW
+      replace: ดูตัวอย่างอุปกรณ์ในร้านค้า
+
+    # PreviewInShop (title)
+    - find: Enable equipment preview in Cash Shop
+      replace: เปิดใช้งานการดูตัวอย่างอุปกรณ์ใน Cash Shop
+
+    # PreviewInShop (desc)
+    - find: Adds an equipment preview button in the Cash Shop (right-click items to see it). Lets players see how gear looks before buying. Requires server-side support to be enabled as well.
+      replace: เพิ่มปุ่มดูตัวอย่างอุปกรณ์ใน Cash Shop (คลิกขวาที่ไอเทมเพื่อดู) ให้ผู้เล่นเห็นว่าอุปกรณ์จะออกมาเป็นอย่างไรก่อนซื้อ ต้องเปิดการรองรับฝั่งเซิร์ฟเวอร์ด้วย
+
+    # PreviewInTrader (title)
+    - find: Enable equipment preview in Trader Shop
+      replace: เปิดใช้งานการดูตัวอย่างอุปกรณ์ใน Trader Shop
+
+    # PreviewInTrader (desc)
+    - find: Adds an equipment preview button in the older-style Trader Shop (right-click items to see it). Requires server-side support to be enabled as well.
+      replace: เพิ่มปุ่มดูตัวอย่างอุปกรณ์ใน Trader Shop แบบเก่า (คลิกขวาที่ไอเทมเพื่อดู) ต้องเปิดการรองรับฝั่งเซิร์ฟเวอร์ด้วย
+
+    # HideCashShop (title)
+    - find: Hide Cash Shop icon
+      replace: ซ่อนไอคอน Cash Shop
+
+    # HideCashShop (desc)
+    - find: Hides the Cash Shop icon from the game interface. Useful for servers that do not use a Cash Shop or want a cleaner UI.
+      replace: ซ่อนไอคอน Cash Shop จากหน้าจอเกม เหมาะสำหรับเซิร์ฟเวอร์ที่ไม่ได้ใช้ Cash Shop หรือต้องการ UI ที่ดูสะอาดตาขึ้น
+
+    # IncrCamAngle (group title)
+    - find: CAMERA ANGLES
+      replace: มุมกล้อง
+
+    # LowCamAngle (title)
+    - find: Increase Camera Angles (LOW)
+      replace: เพิ่มมุมกล้อง (ต่ำ)
+
+    # LowCamAngle (desc)
+    - find: Expands the allowed camera tilt range to about <b>30 degrees</b>, letting you angle the view slightly lower than default. A subtle improvement for general gameplay.
+      replace: ขยายช่วงการเอียงกล้องที่อนุญาตเป็นประมาณ <b>30 องศา</b> ให้คุณปรับมุมมองให้ต่ำลงกว่าค่าเริ่มต้นได้เล็กน้อย เป็นการปรับปรุงเล็กๆ สำหรับการเล่นทั่วไป
+
+    # MediumCamAngle (title)
+    - find: Increase Camera Angles (MEDIUM)
+      replace: เพิ่มมุมกล้อง (ปานกลาง)
+
+    # MediumCamAngle (desc)
+    - find: Expands the allowed camera tilt range to about <b>42 degrees</b>, providing a good balance between visibility and immersion. Recommended for most players.
+      replace: ขยายช่วงการเอียงกล้องที่อนุญาตเป็นประมาณ <b>42 องศา</b> ให้ความสมดุลที่ดีระหว่างการมองเห็นและความสมจริง แนะนำสำหรับผู้เล่นส่วนใหญ่
+
+    # HighCamAngle (title)
+    - find: Increase Camera Angles (HIGH)
+      replace: เพิ่มมุมกล้อง (สูง)
+
+    # HighCamAngle (desc)
+    - find: Expands the allowed camera tilt range to about <b>65 degrees</b>, enabling a near ground-level view. Great for screenshots, but may cause visual glitches on some maps.
+      replace: ขยายช่วงการเอียงกล้องที่อนุญาตเป็นประมาณ <b>65 องศา</b> ทำให้มองได้เกือบระดับพื้น เหมาะสำหรับถ่ายภาพหน้าจอ แต่อาจทำให้ภาพผิดเพี้ยนในบางแมพ
+
+    # IncrZoom (group title)
+    - find: ZOOM OUT
+      replace: การซูมออก
+
+    # ZoomIn25Percent (title)
+    - find: Decrease Zoom Out (to 25%)
+      replace: ลดระยะซูมออก (เหลือ 25%)
+
+    # ZoomIn25Percent (desc)
+    - find: Pulls the camera <b>closer</b> than default, to about a quarter of the stock distance (480 &rarr; 128). The odd one out in this group - every other entry here zooms out.
+      replace: ดึงกล้องให้<b>ใกล้</b>กว่าค่าเริ่มต้น เหลือประมาณหนึ่งในสี่ของระยะเดิม (480 &rarr; 128) เป็นตัวเลือกเดียวในกลุ่มนี้ที่ต่างออกไป เพราะตัวเลือกอื่นทั้งหมดเป็นการซูมออก
+
+    # ZoomOut25Percent (title)
+    - find: Increase Zoom Out (to 25%)
+      replace: เพิ่มระยะซูมออก (25%)
+
+    # ZoomOut25Percent (desc)
+    - find: Extends the zoom-out range by <b>25%</b> over the default (480 &rarr; 600). The gentlest of the four increases - use it when Max feels too far out. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: ขยายระยะการซูมออกมากกว่าค่าเริ่มต้น <b>25%</b> (480 &rarr; 600) เป็นการเพิ่มที่น้อยที่สุดในสี่ตัวเลือก ใช้ตัวนี้เมื่อรู้สึกว่า Max ไกลเกินไป &#9733; <b>อย่าลืมใช้คำสั่ง /zoom ในเกม</b> ไม่เช่นนั้นจะไม่เห็นผลใดๆ เลย ไคลเอ็นท์มีการตั้งค่าซูมออกของตัวเอง และหากปิดการตั้งค่านั้นไว้ กล้องจะถูกจำกัดไว้ที่ 400 ซึ่งแคบกว่าค่าเดิมของเกม
+
+    # Zoom50Percent (title)
+    - find: Increase Zoom Out (to 50%)
+      replace: เพิ่มระยะซูมออก (50%)
+
+    # Zoom50Percent (desc)
+    - find: Extends the zoom-out range by <b>50%</b> over the default (480 &rarr; 720), letting you see more of the map around your character. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: ขยายระยะการซูมออกมากกว่าค่าเริ่มต้น <b>50%</b> (480 &rarr; 720) ทำให้มองเห็นแมพรอบตัวละครได้มากขึ้น &#9733; <b>อย่าลืมใช้คำสั่ง /zoom ในเกม</b> ไม่เช่นนั้นจะไม่เห็นผลใดๆ เลย ไคลเอ็นท์มีการตั้งค่าซูมออกของตัวเอง และหากปิดการตั้งค่านั้นไว้ กล้องจะถูกจำกัดไว้ที่ 400 ซึ่งแคบกว่าค่าเดิมของเกม
+
+    # Zoom75Percent (title)
+    - find: Increase Zoom Out (to 75%)
+      replace: เพิ่มระยะซูมออก (75%)
+
+    # Zoom75Percent (desc)
+    - find: Extends the zoom-out range by <b>75%</b> over the default (480 &rarr; 840). A wide field of view, useful for WoE, PvP and large-scale fights. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: ขยายระยะการซูมออกมากกว่าค่าเริ่มต้น <b>75%</b> (480 &rarr; 840) ให้มุมมองที่กว้าง เหมาะสำหรับ WoE, PvP และการต่อสู้ขนาดใหญ่ &#9733; <b>อย่าลืมใช้คำสั่ง /zoom ในเกม</b> ไม่เช่นนั้นจะไม่เห็นผลใดๆ เลย ไคลเอ็นท์มีการตั้งค่าซูมออกของตัวเอง และหากปิดการตั้งค่านั้นไว้ กล้องจะถูกจำกัดไว้ที่ 400 ซึ่งแคบกว่าค่าเดิมของเกม
+
+    # ZoomMax (title)
+    - find: Increase Zoom Out (to Max)
+      replace: เพิ่มระยะซูมออก (Max)
+
+    # ZoomMax (desc)
+    - find: Pulls the camera back as far as this client can actually draw (480 &rarr; 1127). Maximum visibility, though sprites get small. &#9733; This was 1224 until 2026-08-25; that value is past the render limit and shows black at the screen edges. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: ดึงกล้องออกไปไกลที่สุดเท่าที่ไคลเอ็นท์นี้วาดได้จริง (480 &rarr; 1127) มองเห็นได้กว้างที่สุด แต่ sprite จะมีขนาดเล็กลง &#9733; ค่านี้เคยเป็น 1224 จนถึง 2026-08-25 แต่ค่านั้นเกินขีดจำกัดการเรนเดอร์และทำให้ขอบจอเป็นสีดำ &#9733; <b>อย่าลืมใช้คำสั่ง /zoom ในเกม</b> ไม่เช่นนั้นจะไม่เห็นผลใดๆ เลย ไคลเอ็นท์มีการตั้งค่าซูมออกของตัวเอง และหากปิดการตั้งค่านั้นไว้ กล้องจะถูกจำกัดไว้ที่ 400 ซึ่งแคบกว่าค่าเดิมของเกม
+
+    # ZoomCustom (title)
+    - find: Increase Zoom Out (custom %)
+      replace: เพิ่มระยะซูมออก (กำหนด % เอง)
+
+    # ZoomCustom (desc)
+    - find: Asks you for the increase as a <b>percentage over the client default</b> and converts it for you, so typing <b>60</b> gives the camera 60% more range (480 &rarr; 768). The presets above are the common values; this one covers everything in between. Defaults to <b>134</b>, just under Max. Anything above 135 draws black at the screen edges, and is allowed here anyway so you can experiment. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: ถามค่าที่ต้องการเพิ่มเป็น <b>เปอร์เซ็นต์ที่มากกว่าค่าเริ่มต้นของไคลเอ็นท์</b> แล้วแปลงค่าให้อัตโนมัติ เช่น พิมพ์ <b>60</b> จะทำให้กล้องมีระยะเพิ่มขึ้น 60% (480 &rarr; 768) ตัวเลือกสำเร็จรูปด้านบนเป็นค่าที่ใช้กันทั่วไป ส่วนตัวเลือกนี้ครอบคลุมทุกค่าที่อยู่ระหว่างนั้น ค่าเริ่มต้นคือ <b>134</b> ซึ่งต่ำกว่า Max เล็กน้อย ค่าที่สูงกว่า 135 จะทำให้ขอบจอเป็นสีดำ แต่ก็ยังอนุญาตให้ใช้ได้เพื่อให้คุณทดลอง &#9733; <b>อย่าลืมใช้คำสั่ง /zoom ในเกม</b> ไม่เช่นนั้นจะไม่เห็นผลใดๆ เลย ไคลเอ็นท์มีการตั้งค่าซูมออกของตัวเอง และหากปิดการตั้งค่านั้นไว้ กล้องจะถูกจำกัดไว้ที่ 400 ซึ่งแคบกว่าค่าเดิมของเกม
+
+    # LoginMode (group title)
+    - find: LOGIN MODE
+      replace: โหมดล็อกอิน
+
+    # UseSSOLogin (title)
+    - find: Use SSO Login Packet
+      replace: ใช้แพ็กเก็ตล็อกอินแบบ SSO
+
+    # UseSSOLogin (desc)
+    - find: Forces all langtypes to use the SSO login packet (0x825) instead of the old login packet (0x64). Required when using a patcher/launcher that passes credentials via command-line token. <b>WARNING:</b> Incompatible with 'Disable Login password encryption' (NoPassEncr).
+      replace: บังคับให้ทุก langtype ใช้แพ็กเก็ตล็อกอินแบบ SSO (0x825) แทนแพ็กเก็ตล็อกอินแบบเก่า (0x64) จำเป็นเมื่อใช้ patcher/launcher ที่ส่งข้อมูลล็อกอินผ่าน token ใน command line <b>คำเตือน:</b> ใช้ร่วมกับ 'Disable Login password encryption' (NoPassEncr) ไม่ได้
+
+    # UseOldLogin (title)
+    - find: Use Old Login Packet
+      replace: ใช้แพ็กเก็ตล็อกอินแบบเก่า
+
+    # UseOldLogin (desc)
+    - find: Forces the client to use the old login packet (0x64) for authentication. Required for newer clients where 'Restore Login Window' no longer works. The standard choice for most servers with direct username/password login.
+      replace: บังคับให้ไคลเอ็นท์ใช้แพ็กเก็ตล็อกอินแบบเก่า (0x64) ในการยืนยันตัวตน จำเป็นสำหรับไคลเอ็นท์รุ่นใหม่ที่แพทช์ 'Restore Login Window' ใช้งานไม่ได้แล้ว เป็นตัวเลือกมาตรฐานสำหรับเซิร์ฟเวอร์ส่วนใหญ่ที่ล็อกอินด้วยชื่อผู้ใช้/รหัสผ่านโดยตรง
+
+    # ChatRepeat (group title)
+    - find: CHAT REPEAT
+      replace: การพิมพ์แชทซ้ำ
+
+    # UnlimitedChatRepeat (title)
+    - find: Allow unlimited chat repeat
+      replace: อนุญาตให้พิมพ์แชทซ้ำได้ไม่จำกัด
+
+    # UnlimitedChatRepeat (desc)
+    - find: Removes the client-side limit on repeating the same chat message. By default, the client blocks you from sending the same message more than a few times in a row.
+      replace: ยกเลิกขีดจำกัดฝั่งไคลเอ็นท์ในการส่งข้อความแชทซ้ำ โดยค่าเริ่มต้น ไคลเอ็นท์จะไม่ให้คุณส่งข้อความเดิมติดต่อกันเกินกว่าไม่กี่ครั้ง
+
+    # LimitedChatRepeat (title)
+    - find: Customize chat repeat limit
+      replace: ปรับแต่งขีดจำกัดการพิมพ์แชทซ้ำ
+
+    # LimitedChatRepeat (desc)
+    - find: Changes the maximum number of identical consecutive chat messages allowed from the default of 2 to a custom value. Provides more control than fully removing the limit.
+      replace: เปลี่ยนจำนวนข้อความแชทที่เหมือนกันติดต่อกันสูงสุดที่อนุญาต จากค่าเริ่มต้น 2 เป็นค่าที่กำหนดเอง ควบคุมได้ละเอียดกว่าการยกเลิกขีดจำกัดทั้งหมด
+
+    # CustomSleep (group title)
+    - find: SLEEP DELAY CUSTOMIZATION
+      replace: การปรับแต่งดีเลย์ Sleep
+
+    # AddInpDelay (title)
+    - find: Add Input Delay
+      replace: เพิ่มดีเลย์อินพุต
+
+    # AddInpDelay (desc)
+    - find: Adds extra milliseconds to the client's input processing delay. Can be used to throttle input speed for testing or to reduce CPU usage on low-end machines.
+      replace: เพิ่มเวลา (มิลลิวินาที) ให้กับดีเลย์การประมวลผลอินพุตของไคลเอ็นท์ ใช้เพื่อจำกัดความเร็วอินพุตสำหรับการทดสอบ หรือเพื่อลดการใช้ CPU บนเครื่องสเปกต่ำ
+
+    # CustomGameLoopDelay (title)
+    - find: Customize game loop delay
+      replace: ปรับแต่งดีเลย์ของ game loop
+
+    # CustomGameLoopDelay (desc)
+    - find: Changes the Sleep() delay in the main game loop to a custom value (in milliseconds). Lower values make the client more responsive but use more CPU; higher values save CPU at the cost of smoothness.
+      replace: เปลี่ยนดีเลย์ Sleep() ใน game loop หลักเป็นค่าที่กำหนดเอง (หน่วยเป็นมิลลิวินาที) ค่าต่ำจะทำให้ไคลเอ็นท์ตอบสนองไวขึ้นแต่ใช้ CPU มากขึ้น ส่วนค่าสูงจะประหยัด CPU แต่ความลื่นไหลจะลดลง
+
+    # ===== Data.yml =====
+
+    # CustomData (group title)
+    - find: DATA CUSTOMIZATION
+      replace: การปรับแต่งข้อมูล
+
+    # CustomMaxEmbFileSize (title)
+    - find: Customize Max Emblem file size
+      replace: ปรับแต่งขนาดไฟล์ตรากิลด์สูงสุด
+
+    # CustomMaxEmbFileSize (desc)
+    - find: Changes the maximum allowed file size for guild emblems. Increase this if players are getting errors when uploading detailed or high-resolution guild emblems.
+      replace: เปลี่ยนขนาดไฟล์สูงสุดที่อนุญาตสำหรับตรากิลด์ เพิ่มค่านี้หากผู้เล่นพบข้อผิดพลาดเมื่ออัปโหลดตรากิลด์ที่มีรายละเอียดมากหรือความละเอียดสูง
+
+    # CustomRodexTax (title)
+    - find: Customize Rodex tax
+      replace: ปรับแต่งภาษี Rodex
+
+    # CustomRodexTax (desc)
+    - find: Changes the tax percentage deducted when sending zeny through the RoDEx (mail) system. Set to 0 to remove the tax entirely, or adjust to your server's economy.
+      replace: เปลี่ยนเปอร์เซ็นต์ภาษีที่ถูกหักเมื่อส่ง zeny ผ่านระบบ RoDEx (จดหมาย) ตั้งเป็น 0 เพื่อยกเลิกภาษีทั้งหมด หรือปรับให้เหมาะกับเศรษฐกิจของเซิร์ฟเวอร์ของคุณ
+
+    # CustomGuildExpLimit (title)
+    - find: Customize guild exp limit
+      replace: ปรับแต่งขีดจำกัด exp ของกิลด์
+
+    # CustomGuildExpLimit (desc)
+    - find: Changes the maximum percentage of experience a player can donate to their guild. Default is 50%. Adjust to match your server's guild configuration.
+      replace: เปลี่ยนเปอร์เซ็นต์สูงสุดของค่าประสบการณ์ที่ผู้เล่นสามารถมอบให้กิลด์ได้ ค่าเริ่มต้นคือ 50% ปรับให้ตรงกับการตั้งค่ากิลด์ของเซิร์ฟเวอร์ของคุณ
+
+    # CustomAdvAgencyLimits (title)
+    - find: Customize adventurer agency levels
+      replace: ปรับแต่งช่วงเลเวลของ Adventurer Agency
+
+    # CustomAdvAgencyLimits (desc)
+    - find: Changes the minimum and maximum level range shown in the Adventurer Agency (party finder) window. Adjust to match your server's level cap and party requirements.
+      replace: เปลี่ยนช่วงเลเวลต่ำสุดและสูงสุดที่แสดงในหน้าต่าง Adventurer Agency (ค้นหาปาร์ตี้) ปรับให้ตรงกับเลเวลสูงสุดและเงื่อนไขปาร์ตี้ของเซิร์ฟเวอร์ของคุณ
+
+    # EnableCustomFonts (title)
+    - find: Enable Official Custom Fonts (Reforged)
+      replace: เปิดใช้งาน Custom Fonts ของทางการ (Reforged)
+
+    # EnableCustomFonts (desc)
+    - find: Loads custom .ttf fonts via AddFontResourceExA at init, bypassing the broken T2Embed API on modern Windows. Prompts to copy included .ttf fonts to your client folder on first apply. Requires FixFontsCharset (auto-enabled).
+      replace: โหลดฟอนท์ .ttf ที่กำหนดเองผ่าน AddFontResourceExA ตอนเริ่มต้น โดยข้าม T2Embed API ที่ใช้งานไม่ได้บน Windows รุ่นใหม่ เมื่อใช้แพทช์ครั้งแรกจะถามว่าจะคัดลอกฟอนท์ .ttf ที่แนบมาไปยังโฟลเดอร์ไคลเอ็นท์ของคุณหรือไม่ ต้องใช้ FixFontsCharset (เปิดใช้งานให้อัตโนมัติ)
+
+    # FixFontsCharset (title)
+    - find: Fix charset for Fonts
+      replace: แก้ไข charset ของฟอนท์
+
+    # FixFontsCharset (desc)
+    - find: Fixes the character encoding (charset) used for official custom fonts (EOT and OTF) so they render correctly on all langtypes. Prevents garbled text when using custom fonts on non-Korean service types. Fixed EDI register clobber for 07-16.
+      replace: แก้ไขการเข้ารหัสตัวอักษร (charset) ที่ใช้กับ custom fonts ของทางการ (EOT และ OTF) ให้แสดงผลได้ถูกต้องในทุก langtype ป้องกันข้อความเพี้ยนเมื่อใช้ custom fonts บน service type ที่ไม่ใช่เกาหลี แก้ไขปัญหารีจิสเตอร์ EDI ถูกเขียนทับสำหรับ 07-16 แล้ว
+
+    # AlwaysAscii (title)
+    - find: Use Ascii on All
+      replace: ใช้ Ascii ในทุกกรณี
+
+    # AlwaysAscii (desc)
+    - find: Forces ASCII text rendering regardless of the selected font or langtype. Ensures English characters always display correctly on all service types.
+      replace: บังคับให้แสดงผลข้อความแบบ ASCII ไม่ว่าจะเลือกฟอนท์หรือ langtype ใด ทำให้ตัวอักษรภาษาอังกฤษแสดงผลได้ถูกต้องเสมอในทุก service type
+
+    # CustomSSQuality (title)
+    - find: Customize screenshot quality
+      replace: ปรับแต่งคุณภาพภาพหน้าจอ
+
+    # CustomSSQuality (desc)
+    - find: Changes the JPEG compression quality for in-game screenshots (0-100). Higher values produce sharper images but larger files. Default quality is relatively low.
+      replace: เปลี่ยนคุณภาพการบีบอัด JPEG ของภาพหน้าจอในเกม (0-100) ค่าสูงจะได้ภาพคมชัดขึ้นแต่ไฟล์ใหญ่ขึ้น คุณภาพเริ่มต้นค่อนข้างต่ำ
+
+    # CallKoreaClientInfo (title)
+    - find: Always call SelectKoreaClientInfo()
+      replace: เรียกใช้ SelectKoreaClientInfo() เสมอ
+
+    # CallKoreaClientInfo (desc)
+    - find: Ensures SelectKoreaClientInfo() is always called alongside SelectClientInfo(), unlocking features normally restricted to the Korean service type. Recommended for most servers to enable full client functionality.
+      replace: ทำให้ SelectKoreaClientInfo() ถูกเรียกใช้ควบคู่กับ SelectClientInfo() เสมอ เพื่อปลดล็อกฟีเจอร์ที่ปกติใช้ได้เฉพาะ service type เกาหลี แนะนำสำหรับเซิร์ฟเวอร์ส่วนใหญ่ เพื่อให้ไคลเอ็นท์ใช้งานได้ครบทุกฟังก์ชัน
+
+    # DataFolderFirst (title)
+    - find: Read data folder first
+      replace: อ่านโฟลเดอร์ data ก่อน
+
+    # DataFolderFirst (desc)
+    - find: Loads loose files from the 'data' folder before checking GRF archives. Useful for development and testing custom sprites, textures, or lua files without repacking the GRF.
+      replace: โหลดไฟล์ที่วางแยกไว้ในโฟลเดอร์ 'data' ก่อนตรวจสอบไฟล์ GRF เหมาะสำหรับการพัฒนาและทดสอบ sprite, texture หรือไฟล์ lua ที่กำหนดเอง โดยไม่ต้องแพ็ก GRF ใหม่
+
+    # PlainTextDesc (title)
+    - find: Use plain text descriptions
+      replace: ใช้คำอธิบายแบบข้อความธรรมดา
+
+    # PlainTextDesc (desc)
+    - find: Forces the client to read item and skill description .txt files as plain ASCII text instead of encoded Korean. Required for English-language description files to display correctly.
+      replace: บังคับให้ไคลเอ็นท์อ่านไฟล์คำอธิบายไอเทมและสกิล (.txt) เป็นข้อความ ASCII ธรรมดา แทนภาษาเกาหลีที่เข้ารหัสไว้ จำเป็นเพื่อให้ไฟล์คำอธิบายภาษาอังกฤษแสดงผลได้ถูกต้อง
+
+    # LoadKrExtSettings (title)
+    - find: Always load korea ExternalSettings lua file
+      replace: โหลดไฟล์ lua ExternalSettings ของเกาหลีเสมอ
+
+    # LoadKrExtSettings (desc)
+    - find: Forces loading of the Korean ExternalSettings lua file on all langtypes. This file controls many client features and UI options that are otherwise unavailable outside the Korean service type.
+      replace: บังคับให้โหลดไฟล์ lua ExternalSettings ของเกาหลีในทุก langtype ไฟล์นี้ควบคุมฟีเจอร์และตัวเลือก UI หลายอย่างของไคลเอ็นท์ ซึ่งปกติจะใช้ไม่ได้นอก service type เกาหลี
+
+    # IncrViewID (title)
+    - find: Increase headgear viewID limit
+      replace: เพิ่มขีดจำกัด viewID ของหมวก
+
+    # IncrViewID (desc)
+    - find: Raises the maximum headgear View ID limit from the default (1000-3000 depending on client version) up to 32000. Required for servers with large numbers of custom headgear sprites.
+      replace: เพิ่มขีดจำกัด View ID สูงสุดของหมวกจากค่าเริ่มต้น (1000-3000 ขึ้นอยู่กับเวอร์ชันของไคลเอ็นท์) เป็นสูงสุด 32000 จำเป็นสำหรับเซิร์ฟเวอร์ที่มี sprite หมวกแบบกำหนดเองจำนวนมาก
+
+    # No3DBoneLimit (title)
+    - find: Remove 3D bones limit
+      replace: ยกเลิกขีดจำกัด 3D bones
+
+    # No3DBoneLimit (desc)
+    - find: Removes the hardcoded monster ID limit for 3D Granny models, allowing custom 3D monsters beyond the official range. Required for servers that add new 3D monster sprites.
+      replace: ยกเลิกขีดจำกัด ID มอนสเตอร์ที่ hardcode ไว้สำหรับโมเดล 3D แบบ Granny ทำให้ใช้มอนสเตอร์ 3D ที่กำหนดเองนอกช่วงของทางการได้ จำเป็นสำหรับเซิร์ฟเวอร์ที่เพิ่ม sprite มอนสเตอร์ 3D ใหม่
+
+    # IncrMapQuality (title)
+    - find: Increase map quality
+      replace: เพิ่มคุณภาพแมพ
+
+    # IncrMapQuality (desc)
+    - find: Upgrades map texture rendering from 16-bit to 32-bit color depth, resulting in smoother color gradients and reduced banding on ground textures. May slightly increase memory usage.
+      replace: อัปเกรดการเรนเดอร์ texture ของแมพจากความลึกสี 16-bit เป็น 32-bit ทำให้การไล่สีเนียนขึ้นและลดการเกิดแถบสีบน texture พื้น อาจทำให้ใช้หน่วยความจำเพิ่มขึ้นเล็กน้อย
+
+    # EnableEffectTool (title)
+    - find: Enable effect for all maps
+      replace: เปิดใช้งานเอฟเฟกต์ในทุกแมพ
+
+    # EnableEffectTool (desc)
+    - find: Makes the client load per-map effect files from the EffectTool folder on all maps, not just select ones. Allows custom map effects (weather, ambient particles, etc.) to work everywhere.
+      replace: ทำให้ไคลเอ็นท์โหลดไฟล์เอฟเฟกต์ประจำแมพจากโฟลเดอร์ EffectTool ในทุกแมพ ไม่ใช่เฉพาะบางแมพ ทำให้เอฟเฟกต์แมพที่กำหนดเอง (สภาพอากาศ อนุภาคบรรยากาศ ฯลฯ) ทำงานได้ทุกที่
+
+    # ItemInfoPerServer (title)
+    - find: Load iteminfo based on char server
+      replace: โหลด iteminfo ตาม char server
+
+    # ItemInfoPerServer (desc)
+    - find: Loads the ItemInfo lua file and passes the selected character server name as an argument. Allows different item databases per server when hosting multiple char servers (e.g., Renewal vs Pre-Renewal).
+      replace: โหลดไฟล์ lua ItemInfo และส่งชื่อ char server ที่เลือกไปเป็นอาร์กิวเมนต์ ทำให้ใช้ฐานข้อมูลไอเทมแยกกันในแต่ละเซิร์ฟเวอร์ได้เมื่อเปิดหลาย char server (เช่น Renewal กับ Pre-Renewal)
+
+    # UseStateLubIcon (title)
+    - find: Use icons from stateiconimginfo.lub
+      replace: ใช้ไอคอนจาก stateiconimginfo.lub
+
+    # UseStateLubIcon (desc)
+    - find: Disables hardcoded status effect icons and loads them exclusively from stateiconimginfo.lub instead. Allows full customization of buff/debuff icons through lua.
+      replace: ปิดใช้งานไอคอนสถานะที่ hardcode ไว้ และโหลดไอคอนเหล่านั้นจาก stateiconimginfo.lub เท่านั้น ทำให้ปรับแต่งไอคอนบัฟ/ดีบัฟผ่าน lua ได้อย่างเต็มที่
+
+    # CustomDLL (title)
+    - find: Add custom DLLs
+      replace: เพิ่ม DLL ที่กำหนดเอง
+
+    # CustomDLL (desc)
+    - find: Injects custom DLL loading into the client at startup. Specify the DLL filename and exported functions to call. Used for adding custom functionality like anticheat, custom rendering, or server-specific features.
+      replace: ใส่การโหลด DLL ที่กำหนดเองเข้าไปในไคลเอ็นท์ตอนเริ่มทำงาน ระบุชื่อไฟล์ DLL และฟังก์ชันที่ export ไว้ซึ่งต้องการเรียกใช้ ใช้สำหรับเพิ่มฟังก์ชันพิเศษ เช่น ระบบกันโกง การเรนเดอร์แบบกำหนดเอง หรือฟีเจอร์เฉพาะของเซิร์ฟเวอร์
+
+    # HideBuildInfo (title)
+    - find: Hide build info
+      replace: ซ่อนข้อมูลบิลด์
+
+    # HideBuildInfo (desc)
+    - find: Hides the client's build date, time, and version information by zeroing out all related strings. Prevents players from seeing which exact client version the server uses.
+      replace: ซ่อนวันที่ เวลา และข้อมูลเวอร์ชันของบิลด์ไคลเอ็นท์ โดยลบข้อความที่เกี่ยวข้องทั้งหมดให้เป็นศูนย์ ป้องกันไม่ให้ผู้เล่นรู้ว่าเซิร์ฟเวอร์ใช้ไคลเอ็นท์เวอร์ชันใด
+
+    # NoCameraLock (title)
+    - find: Disable camera lock
+      replace: ปิดใช้งานการล็อกกล้อง
+
+    # NoCameraLock (desc)
+    - find: Disables the per-map camera lock defined in ViewPointTable.txt, allowing free camera rotation on all maps. Useful for players who prefer manual camera control indoors and in dungeons.
+      replace: ปิดใช้งานการล็อกกล้องประจำแมพที่กำหนดไว้ใน ViewPointTable.txt ทำให้หมุนกล้องได้อิสระในทุกแมพ เหมาะสำหรับผู้เล่นที่ชอบควบคุมกล้องเองในอาคารและในดันเจี้ยน
+
+    # NoMapInfo (title)
+    - find: Disable map signs
+      replace: ปิดใช้งานป้ายชื่อแมพ
+
+    # NoMapInfo (desc)
+    - find: Disables the map name signs (location banners) that appear when entering a new map, controlled by mapInfo.lub. Removes visual clutter for players who find them distracting.
+      replace: ปิดใช้งานป้ายชื่อแมพ (แบนเนอร์บอกสถานที่) ที่ปรากฏเมื่อเข้าแมพใหม่ ซึ่งควบคุมโดย mapInfo.lub ช่วยลดความรกของหน้าจอสำหรับผู้เล่นที่รู้สึกว่าป้ายนี้รบกวน
+
+    # FixArrowsCharset (title)
+    - find: Translate arrows to English
+      replace: แปลลูกศรเป็นภาษาอังกฤษ
+
+    # FixArrowsCharset (desc)
+    - find: Translates the arrow symbols and menu button labels in the hotkey settings UI from Korean to English. Fixes unreadable Korean text in the shortcut key configuration window.
+      replace: แปลสัญลักษณ์ลูกศรและชื่อปุ่มเมนูในหน้าตั้งค่าคีย์ลัดจากภาษาเกาหลีเป็นภาษาอังกฤษ แก้ปัญหาข้อความภาษาเกาหลีที่อ่านไม่ออกในหน้าต่างตั้งค่าคีย์ลัด
+
+    # BossDropIdentified (title)
+    - find: Use 'identified' drops for Boss (MVP) mob
+      replace: ใช้ชื่อแบบ 'identified' สำหรับไอเทมที่ดรอปจากมอนสเตอร์ Boss (MVP)
+
+    # BossDropIdentified (desc)
+    - find: Forces items dropped by Boss (MVP) monsters to show their identified names in the drop announcement, so players can see exactly what dropped instead of 'Unknown Item'.
+      replace: บังคับให้ไอเทมที่ดรอปจากมอนสเตอร์ Boss (MVP) แสดงชื่อแบบ identified ในประกาศการดรอป เพื่อให้ผู้เล่นเห็นได้ชัดเจนว่าดรอปอะไร แทนที่จะเป็น 'Unknown Item'
+
+    # TranslateClient (title)
+    - find: Translate client
+      replace: แปลไคลเอ็นท์
+
+    # TranslateClient (desc)
+    - find: Replaces hardcoded Korean text strings in the client with translations from a mapping file (defaults to <b>Translations_EN.yml</b>). Covers system messages, UI labels, and other text that cannot be changed through lua or txt files.
+      replace: แทนที่ข้อความภาษาเกาหลีที่ hardcode ไว้ในไคลเอ็นท์ด้วยคำแปลจากไฟล์ mapping (ค่าเริ่มต้นคือ <b>Translations_EN.yml</b>) ครอบคลุมข้อความระบบ ป้ายกำกับ UI และข้อความอื่นที่ไม่สามารถเปลี่ยนผ่านไฟล์ lua หรือ txt ได้
+
+    # CustomCaptchaDecomp (title)
+    - find: Customize Captcha Decomp size
+      replace: ปรับแต่งขนาดการคลายบีบอัด Captcha
+
+    # CustomCaptchaDecomp (desc)
+    - find: Changes the maximum zlib decompression buffer size for captcha images. Increase this if captcha images fail to load due to exceeding the default size limit.
+      replace: เปลี่ยนขนาดบัฟเฟอร์สูงสุดสำหรับการคลายบีบอัด zlib ของภาพ captcha เพิ่มค่านี้หากภาพ captcha โหลดไม่ขึ้นเพราะเกินขนาดที่จำกัดไว้ตามค่าเริ่มต้น
+
+    # RestoreCpsDll (title)
+    - find: Restore Cps Dll
+      replace: นำ Cps Dll กลับมา
+
+    # RestoreCpsDll (desc)
+    - find: Restores the loading of Cps.dll (Gravity's protection DLL) which was removed in newer clients. Only enable if your server requires this DLL. <b>WARNING:</b> Requires the 'Add custom DLLs' patch to be active; may crash without it.
+      replace: นำการโหลด Cps.dll (DLL ป้องกันของ Gravity) ที่ถูกนำออกในไคลเอ็นท์รุ่นใหม่กลับมา เปิดใช้งานเฉพาะเมื่อเซิร์ฟเวอร์ของคุณต้องใช้ DLL นี้ <b>คำเตือน:</b> ต้องเปิดใช้แพทช์ 'Add custom DLLs' ด้วย ไม่เช่นนั้นอาจเกิดการแครช
+
+    # DisableProtect (group title)
+    - find: DISABLE PROTECTION
+      replace: ปิดใช้งานระบบป้องกัน
+
+    # NoGGuard (title)
+    - find: Disable Game Guard
+      replace: ปิดใช้งาน Game Guard
+
+    # NoGGuard (desc)
+    - find: Disables nProtect GameGuard, Gravity's anti-cheat system built into Renewal clients. Required for servers since GameGuard expects Gravity's official servers and will block connections otherwise.
+      replace: ปิดใช้งาน nProtect GameGuard ซึ่งเป็นระบบกันโกงของ Gravity ที่ติดมากับไคลเอ็นท์ Renewal จำเป็นสำหรับเซิร์ฟเวอร์ เพราะ GameGuard ต้องการเชื่อมต่อกับเซิร์ฟเวอร์ทางการของ Gravity และจะบล็อกการเชื่อมต่ออื่น
+
+    # SkipLub (group title)
+    - find: SKIP LUB
+      replace: ข้ามไฟล์ LUB
+
+    # SkipSignBoard (title)
+    - find: Skip SignBoard lubs
+      replace: ข้ามไฟล์ lub ของ SignBoard
+
+    # SkipSignBoard (desc)
+    - find: Skips loading of SignBoardList lub files. Useful if you do not use sign board features or want to avoid errors from missing files.
+      replace: ข้ามการโหลดไฟล์ lub ของ SignBoardList เหมาะสำหรับกรณีที่คุณไม่ได้ใช้ฟีเจอร์ sign board หรือต้องการหลีกเลี่ยงข้อผิดพลาดจากไฟล์ที่หายไป
+
+    # SkipTownInfo (title)
+    - find: Skip Towninfo lub
+      replace: ข้ามไฟล์ Towninfo lub
+
+    # SkipTownInfo (desc)
+    - find: Skips loading of Towninfo.lub file. Use this if you handle town information through other means or want to avoid errors from a missing file.
+      replace: ข้ามการโหลดไฟล์ Towninfo.lub ใช้แพทช์นี้หากคุณจัดการข้อมูลเมืองด้วยวิธีอื่น หรือต้องการหลีกเลี่ยงข้อผิดพลาดจากไฟล์ที่หายไป
+
+    # CustomPath (group title)
+    - find: PATH CUSTOMIZATION
+      replace: การปรับแต่งพาธไฟล์
+
+    # CustomDefaultBGM (title)
+    - find: Customize Default BGM file
+      replace: ปรับแต่งไฟล์ BGM เริ่มต้น
+
+    # CustomDefaultBGM (desc)
+    - find: Changes the default background music played on the login screen from <b>bgm\01.mp3</b> to a custom MP3 file of your choice.
+      replace: เปลี่ยนเพลงพื้นหลังเริ่มต้นที่เล่นในหน้าจอล็อกอินจาก <b>bgm\01.mp3</b> เป็นไฟล์ MP3 ที่คุณเลือกเอง
+
+    # CustomItemInfoLub (title)
+    - find: Customize Iteminfo lub
+      replace: ปรับแต่งไฟล์ Iteminfo lub
+
+    # CustomItemInfoLub (desc)
+    - find: Loads a custom lua file for item data instead of the default <b>Iteminfo*.lub</b>. Lets you use a renamed or restructured item database file.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลไอเทม แทนไฟล์เริ่มต้น <b>Iteminfo*.lub</b> ทำให้คุณใช้ไฟล์ฐานข้อมูลไอเทมที่เปลี่ยนชื่อหรือปรับโครงสร้างแล้วได้
+
+    # CustomAchieveLub (title)
+    - find: Customize AchievementList lub
+      replace: ปรับแต่งไฟล์ AchievementList lub
+
+    # CustomAchieveLub (desc)
+    - find: Loads a custom lua file for achievement data instead of the default <b>AchievementList*.lub</b>. Useful for servers with custom achievement systems.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูล achievement แทนไฟล์เริ่มต้น <b>AchievementList*.lub</b> เหมาะสำหรับเซิร์ฟเวอร์ที่มีระบบ achievement แบบกำหนดเอง
+
+    # CustomMonSizeEffLub (title)
+    - find: Customize MonsterSizeEffect lub
+      replace: ปรับแต่งไฟล์ MonsterSizeEffect lub
+
+    # CustomMonSizeEffLub (desc)
+    - find: Loads a custom lua file for monster size effects instead of the default <b>MonsterSizeEffect*.lub</b>. Controls which monsters display enlarged or reduced sprites.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับเอฟเฟกต์ขนาดมอนสเตอร์ แทนไฟล์เริ่มต้น <b>MonsterSizeEffect*.lub</b> ใช้กำหนดว่ามอนสเตอร์ตัวใดจะแสดง sprite แบบขยายหรือย่อขนาด
+
+    # CustomTownInfoLub (title)
+    - find: Customize Towninfo lub
+      replace: ปรับแต่งไฟล์ Towninfo lub
+
+    # CustomTownInfoLub (desc)
+    - find: Loads a custom lua file for town/city data instead of the default <b>Towninfo*.lub</b>. Controls warp portal labels and town information displayed on the world map.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลเมือง แทนไฟล์เริ่มต้น <b>Towninfo*.lub</b> ใช้กำหนดป้ายชื่อ warp portal และข้อมูลเมืองที่แสดงบนแผนที่โลก
+
+    # CustomPetEvoClnLub (title)
+    - find: Customize PetEvolutionCln lub
+      replace: ปรับแต่งไฟล์ PetEvolutionCln lub
+
+    # CustomPetEvoClnLub (desc)
+    - find: Loads a custom lua file for pet evolution data instead of the default <b>PetEvolutionCln*.lub</b>. Use when adding custom pet evolution paths.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลการวิวัฒนาการของเพ็ท แทนไฟล์เริ่มต้น <b>PetEvolutionCln*.lub</b> ใช้เมื่อเพิ่มเส้นทางวิวัฒนาการของเพ็ทแบบกำหนดเอง
+
+    # CustomTipboxLub (title)
+    - find: Customize Tipbox lub
+      replace: ปรับแต่งไฟล์ Tipbox lub
+
+    # CustomTipboxLub (desc)
+    - find: Loads a custom lua file for the Tip Box (loading screen tips) instead of the default <b>Tipbox*.lub</b>. Allows custom loading tips for your server.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับ Tip Box (คำแนะนำในหน้าจอโหลด) แทนไฟล์เริ่มต้น <b>Tipbox*.lub</b> ทำให้คุณกำหนดคำแนะนำในหน้าจอโหลดของเซิร์ฟเวอร์เองได้
+
+    # CustomCheckAttLub (title)
+    - find: Customize CheckAttendance lub
+      replace: ปรับแต่งไฟล์ CheckAttendance lub
+
+    # CustomCheckAttLub (desc)
+    - find: Loads a custom lua file for the attendance check-in system instead of the default <b>CheckAttendance*.lub</b>. Use when customizing daily login reward data.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับระบบเช็คชื่อรายวัน แทนไฟล์เริ่มต้น <b>CheckAttendance*.lub</b> ใช้เมื่อปรับแต่งข้อมูลรางวัลล็อกอินรายวัน
+
+    # CustomPrivAirplaneLub (title)
+    - find: Customize PrivateAirplane lub
+      replace: ปรับแต่งไฟล์ PrivateAirplane lub
+
+    # CustomPrivAirplaneLub (desc)
+    - find: Loads a custom lua file for the Private Airship system instead of the default <b>PrivateAirplane*.lub</b>. Use when customizing airship destinations or teleport data.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับระบบ Private Airship แทนไฟล์เริ่มต้น <b>PrivateAirplane*.lub</b> ใช้เมื่อปรับแต่งจุดหมายของเรือเหาะหรือข้อมูลการเทเลพอร์ต
+
+    # CustomMapInfoLub (title)
+    - find: Customize MapInfo lub
+      replace: ปรับแต่งไฟล์ MapInfo lub
+
+    # CustomMapInfoLub (desc)
+    - find: Loads a custom lua file for map information instead of the default <b>MapInfo*.lub</b>. Controls map name banners and location data shown when entering maps.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลแมพ แทนไฟล์เริ่มต้น <b>MapInfo*.lub</b> ใช้กำหนดแบนเนอร์ชื่อแมพและข้อมูลสถานที่ที่แสดงเมื่อเข้าแมพ
+
+    # CustomOngQuestInfoLub (title)
+    - find: Customize OngoingQuestInfoList lub
+      replace: ปรับแต่งไฟล์ OngoingQuestInfoList lub
+
+    # CustomOngQuestInfoLub (desc)
+    - find: Loads a custom lua file for ongoing quest information instead of the default <b>OngoingQuestInfoList*.lub</b>. Use when customizing the quest tracker display.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลเควสที่กำลังทำอยู่ แทนไฟล์เริ่มต้น <b>OngoingQuestInfoList*.lub</b> ใช้เมื่อปรับแต่งการแสดงผลตัวติดตามเควส
+
+    # CustomRcmdQuestInfoLub (title)
+    - find: Customize RecommendedQuestInfoList lub
+      replace: ปรับแต่งไฟล์ RecommendedQuestInfoList lub
+
+    # CustomRcmdQuestInfoLub (desc)
+    - find: Loads a custom lua file for recommended quest data instead of the default <b>RecommendedQuestInfoList*.lub</b>. Use when customizing suggested quests shown to players.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลเควสแนะนำ แทนไฟล์เริ่มต้น <b>RecommendedQuestInfoList*.lub</b> ใช้เมื่อปรับแต่งเควสแนะนำที่แสดงให้ผู้เล่นเห็น
+
+    # CustomspopupLub (title)
+    - find: Customize spopup lub
+      replace: ปรับแต่งไฟล์ spopup lub
+
+    # CustomspopupLub (desc)
+    - find: Loads a custom lua file for skill popup data instead of the default <b>spopup.lub</b>. Controls the popup text shown when hovering over skills.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลป๊อปอัปของสกิล แทนไฟล์เริ่มต้น <b>spopup.lub</b> ใช้กำหนดข้อความป๊อปอัปที่แสดงเมื่อนำเมาส์ไปชี้ที่สกิล
+
+    # CustomChangeMatLub (title)
+    - find: Customize ChangeMaterial lub
+      replace: ปรับแต่งไฟล์ ChangeMaterial lub
+
+    # CustomChangeMatLub (desc)
+    - find: Loads a custom lua file for material change data instead of the default <b>ChangeMaterial.lub</b>. Controls the material/ingredient lists shown in crafting UIs.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลการแลกเปลี่ยนวัตถุดิบ แทนไฟล์เริ่มต้น <b>ChangeMaterial.lub</b> ใช้กำหนดรายการวัตถุดิบ/ส่วนผสมที่แสดงในหน้าต่างคราฟต์
+
+    # CustomQuestQualiLub (title)
+    - find: Customize QuestClassificationInfo lub
+      replace: ปรับแต่งไฟล์ QuestClassificationInfo lub
+
+    # CustomQuestQualiLub (desc)
+    - find: Loads a custom lua file for quest classification data instead of the default <b>QuestClassificationInfo.lub</b>. Controls quest category labels and sorting in the quest window.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลการจัดประเภทเควส แทนไฟล์เริ่มต้น <b>QuestClassificationInfo.lub</b> ใช้กำหนดชื่อหมวดหมู่เควสและการเรียงลำดับในหน้าต่างเควส
+
+    # CustomRuneDescLub (title)
+    - find: Customize Rune\rune_desc lub
+      replace: ปรับแต่งไฟล์ Rune\rune_desc lub
+
+    # CustomRuneDescLub (desc)
+    - find: Loads a custom lua file for rune descriptions instead of the default <b>Rune\rune_desc.lub</b>. Use when customizing rune tooltip text.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับคำอธิบายรูน แทนไฟล์เริ่มต้น <b>Rune\rune_desc.lub</b> ใช้เมื่อปรับแต่งข้อความ tooltip ของรูน
+
+    # CustomRuneSetDescLub (title)
+    - find: Customize Rune\runeset_desc lub
+      replace: ปรับแต่งไฟล์ Rune\runeset_desc lub
+
+    # CustomRuneSetDescLub (desc)
+    - find: Loads a custom lua file for rune set descriptions instead of the default <b>Rune\runeset_desc.lub</b>. Use when customizing rune set bonus tooltip text.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับคำอธิบายชุดรูน แทนไฟล์เริ่มต้น <b>Rune\runeset_desc.lub</b> ใช้เมื่อปรับแต่งข้อความ tooltip โบนัสชุดรูน
+
+    # CustomitemDecomLub (title)
+    - find: Customize Rune\itemDecom lub
+      replace: ปรับแต่งไฟล์ Rune\itemDecom lub
+
+    # CustomitemDecomLub (desc)
+    - find: Loads a custom lua file for rune item decomposition data instead of the default <b>Rune\itemDecom.lub</b>. Controls which items can be broken down in the rune system.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลการแยกส่วนไอเทมรูน แทนไฟล์เริ่มต้น <b>Rune\itemDecom.lub</b> ใช้กำหนดว่าไอเทมใดบ้างที่แยกส่วนได้ในระบบรูน
+
+    # CustomRuneInfoLub (title)
+    - find: Customize Rune\rune_info lub
+      replace: ปรับแต่งไฟล์ Rune\rune_info lub
+
+    # CustomRuneInfoLub (desc)
+    - find: Loads a custom lua file for rune information instead of the default <b>Rune\rune_info.lub</b>. Controls rune stats and properties displayed in the UI.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลรูน แทนไฟล์เริ่มต้น <b>Rune\rune_info.lub</b> ใช้กำหนดค่าสถานะและคุณสมบัติของรูนที่แสดงใน UI
+
+    # CustomRuneSetInfoLub (title)
+    - find: Customize Rune\runeset_info lub
+      replace: ปรับแต่งไฟล์ Rune\runeset_info lub
+
+    # CustomRuneSetInfoLub (desc)
+    - find: Loads a custom lua file for rune set information instead of the default <b>Rune\runeset_info.lub</b>. Controls rune set data and bonuses shown in the UI.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลชุดรูน แทนไฟล์เริ่มต้น <b>Rune\runeset_info.lub</b> ใช้กำหนดข้อมูลและโบนัสของชุดรูนที่แสดงใน UI
+
+    # CustomRuneSystemTableLub (title)
+    - find: Customize Rune\runeSystem_table lub
+      replace: ปรับแต่งไฟล์ Rune\runeSystem_table lub
+
+    # CustomRuneSystemTableLub (desc)
+    - find: Loads a custom lua file for the rune system table instead of the default <b>Rune\runeSystem_table.lub</b>. Controls the master rune system configuration data.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับตารางระบบรูน แทนไฟล์เริ่มต้น <b>Rune\runeSystem_table.lub</b> ใช้กำหนดข้อมูลการตั้งค่าหลักของระบบรูน
+
+    # CustomRuneSystemIdLub (title)
+    - find: Customize Rune\runesystemid lub
+      replace: ปรับแต่งไฟล์ Rune\runesystemid lub
+
+    # CustomRuneSystemIdLub (desc)
+    - find: Loads a custom lua file for rune system IDs instead of the default <b>Rune\runesystemid.lub</b>. Controls the mapping of rune IDs used by the system.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับ ID ของระบบรูน แทนไฟล์เริ่มต้น <b>Rune\runesystemid.lub</b> ใช้กำหนดการจับคู่ ID รูนที่ระบบใช้
+
+    # CustomRuneSystemInfoLub (title)
+    - find: Customize Rune\runesystemInfo lub
+      replace: ปรับแต่งไฟล์ Rune\runesystemInfo lub
+
+    # CustomRuneSystemInfoLub (desc)
+    - find: Loads a custom lua file for rune system display info instead of the default <b>Rune\runesystemInfo.lub</b>. Controls rune system UI labels and descriptions.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับข้อมูลการแสดงผลของระบบรูน แทนไฟล์เริ่มต้น <b>Rune\runesystemInfo.lub</b> ใช้กำหนดป้ายกำกับและคำอธิบายใน UI ของระบบรูน
+
+    # CustomRuneRewardLub (title)
+    - find: Customize Rune\runeset_reward lub
+      replace: ปรับแต่งไฟล์ Rune\runeset_reward lub
+
+    # CustomRuneRewardLub (desc)
+    - find: Loads a custom lua file for rune set rewards instead of the default <b>Rune\runeset_reward.lub</b>. Controls rune set completion reward data.
+      replace: โหลดไฟล์ lua ที่กำหนดเองสำหรับรางวัลชุดรูน แทนไฟล์เริ่มต้น <b>Rune\runeset_reward.lub</b> ใช้กำหนดข้อมูลรางวัลเมื่อสะสมชุดรูนครบ
+
+    # CustomLicenseTxt (title)
+    - find: Customize License File
+      replace: ปรับแต่งไฟล์ License
+
+    # CustomLicenseTxt (desc)
+    - find: Changes the EULA license file path from the default <b>..\licence.txt</b> to a custom filename. Path is relative to the Data folder. Use to display your own server rules or terms of service.
+      replace: เปลี่ยนพาธไฟล์สัญญาอนุญาต EULA จากค่าเริ่มต้น <b>..\licence.txt</b> เป็นชื่อไฟล์ที่กำหนดเอง พาธนี้อ้างอิงจากโฟลเดอร์ Data ใช้เพื่อแสดงกฎหรือข้อกำหนดการใช้บริการของเซิร์ฟเวอร์คุณเอง
+
+    # CustomClientInfo (title)
+    - find: Customize ClientInfo file
+      replace: ปรับแต่งไฟล์ ClientInfo
+
+    # CustomClientInfo (desc)
+    - find: Changes the clientinfo XML filename from the default *clientinfo.xml to a custom name. Useful for maintaining multiple server configurations or using a non-standard filename.
+      replace: เปลี่ยนชื่อไฟล์ XML ของ clientinfo จากค่าเริ่มต้น *clientinfo.xml เป็นชื่อที่กำหนดเอง เหมาะสำหรับการดูแลการตั้งค่าเซิร์ฟเวอร์หลายชุด หรือใช้ชื่อไฟล์ที่ไม่เป็นมาตรฐาน
+
+    # AllowHomunSkills (title)
+    - find: Unlock all valid skills for homunculus and mercenary AI
+      replace: ปลดล็อกสกิลที่ใช้ได้ทั้งหมดสำหรับ AI ของ Homunculus และ Mercenary
+
+    # AllowHomunSkills (desc)
+    - find: Removes the client-side restriction on which skills homunculus and mercenary AI can use, allowing all valid skills to be cast. Server-side skill availability still applies.
+      replace: ยกเลิกข้อจำกัดฝั่งไคลเอ็นท์ว่า AI ของ Homunculus และ Mercenary ใช้สกิลใดได้บ้าง ทำให้ร่ายสกิลที่ใช้ได้ทั้งหมด แต่เงื่อนไขการใช้สกิลฝั่งเซิร์ฟเวอร์ยังคงมีผลอยู่
+
+    # SharedBodyPal (group title)
+    - find: SHARED BODY PALETTES
+      replace: พาเลตต์ชุดแบบใช้ร่วมกัน
+
+    # BodyPalMF (title)
+    - find: Enable shared body palettes - Male & Female
+      replace: เปิดใช้งานพาเลตต์ชุดแบบใช้ร่วมกัน - แยกชายและหญิง
+
+    # BodyPalMF (desc)
+    - find: Uses one shared set of cloth/body palettes (body_%s_%d.pal) across all job classes while keeping male and female palettes separate. Greatly reduces the number of palette files needed.
+      replace: ใช้พาเลตต์สีชุดตัวละคร (body_%s_%d.pal) ร่วมกันหนึ่งเซ็ตสำหรับทุกอาชีพ โดยยังแยกพาเลตต์ของชายและหญิงไว้ ช่วยลดจำนวนไฟล์พาเลตต์ที่ต้องใช้ได้อย่างมาก
+
+    # BodyPalUnisex (title)
+    - find: Enable shared body palettes - Unisex
+      replace: เปิดใช้งานพาเลตต์ชุดแบบใช้ร่วมกัน - Unisex
+
+    # BodyPalUnisex (desc)
+    - find: Uses one shared set of cloth/body palettes (body_%d.pal) for all job classes and both genders. The simplest option -- minimizes palette files to just one set.
+      replace: ใช้พาเลตต์สีชุดตัวละคร (body_%d.pal) ร่วมกันหนึ่งเซ็ตสำหรับทุกอาชีพและทั้งสองเพศ เป็นตัวเลือกที่ง่ายที่สุด เหลือไฟล์พาเลตต์เพียงเซ็ตเดียว
+
+    # SharedHeadPal (group title)
+    - find: SHARED HEAD PALETTES
+      replace: พาเลตต์ผมแบบใช้ร่วมกัน
+
+    # HeadPalMF (title)
+    - find: Enable shared head palettes - Male & Female
+      replace: เปิดใช้งานพาเลตต์ผมแบบใช้ร่วมกัน - แยกชายและหญิง
+
+    # HeadPalMF (desc)
+    - find: Uses one shared set of hair palettes (head_%s_%d.pal) across all hairstyles while keeping male and female palettes separate. Reduces the number of hair palette files needed.
+      replace: ใช้พาเลตต์สีผม (head_%s_%d.pal) ร่วมกันหนึ่งเซ็ตสำหรับทุกทรงผม โดยยังแยกพาเลตต์ของชายและหญิงไว้ ช่วยลดจำนวนไฟล์พาเลตต์ผมที่ต้องใช้
+
+    # HeadPalUnisex (title)
+    - find: Enable shared head palettes - Unisex
+      replace: เปิดใช้งานพาเลตต์ผมแบบใช้ร่วมกัน - Unisex
+
+    # HeadPalUnisex (desc)
+    - find: Uses one shared set of hair palettes (head_%d.pal) for all hairstyles and both genders. The simplest option -- minimizes hair palette files to just one set.
+      replace: ใช้พาเลตต์สีผม (head_%d.pal) ร่วมกันหนึ่งเซ็ตสำหรับทุกทรงผมและทั้งสองเพศ เป็นตัวเลือกที่ง่ายที่สุด เหลือไฟล์พาเลตต์ผมเพียงเซ็ตเดียว
+
+    # SharedDoramPal (group title)
+    - find: SHARED PALETTES - DORAM
+      replace: พาเลตต์แบบใช้ร่วมกัน - Doram
+
+    # DoramHeadPalShared (title)
+    - find: Enable shared head palettes for Doram
+      replace: เปิดใช้งานพาเลตต์ผมแบบใช้ร่วมกันสำหรับ Doram
+
+    # DoramHeadPalShared (desc)
+    - find: Applies the shared hair palette naming to the Doram races too, which the human patch ignores entirely -- without it a Doram needs one palette file per hairstyle AND per gender. Files stay in the Doram race folder (doram\hair\head_%d.pal) because Doram sprites do not share the human palette indexing -- pointing them at the human files leaves most of the character black. Follows whichever flavour (MF or Unisex) you enabled for the other races, which is required.
+      replace: นำการตั้งชื่อพาเลตต์ผมแบบใช้ร่วมกันไปใช้กับเผ่า Doram ด้วย ซึ่งแพทช์ของมนุษย์ไม่ได้ครอบคลุมเลย หากไม่มีแพทช์นี้ Doram จะต้องมีไฟล์พาเลตต์แยกหนึ่งไฟล์ต่อทรงผม และต่อเพศด้วย ไฟล์ยังคงอยู่ในโฟลเดอร์ของเผ่า Doram (doram\hair\head_%d.pal) เพราะ sprite ของ Doram ไม่ได้ใช้ลำดับดัชนีพาเลตต์ร่วมกับมนุษย์ หากชี้ไปที่ไฟล์ของมนุษย์ ตัวละครส่วนใหญ่จะกลายเป็นสีดำ แพทช์นี้จะใช้รูปแบบเดียวกับที่คุณเปิดใช้งานไว้สำหรับเผ่าอื่น (MF หรือ Unisex) ซึ่งจำเป็นต้องเปิดไว้ด้วย
+
+    # MultiGRFs (group title)
+    - find: MULTIPLE GRFS
+      replace: GRF หลายไฟล์
+
+    # GRFsFromIni (title)
+    - find: Enable Multiple GRFs ( INI )
+      replace: เปิดใช้งาน GRF หลายไฟล์ ( INI )
+
+    # GRFsFromIni (desc)
+    - find: Allows loading up to 10 GRF files listed in an INI file (DATA.INI) in your client folder. GRFs are loaded in order, with earlier entries taking priority. The standard way to use multiple GRFs on servers.
+      replace: อนุญาตให้โหลดไฟล์ GRF ได้สูงสุด 10 ไฟล์ตามรายการในไฟล์ INI (DATA.INI) ในโฟลเดอร์ไคลเอ็นท์ของคุณ GRF จะถูกโหลดตามลำดับ โดยรายการที่อยู่ก่อนจะมีลำดับความสำคัญสูงกว่า เป็นวิธีมาตรฐานในการใช้ GRF หลายไฟล์บนเซิร์ฟเวอร์
+
+    # GRFsEmbedded (title)
+    - find: Enable Multiple GRFs ( Embedded )
+      replace: เปิดใช้งาน GRF หลายไฟล์ ( ฝังในตัว )
+
+    # GRFsEmbedded (desc)
+    - find: Embeds GRF filenames directly into the client executable instead of reading from an external INI file. You provide the GRF list at patch time and it gets baked into the exe. No DATA.INI file needed in the client folder.
+      replace: ฝังชื่อไฟล์ GRF ไว้ในไฟล์ไคลเอ็นท์โดยตรง แทนการอ่านจากไฟล์ INI ภายนอก คุณระบุรายการ GRF ตอนแพทช์ แล้วรายการนั้นจะถูกฝังลงใน exe ไม่ต้องมีไฟล์ DATA.INI ในโฟลเดอร์ไคลเอ็นท์
+
+    # ===== Env.yml =====
+
+    # CustomEnv (group title)
+    - find: ENVIRONMENT CUSTOMIZATION
+      replace: การปรับแต่งสภาพแวดล้อม
+
+    # HKLMtoHKCU (title)
+    - find: HKLM To HKCU
+      replace: HKLM เป็น HKCU
+
+    # HKLMtoHKCU (desc)
+    - find: Switches registry access from HKEY_LOCAL_MACHINE to HKEY_CURRENT_USER. Allows the client to save settings without admin privileges, which is required on shared or restricted PCs.
+      replace: เปลี่ยนการเข้าถึงรีจิสทรีจาก HKEY_LOCAL_MACHINE เป็น HKEY_CURRENT_USER ทำให้ไคลเอ็นท์บันทึกการตั้งค่าได้โดยไม่ต้องใช้สิทธิ์แอดมิน ซึ่งจำเป็นบน PC ที่ใช้ร่วมกันหรือมีการจำกัดสิทธิ์
+
+    # NoAdminNeeded (title)
+    - find: Remove admin privilege requirement
+      replace: ยกเลิกการต้องใช้สิทธิ์แอดมิน
+
+    # NoAdminNeeded (desc)
+    - find: Removes the client's requirement for administrator privileges, so it launches without the UAC elevation prompt. Useful for players who cannot or prefer not to run the game as admin.
+      replace: ยกเลิกการที่ไคลเอ็นท์ต้องใช้สิทธิ์ผู้ดูแลระบบ ทำให้เปิดเกมได้โดยไม่มีหน้าต่าง UAC ขอยกระดับสิทธิ์ เหมาะสำหรับผู้เล่นที่ไม่สามารถหรือไม่ต้องการเปิดเกมในฐานะแอดมิน
+
+    # LoadClientPlugins (title)
+    - find: Always load client plugins [Experimental]
+      replace: โหลดปลั๊กอินของไคลเอ็นท์เสมอ [ทดลอง]
+
+    # LoadClientPlugins (desc)
+    - find: Forces loading of client plugins (3rd party DLLs in the plugins folder) regardless of the client's sound configuration. Normally plugins only load when sound is enabled.
+      replace: บังคับให้โหลดปลั๊กอินของไคลเอ็นท์ (DLL จากบุคคลที่ 3 ในโฟลเดอร์ plugins) ไม่ว่าการตั้งค่าเสียงของไคลเอ็นท์จะเป็นอย่างไร ปกติปลั๊กอินจะโหลดเฉพาะเมื่อเปิดเสียงไว้เท่านั้น
+
+    # NoMultiWindow (title)
+    - find: Disable multiple windows
+      replace: ปิดใช้งานการเปิดหลายหน้าต่าง
+
+    # NoMultiWindow (desc)
+    - find: Prevents launching more than one game client at a time on all langtypes. Blocks multi-clienting by showing an error if a second instance is opened.
+      replace: ป้องกันการเปิดไคลเอ็นท์เกมมากกว่าหนึ่งตัวพร้อมกันในทุก langtype บล็อกการเปิดหลายไคลเอ็นท์โดยแสดงข้อผิดพลาดหากมีการเปิดตัวที่สอง
+
+    # CustomMinResolution (title)
+    - find: Customize minimum screen resolution
+      replace: ปรับแต่งความละเอียดหน้าจอขั้นต่ำ
+
+    # CustomMinResolution (desc)
+    - find: Changes the minimum allowed screen resolution from the default 1024x768 to custom values. Useful for supporting smaller resolutions on older hardware or for testing.
+      replace: เปลี่ยนความละเอียดหน้าจอขั้นต่ำที่อนุญาตจากค่าเริ่มต้น 1024x768 เป็นค่าที่กำหนดเอง เหมาะสำหรับรองรับความละเอียดที่เล็กลงบนฮาร์ดแวร์รุ่นเก่า หรือสำหรับการทดสอบ
+
+    # IgnoreDebugger (title)
+    - find: Ignore Debugger
+      replace: ละเว้น Debugger
+
+    # IgnoreDebugger (desc)
+    - find: Disables the IsDebuggerPresent() anti-debug check, allowing the client to run under a debugger. Intended for development and reverse engineering only -- do not use on production clients distributed to players.
+      replace: ปิดใช้งานการตรวจสอบกัน debug ด้วย IsDebuggerPresent() ทำให้ไคลเอ็นท์ทำงานภายใต้ debugger ได้ มีไว้สำหรับการพัฒนาและการทำ reverse engineering เท่านั้น ห้ามใช้กับไคลเอ็นท์ที่แจกจ่ายให้ผู้เล่นใช้งานจริง
+
+    # DisableIndoorRSW (title)
+    - find: Disable indoor RSW lighting
+      replace: ปิดใช้งานแสงในอาคารของ RSW
+
+    # DisableIndoorRSW (desc)
+    - find: Disables the IndoorRswTable.txt lookup that forces fixed camera angles and lighting on indoor maps. Grants free camera rotation indoors, similar to the NoCameraLock patch but specifically targeting RSW-based indoor restrictions.
+      replace: ปิดใช้งานการอ่าน IndoorRswTable.txt ที่บังคับมุมกล้องและแสงแบบตายตัวในแมพในอาคาร ทำให้หมุนกล้องในอาคารได้อิสระ คล้ายกับแพทช์ NoCameraLock แต่เจาะจงเฉพาะข้อจำกัดในอาคารที่มาจาก RSW
+
+    # RemovePremiumService (title)
+    - find: Remove Premium Service text
+      replace: นำข้อความ Premium Service ออก
+
+    # RemovePremiumService (desc)
+    - find: Removes the "Premium Service" text from the character selection screen. This text is irrelevant on servers since there is no premium subscription system.
+      replace: นำข้อความ "Premium Service" ออกจากหน้าจอเลือกตัวละคร ข้อความนี้ไม่มีความหมายบนเซิร์ฟเวอร์ เพราะไม่มีระบบสมาชิกพรีเมียม
+
+    # WindowFrame (group title)
+    - find: WINDOW FRAME CUSTOMIZATION
+      replace: การปรับแต่งกรอบหน้าต่าง
+
+    # EnableSysMenu (title)
+    - find: Enable title buttons
+      replace: เปิดใช้งานปุ่มบนแถบชื่อเรื่อง
+
+    # EnableSysMenu (desc)
+    - find: Adds standard Windows title bar buttons (Minimize, Maximize, Close) and the application icon to the game window. Makes the client behave like a normal window instead of a borderless frame.
+      replace: เพิ่มปุ่มมาตรฐานบนแถบชื่อเรื่องของ Windows (Minimize, Maximize, Close) และไอคอนโปรแกรมให้กับหน้าต่างเกม ทำให้ไคลเอ็นท์ทำงานเหมือนหน้าต่างปกติ แทนที่จะเป็นกรอบแบบไม่มีขอบ
+
+    # UseMiniTitle (title)
+    - find: Use Miniature title bar
+      replace: ใช้แถบชื่อเรื่องขนาดเล็ก
+
+    # UseMiniTitle (desc)
+    - find: Switches the game window to use a compact/miniature title bar instead of the standard-size one. Saves screen space while still showing window controls.
+      replace: เปลี่ยนหน้าต่างเกมให้ใช้แถบชื่อเรื่องแบบกะทัดรัด/ขนาดเล็ก แทนขนาดมาตรฐาน ช่วยประหยัดพื้นที่หน้าจอโดยยังแสดงปุ่มควบคุมหน้าต่างอยู่
+
+    # CustomWinTitle (title)
+    - find: Customize Window title
+      replace: ปรับแต่งชื่อหน้าต่าง
+
+    # CustomWinTitle (desc)
+    - find: Changes the text shown in the game window's title bar to a custom string. Use to display your server name instead of the default "Ragnarok" title.
+      replace: เปลี่ยนข้อความที่แสดงบนแถบชื่อเรื่องของหน้าต่างเกมเป็นข้อความที่กำหนดเอง ใช้เพื่อแสดงชื่อเซิร์ฟเวอร์ของคุณแทนชื่อ "Ragnarok" ที่เป็นค่าเริ่มต้น
+
+    # BorderlessFSW (title)
+    - find: Enable Borderless full screen
+      replace: เปิดใช้งานเต็มจอแบบไม่มีขอบ
+
+    # BorderlessFSW (desc)
+    - find: Enables borderless fullscreen mode -- removes the window frame and borders when the game resolution matches your screen resolution. Provides a seamless fullscreen experience while allowing easy Alt-Tab.
+      replace: เปิดใช้งานโหมดเต็มจอแบบไม่มีขอบ โดยนำกรอบและขอบหน้าต่างออกเมื่อความละเอียดของเกมตรงกับความละเอียดหน้าจอของคุณ ให้การแสดงผลเต็มจอที่ไร้รอยต่อ และยังกด Alt-Tab ได้ง่าย
+
+    # ClientArgs (group title)
+    - find: CLIENT ARGUMENTS
+      replace: อาร์กิวเมนต์ของไคลเอ็นท์
+
+    # No1and1Arg (title)
+    - find: Disable '1*1' arguments
+      replace: ปิดใช้งานอาร์กิวเมนต์ '1*1'
+
+    # No1and1Arg (desc)
+    - find: Removes the requirement for launcher arguments (1rag1, 1sak1, etc.) so the client can be started directly by double-clicking the exe. Without this, the client refuses to launch unless opened through a patcher.
+      replace: ยกเลิกการต้องใช้อาร์กิวเมนต์จาก launcher (1rag1, 1sak1 ฯลฯ) เพื่อให้เปิดไคลเอ็นท์ได้โดยตรงด้วยการดับเบิลคลิกที่ exe หากไม่มีแพทช์นี้ ไคลเอ็นท์จะไม่ยอมเปิดเว้นแต่จะเปิดผ่าน patcher
+
+    # EnableIcon (group title)
+    - find: ENABLE ICON
+      replace: เปิดใช้งานไอคอน
+
+    # RestoreIcon (title)
+    - find: Restore Inbuilt App icon
+      replace: นำไอคอนโปรแกรมในตัวกลับมา
+
+    # RestoreIcon (desc)
+    - find: Restores the original Ragnarok Online icon embedded in the executable instead of showing the generic Windows application icon. Fixes the missing icon in the taskbar and window title.
+      replace: นำไอคอน Ragnarok Online ดั้งเดิมที่ฝังอยู่ในไฟล์ exe กลับมาใช้ แทนการแสดงไอคอนโปรแกรมทั่วไปของ Windows แก้ปัญหาไอคอนหายไปจากทาสก์บาร์และแถบชื่อเรื่องของหน้าต่าง
+
+    # CustomIcon (title)
+    - find: Customize App icon
+      replace: ปรับแต่งไอคอนโปรแกรม
+
+    # CustomIcon (desc)
+    - find: Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</font></b>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include.
+      replace: แทนที่ไอคอนโปรแกรมด้วยไฟล์ .ico ที่คุณเลือกเอง (ขนาดและ bit depth ใดก็ได้) สำหรับ Win7 ขึ้นไป ให้ใช้ <b><font color='deepskyblue'>ขนาด 256x256 32-bit พร้อมกับเวอร์ชัน 16x16</font></b><br><br>ไคลเอ็นท์รุ่นเก่ามีขีดจำกัดขนาดไอคอนไว้ที่ 3 ขนาด คุณจึงอาจต้องเลือกว่าจะรวมความละเอียดใดบ้าง
+
+    # AlterPriority (group title)
+    - find: PRIORITY ALTERATION
+      replace: การปรับลำดับความสำคัญ
+
+    # Idle2NormalPriority (title)
+    - find: Change Priority (Idle to Normal)
+      replace: เปลี่ยนลำดับความสำคัญ (Idle เป็น Normal)
+
+    # Idle2NormalPriority (desc)
+    - find: Raises the thread priority of the game when its window is inactive from Idle to Normal. Prevents the game from slowing down significantly when alt-tabbed or in the background.
+      replace: เพิ่มลำดับความสำคัญของเธรดเกมขณะที่หน้าต่างไม่ได้ใช้งานอยู่ จาก Idle เป็น Normal ป้องกันไม่ให้เกมช้าลงอย่างมากเมื่อกด alt-tab ออกไปหรือทำงานอยู่เบื้องหลัง
+
+    # Normal2HighPriority (title)
+    - find: Change Priority (Normal to High)
+      replace: เปลี่ยนลำดับความสำคัญ (Normal เป็น High)
+
+    # Normal2HighPriority (desc)
+    - find: Raises the thread priority of the active game window from Normal to High. Gives the client more CPU time, which can improve performance on systems running many background applications.
+      replace: เพิ่มลำดับความสำคัญของเธรดหน้าต่างเกมที่ใช้งานอยู่จาก Normal เป็น High ทำให้ไคลเอ็นท์ได้เวลา CPU มากขึ้น ซึ่งช่วยเพิ่มประสิทธิภาพบนเครื่องที่มีโปรแกรมทำงานเบื้องหลังจำนวนมาก
+
+    # ===== Network.yml =====
+
+    # CustomNW (group title)
+    - find: NETWORK CUSTOMIZATION
+      replace: การปรับแต่งเครือข่าย
+
+    # SendMD5Hash (title)
+    - find: Send MD5 hash packet
+      replace: ส่งแพ็กเก็ตค่าแฮช MD5
+
+    # SendMD5Hash (desc)
+    - find: Makes the client send its own MD5 hash to the server on login for all langtypes. Used for integrity verification to detect modified client executables. Only enable if your server is configured to receive and check this packet.
+      replace: ทำให้ไคลเอ็นท์ส่งค่าแฮช MD5 ของตัวเองไปยังเซิร์ฟเวอร์ตอนล็อกอินในทุก langtype ใช้ตรวจสอบความถูกต้องเพื่อตรวจจับไฟล์ไคลเอ็นท์ที่ถูกดัดแปลง เปิดใช้งานเฉพาะเมื่อเซิร์ฟเวอร์ของคุณตั้งค่าให้รับและตรวจสอบแพ็กเก็ตนี้แล้ว
+
+    # NoNagle (title)
+    - find: Disable nagle algorithm
+      replace: ปิดใช้งาน Nagle algorithm
+
+    # NoNagle (desc)
+    - find: Disables TCP Nagle buffering so packets are sent immediately. Reduces input lag and improves responsiveness at the cost of slightly more network traffic. Recommended for most servers.
+      replace: ปิดใช้งานการบัฟเฟอร์แบบ TCP Nagle เพื่อให้ส่งแพ็กเก็ตออกไปทันที ช่วยลดอาการหน่วงของอินพุตและเพิ่มการตอบสนอง แลกกับปริมาณข้อมูลเครือข่ายที่เพิ่มขึ้นเล็กน้อย แนะนำสำหรับเซิร์ฟเวอร์ส่วนใหญ่
+
+    # EnableProxy (title)
+    - find: Enable proxy support
+      replace: เปิดใช้งานการรองรับ proxy
+
+    # EnableProxy (desc)
+    - find: Ignores the IP addresses sent by the server when transitioning between login, char, and map servers. Keeps the client connecting to the address from clientinfo.xml instead. Required when playing through a proxy, VPN, or when the server reports internal LAN addresses.
+      replace: ละเว้นที่อยู่ IP ที่เซิร์ฟเวอร์ส่งมาเมื่อย้ายระหว่าง login server, char server และ map server และให้ไคลเอ็นท์เชื่อมต่อกับที่อยู่จาก clientinfo.xml แทน จำเป็นเมื่อเล่นผ่าน proxy, VPN หรือเมื่อเซิร์ฟเวอร์ส่งที่อยู่ LAN ภายในมา
+
+    # SendClientFlags (title)
+    - find: Send client flags
+      replace: ส่ง flag ของไคลเอ็นท์
+
+    # SendClientFlags (desc)
+    - find: Sends the client's feature flags to the server during login, keeping client and server in sync about which features are supported. Prevents mismatches that can cause missing UI elements or broken functionality.
+      replace: ส่ง feature flag ของไคลเอ็นท์ไปยังเซิร์ฟเวอร์ระหว่างล็อกอิน เพื่อให้ไคลเอ็นท์และเซิร์ฟเวอร์ตรงกันว่ารองรับฟีเจอร์ใดบ้าง ป้องกันความไม่ตรงกันที่อาจทำให้องค์ประกอบ UI หายไปหรือฟังก์ชันทำงานผิดพลาด
+
+    # CustomEncKeys (group title)
+    - find: ENCRYPTION KEY CUSTOMIZATION
+      replace: การปรับแต่งคีย์เข้ารหัส
+
+    # CustomFirstKey (title)
+    - find: Customize Packet Key (1st)
+      replace: ปรับแต่ง Packet Key (ตัวที่ 1)
+
+    # CustomFirstKey (desc)
+    - find: Sets a custom value for the 1st packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other.
+      replace: ตั้งค่าคีย์เข้ารหัสแพ็กเก็ตตัวที่ 1 เป็นค่าที่กำหนดเอง ต้องตรงกับคีย์ที่ตั้งค่าไว้บนเซิร์ฟเวอร์ของคุณ <b>คำเตือน:</b> อย่าใช้ร่วมกับ 'Disable Map packet encryption' ให้เลือกใช้วิธีใดวิธีหนึ่งเท่านั้น
+
+    # CustomSecondKey (title)
+    - find: Customize Packet Key (2nd)
+      replace: ปรับแต่ง Packet Key (ตัวที่ 2)
+
+    # CustomSecondKey (desc)
+    - find: Sets a custom value for the 2nd packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other.
+      replace: ตั้งค่าคีย์เข้ารหัสแพ็กเก็ตตัวที่ 2 เป็นค่าที่กำหนดเอง ต้องตรงกับคีย์ที่ตั้งค่าไว้บนเซิร์ฟเวอร์ของคุณ <b>คำเตือน:</b> อย่าใช้ร่วมกับ 'Disable Map packet encryption' ให้เลือกใช้วิธีใดวิธีหนึ่งเท่านั้น
+
+    # CustomThirdKey (title)
+    - find: Customize Packet Key (3rd)
+      replace: ปรับแต่ง Packet Key (ตัวที่ 3)
+
+    # CustomThirdKey (desc)
+    - find: Sets a custom value for the 3rd packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other.
+      replace: ตั้งค่าคีย์เข้ารหัสแพ็กเก็ตตัวที่ 3 เป็นค่าที่กำหนดเอง ต้องตรงกับคีย์ที่ตั้งค่าไว้บนเซิร์ฟเวอร์ของคุณ <b>คำเตือน:</b> อย่าใช้ร่วมกับ 'Disable Map packet encryption' ให้เลือกใช้วิธีใดวิธีหนึ่งเท่านั้น
+
+    # DisableEncr (group title)
+    - find: DISABLE ENCRYPTION
+      replace: ปิดใช้งานการเข้ารหัส
+
+    # NoPacketEncr (title)
+    - find: Disable Map packet encryption
+      replace: ปิดใช้งานการเข้ารหัสแพ็กเก็ตของ Map
+
+    # NoPacketEncr (desc)
+    - find: Disables packet obfuscation (encryption) for communication with the map server. Simplifies packet handling on servers that do not use encryption.<br> Also known as 'Skip Packet Obfuscation'.
+      replace: ปิดใช้งานการอำพรางแพ็กเก็ต (การเข้ารหัส) ในการสื่อสารกับ map server ทำให้การจัดการแพ็กเก็ตง่ายขึ้นบนเซิร์ฟเวอร์ที่ไม่ได้ใช้การเข้ารหัส<br> หรือที่รู้จักกันในชื่อ 'Skip Packet Obfuscation'
+
+    # NoEncrForLC (title)
+    - find: Disable Login/Char packet encryption
+      replace: ปิดใช้งานการเข้ารหัสแพ็กเก็ตของ Login/Char
+
+    # NoEncrForLC (desc)
+    - find: Disables packet encryption for communication with the login and character servers. Required by most server emulators that do not implement Gravity's encryption handshake.
+      replace: ปิดใช้งานการเข้ารหัสแพ็กเก็ตในการสื่อสารกับ login server และ char server จำเป็นสำหรับ server emulator ส่วนใหญ่ที่ไม่ได้รองรับ handshake การเข้ารหัสของ Gravity
+
+    # NoPassEncr (title)
+    - find: Disable Login password encryption
+      replace: ปิดใช้งานการเข้ารหัสรหัสผ่านตอนล็อกอิน
+
+    # NoPassEncr (desc)
+    - find: Disables password encryption in the old login packet (0x64) for langtypes 4 and 7. Required for servers using plaintext or bcrypt password authentication with these langtypes. <b>WARNING:</b> Conflicts with 'Use SSO Login Packet' -- do not enable both.
+      replace: ปิดใช้งานการเข้ารหัสรหัสผ่านในแพ็กเก็ตล็อกอินแบบเก่า (0x64) สำหรับ langtype 4 และ 7 จำเป็นสำหรับเซิร์ฟเวอร์ที่ยืนยันรหัสผ่านแบบ plaintext หรือ bcrypt กับ langtype เหล่านี้ <b>คำเตือน:</b> ขัดแย้งกับ 'Use SSO Login Packet' อย่าเปิดใช้งานทั้งสองอย่างพร้อมกัน
+
+    # ===== Sound.yml =====
+
+    # CustomSound (group title)
+    - find: SOUND CUSTOMIZATION
+      replace: การปรับแต่งเสียง
+
+    # Enable44kHzAudio (title)
+    - find: Enable 44.1 kHz audio sampling frequency
+      replace: เปิดใช้งานความถี่สุ่มตัวอย่างเสียง 44.1 kHz
+
+    # Enable44kHzAudio (desc)
+    - find: Upgrades the audio sampling rate from the default (22 kHz) to 44.1 kHz (CD quality). Improves sound effect and BGM clarity at a slight increase in memory usage.
+      replace: อัปเกรดอัตราสุ่มตัวอย่างเสียงจากค่าเริ่มต้น (22 kHz) เป็น 44.1 kHz (คุณภาพระดับ CD) ทำให้เสียงเอฟเฟกต์และ BGM ชัดขึ้น แลกกับการใช้หน่วยความจำที่เพิ่มขึ้นเล็กน้อย
+
+    # AutoMute (title)
+    - find: Auto mute audio [Experimental]
+      replace: ปิดเสียงอัตโนมัติ [ทดลอง]
+
+    # AutoMute (desc)
+    - find: Automatically mutes all game audio when the client window loses focus (e.g., when alt-tabbed). Audio resumes when the window is active again. Experimental -- may not work with all sound configurations.
+      replace: ปิดเสียงทั้งหมดของเกมโดยอัตโนมัติเมื่อหน้าต่างไคลเอ็นท์ไม่ได้อยู่ในโฟกัส (เช่น เมื่อกด alt-tab ออกไป) เสียงจะกลับมาเมื่อกลับมาที่หน้าต่างอีกครั้ง ยังอยู่ในขั้นทดลอง อาจใช้ไม่ได้กับการตั้งค่าเสียงบางแบบ
+
+    # NoBGMAudio (title)
+    - find: Disable BGM audio
+      replace: ปิดใช้งานเสียง BGM
+
+    # NoBGMAudio (desc)
+    - find: Disables background music loading from mp3NameTable.txt, preventing BGM from playing on any map. Use if you want a completely silent game or handle music through external means.
+      replace: ปิดใช้งานการโหลดเพลงพื้นหลังจาก mp3NameTable.txt ทำให้ไม่มี BGM เล่นในทุกแมพ ใช้หากคุณต้องการให้เกมเงียบสนิท หรือจัดการเพลงด้วยวิธีภายนอก
+
+    # ===== Special.yml =====
+
+    # CustomSpecials (group title)
+    - find: SPECIAL CUSTOMIZATIONS
+      replace: การปรับแต่งพิเศษ
+
+    # CustomShields (title)
+    - find: Enable Custom Shields
+      replace: เปิดใช้งาน Custom Shields
+
+    # CustomShields (desc)
+    - find: Enables custom shield sprites beyond the default set by loading shield definitions from lua files (similar to the Xray system). Required for servers with custom shield graphics.
+      replace: เปิดใช้งาน sprite โล่แบบกำหนดเองนอกเหนือจากชุดเริ่มต้น โดยโหลดข้อมูลโล่จากไฟล์ lua (คล้ายกับระบบ Xray) จำเป็นสำหรับเซิร์ฟเวอร์ที่มีกราฟิกโล่แบบกำหนดเอง
+
+    # CustomJobs (title)
+    - find: Enable Custom Jobs (Reforged)
+      replace: เปิดใช้งาน Custom Jobs (Reforged)
+
+    # CustomJobs (desc)
+    - find: Adds support for custom job classes beyond the official set. Jobs are defined via lua files in the data folder. Required for servers with custom classes like Druid or other fan-made jobs.
+      replace: เพิ่มการรองรับอาชีพแบบกำหนดเองนอกเหนือจากอาชีพของทางการ อาชีพจะถูกกำหนดผ่านไฟล์ lua ในโฟลเดอร์ data จำเป็นสำหรับเซิร์ฟเวอร์ที่มีอาชีพแบบกำหนดเอง เช่น Druid หรืออาชีพอื่นที่แฟนๆ สร้างขึ้น
+
+    # EnableDruidClasses (title)
+    - find: Enable Druid classes (2026)
+      replace: เปิดใช้งานอาชีพสาย Druid (2026)
+
+    # EnableDruidClasses (desc)
+    - find: Teaches this client Gravity's Druid line (Druid, Karnos, Alitea, their riding forms and the Werewolf/Wereraptor forms) the way the 2026 kRO clients know it, straight from data.grf with no Lua job files. Needs a server that has these jobs and a data.grf that carries their art. WARPGATE's English translation carries its five skill files, so a client that takes it answers No when the patch offers its own copies.
+      replace: สอนให้ไคลเอ็นท์นี้รู้จักอาชีพสาย Druid ของ Gravity (Druid, Karnos, Alitea, ร่างขี่พาหนะของอาชีพเหล่านี้ และร่าง Werewolf/Wereraptor) แบบเดียวกับที่ไคลเอ็นท์ kRO ปี 2026 รู้จัก โดยอ่านจาก data.grf โดยตรงโดยไม่ต้องใช้ไฟล์ job ของ Lua ต้องใช้เซิร์ฟเวอร์ที่มีอาชีพเหล่านี้ และ data.grf ที่มีภาพกราฟิกของอาชีพเหล่านี้ ชุดแปลภาษาอังกฤษของ WARPGATE มีไฟล์สกิลทั้งห้าไฟล์นี้อยู่แล้ว ดังนั้นไคลเอ็นท์ที่ใช้ชุดแปลนั้นให้ตอบ 'ไม่ใช่' เมื่อแพทช์เสนอสำเนาของตัวเองให้
+
+    # QoL2026 (title)
+    - find: Quality of Life Changes (2026)
+      replace: การปรับปรุง Quality of Life (2026)
+
+    # QoL2026 (desc)
+    - find: In progress and experimental (still in beta), more are added with each update. Adds kRO 2026's quality-of-life changes, translated from kRO's own 2026 client. When you apply it, you choose which ones to add (all by default).
+      replace: อยู่ระหว่างพัฒนาและยังเป็นการทดลอง (ยังอยู่ในช่วงเบต้า) จะมีการเพิ่มรายการใหม่ในทุกการอัปเดต เพิ่มการปรับปรุง quality-of-life ของ kRO ปี 2026 ที่แปลงมาจากไคลเอ็นท์ 2026 ของ kRO เอง เมื่อใช้แพทช์ คุณสามารถเลือกได้ว่าจะเพิ่มรายการใดบ้าง (ค่าเริ่มต้นคือทั้งหมด)
+
+    # RelaunchOnRestart (title)
+    - find: Restart relaunches the client
+      replace: การรีสตาร์ทจะเปิดไคลเอ็นท์ขึ้นมาใหม่
+
+    # RelaunchOnRestart (desc)
+    - find: When a setting needs a client restart (resolution, window mode, Render Scaling) and you press OK, the client starts itself again with the same arguments, instead of opening the restart web address from msgstringtable (kRO points it at its official site, ROenglishRE at its GitHub page).
+      replace: เมื่อการตั้งค่าใดต้องรีสตาร์ทไคลเอ็นท์ (ความละเอียด โหมดหน้าต่าง Render Scaling) และคุณกด OK ไคลเอ็นท์จะเปิดตัวเองขึ้นมาใหม่ด้วยอาร์กิวเมนต์เดิม แทนการเปิดที่อยู่เว็บสำหรับรีสตาร์ทจาก msgstringtable (kRO ชี้ไปที่เว็บไซต์ทางการ ส่วน ROenglishRE ชี้ไปที่หน้า GitHub)
+
+    # CustomHomuns (title)
+    - find: Enable Custom Homunculi
+      replace: เปิดใช้งาน Custom Homunculi
+
+    # CustomHomuns (desc)
+    - find: Enables custom homunculus types beyond the official set using lua files. Uses the same <b>'ReqJobName'</b> function as custom jobs, so no extra configuration files are needed beyond the job lua.
+      replace: เปิดใช้งาน Homunculus แบบกำหนดเองนอกเหนือจากของทางการ โดยใช้ไฟล์ lua ใช้ฟังก์ชัน <b>'ReqJobName'</b> เดียวกับ custom jobs จึงไม่ต้องมีไฟล์ตั้งค่าเพิ่มเติมนอกจากไฟล์ lua ของ job
+
+    # AddLuaOverrides (title)
+    - find: Add Chris' lua overrides [Experimental]
+      replace: เพิ่ม lua overrides ของ Chris [ทดลอง]
+
+    # AddLuaOverrides (desc)
+    - find: Loads additional lua override files by llchrisll that extend and patch the client's existing lua tables and functions. Adds quality-of-life improvements and fixes. See <a href="https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua">documentation</a> for the full list of changes. Experimental.
+      replace: โหลดไฟล์ lua override เพิ่มเติมโดย llchrisll ซึ่งขยายและแพทช์ตาราง lua และฟังก์ชันที่มีอยู่แล้วในไคลเอ็นท์ เพิ่มการปรับปรุง quality-of-life และการแก้ไขต่างๆ ดู<a href="https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua">เอกสารประกอบ</a>สำหรับรายการการเปลี่ยนแปลงทั้งหมด ยังอยู่ในขั้นทดลอง
+
+    # AllowAPBarforAllJobs (title)
+    - find: Allow AP Bar for all Jobs
+      replace: อนุญาตให้ทุกอาชีพมีแถบ AP
+
+    # AllowAPBarforAllJobs (desc)
+    - find: Displays the AP (Activity Points) bar for all job classes, not just 4th jobs. Internally treats every class as a 4th job for the AP gauge check. Useful for servers that give AP to all classes.
+      replace: แสดงแถบ AP (Activity Points) ให้กับทุกอาชีพ ไม่ใช่เฉพาะอาชีพคลาส 4 ภายในจะถือว่าทุกอาชีพเป็นอาชีพคลาส 4 สำหรับการตรวจสอบเกจ AP เหมาะสำหรับเซิร์ฟเวอร์ที่ให้ AP กับทุกอาชีพ
+
+    # RemoveMaxNumbersLimit (title)
+    - find: Remove the limit of max number displayed in damage/heal
+      replace: ยกเลิกขีดจำกัดตัวเลขสูงสุดที่แสดงในดาเมจ/ฮีล
+
+    # RemoveMaxNumbersLimit (desc)
+    - find: Removes the cap on displayed damage, healing, and other floating numbers. Without this, very large numbers get clamped to a maximum display value. Required for high-rate servers with large damage output.
+      replace: ยกเลิกขีดจำกัดของตัวเลขดาเมจ ฮีล และตัวเลขลอยอื่นๆ ที่แสดง หากไม่มีแพทช์นี้ ตัวเลขที่สูงมากจะถูกตัดไว้ที่ค่าแสดงผลสูงสุด จำเป็นสำหรับเซิร์ฟเวอร์เรทสูงที่มีดาเมจมหาศาล
+
+    # AllHatEffectsWorldDepthOracle (title)
+    - find: All HatEffects Screen-Size World Depth [QJS]
+      replace: World Depth สำหรับ HatEffect ทั้งหมด (คงขนาดบนจอ) [QJS]
+
+    # AllHatEffectsWorldDepthOracle (desc)
+    - find: 2025-07-16 build-specific global HatEffect depth patch, live validated on 2026-07-14. It preserves every original HatEffect STR resource, animation, actor attachment, metadata, teardown, screen-space position, apparent scale, and RHW. During only the two generic HatEffect render methods, vertices at/below actor-anchor Y retain a floor-safe four-quantum contact-biased depth; upper vertices reconstruct Y-up reciprocal depth using projection-matrix +0x10/+0x14 and convert it through 0x00554040. Native world STR NPCs remain unchanged.
+      replace: แพทช์ความลึกของ HatEffect แบบ global สำหรับบิลด์ 2025-07-16 โดยเฉพาะ ผ่านการทดสอบจริงเมื่อ 2026-07-14 แพทช์นี้คงทุกอย่างของ HatEffect ต้นฉบับไว้ ได้แก่ STR resource, แอนิเมชัน, การยึดติดกับ actor, metadata, การ teardown, ตำแหน่งบน screen-space, ขนาดที่มองเห็น และ RHW เฉพาะในระหว่างเมธอดเรนเดอร์ HatEffect ทั่วไปทั้งสองตัวเท่านั้น vertex ที่อยู่ระดับเดียวกับหรือต่ำกว่า Y ของจุดยึด actor จะคงค่า depth แบบ contact-biased สี่ quantum ที่ปลอดภัยต่อพื้น ส่วน vertex ด้านบนจะสร้าง reciprocal depth แบบ Y-up ขึ้นใหม่โดยใช้ projection-matrix +0x10/+0x14 แล้วแปลงผ่าน 0x00554040 ส่วน NPC แบบ STR ดั้งเดิมของ world จะไม่เปลี่ยนแปลง
+
+    # AllowDualWeaponSprites (title)
+    - find: Dual-Wield Original Weapon Sprites [QJS]
+      replace: Sprite อาวุธต้นฉบับเมื่อถืออาวุธคู่ [QJS]
+
+    # AllowDualWeaponSprites (desc)
+    - find: Self-contained QJS/EXE patch; no weapon DLL is required. The D403A0 equipment hook drives the stock single-item loader for each equipped item and installs the original parallel SPR/ACT resources in native weapon slots 5 and 6 instead of generic combined types 25..30. A live-slot renderer bridge direction-preservingly maps blank item ACT actions 88..95 to populated actions 80..87. Off-hand-only equipment also receives its real item pair in slot 6. Applies to every valid item resource without an item-ID allowlist.
+      replace: แพทช์ QJS/EXE ที่ทำงานได้ในตัวเอง ไม่ต้องใช้ DLL อาวุธ hook อุปกรณ์ที่ D403A0 จะเรียกตัวโหลดไอเทมเดี่ยวดั้งเดิมสำหรับอุปกรณ์แต่ละชิ้นที่สวมใส่ และติดตั้ง resource SPR/ACT แบบขนานของต้นฉบับลงในช่องอาวุธดั้งเดิม 5 และ 6 แทนประเภทรวมทั่วไป 25..30 ตัวเชื่อมของ renderer สำหรับช่องที่ใช้งานอยู่จะจับคู่ action ACT ที่ว่างเปล่าของไอเทม 88..95 ไปยัง action ที่มีข้อมูล 80..87 โดยคงทิศทางไว้ อุปกรณ์ที่สวมเฉพาะมือรองก็จะได้คู่ไอเทมจริงของตัวเองในช่อง 6 ด้วย ใช้ได้กับ resource ไอเทมที่ถูกต้องทุกชิ้นโดยไม่ต้องมี allowlist ของ item ID
+
+    # AllowChatWhileBerserk (title)
+    - find: Allow Chatting While Berserk
+      replace: อนุญาตให้แชทได้ขณะติด Berserk
+
+    # AllowChatWhileBerserk (desc)
+    - find: "Self-contained QJS/EXE patch. The client helper Status_IsBerserkActive (0x00D8E6C0) scans the local status-icon list for EFST_BERSERK (0x6B) and returns 1 while Berserk is up; every chat-channel handler in CModeMgr::SendMsg drops the outgoing CZ_REQUEST_CHAT (opcode 0xF3) on that 1, so the input clears but nothing is sent. Emotes use another command and stay usable. This forces the helper to always return 0, unblocking chat on every channel while Berserk without touching the item/skill Berserk restrictions. NOTE: removes ONLY the client gate; any server-side chat gate for SC_BERSERK must also be removed for chat to go through."
+      replace: "แพทช์ QJS/EXE ที่ทำงานได้ในตัวเอง ฟังก์ชันช่วยของไคลเอ็นท์ Status_IsBerserkActive (0x00D8E6C0) จะสแกนรายการไอคอนสถานะของตัวละครเพื่อหา EFST_BERSERK (0x6B) และคืนค่า 1 ขณะที่ Berserk ทำงานอยู่ ตัวจัดการช่องแชททุกช่องใน CModeMgr::SendMsg จะทิ้ง CZ_REQUEST_CHAT (opcode 0xF3) ที่กำลังส่งออกเมื่อได้ค่า 1 นั้น ทำให้ช่องพิมพ์ถูกล้างแต่ไม่มีข้อความถูกส่งออกไป อีโมตใช้คำสั่งอื่นจึงยังใช้งานได้ แพทช์นี้บังคับให้ฟังก์ชันช่วยคืนค่า 0 เสมอ ทำให้แชทได้ทุกช่องขณะติด Berserk โดยไม่แตะข้อจำกัด Berserk ของไอเทม/สกิล หมายเหตุ: แพทช์นี้ยกเลิกเฉพาะการกั้นฝั่งไคลเอ็นท์เท่านั้น หากเซิร์ฟเวอร์มีการกั้นแชทสำหรับ SC_BERSERK ด้วย ต้องยกเลิกฝั่งเซิร์ฟเวอร์ด้วย แชทจึงจะส่งออกไปได้"
+
+    # RestoreSkillAttackAnimation (title)
+    - find: Restore Skill Attack Animation
+      replace: นำแอนิเมชันโจมตีของสกิลกลับมา
+
+    # RestoreSkillAttackAnimation (desc)
+    - find: "Gives Sonic Blow and Arrow Vulcan back the attacker's sprite animation -- pick either one or both. Gravity never removed the animations themselves, only the routing that selected them: the client still plays it for Chain Crush Combo, and this sends the chosen skills back through the same path. Sound and effects were never affected."
+      replace: คืนแอนิเมชัน sprite ของผู้โจมตีให้กับสกิล Sonic Blow และ Arrow Vulcan โดยเลือกได้ว่าจะเอาสกิลใดสกิลหนึ่งหรือทั้งสองสกิล Gravity ไม่เคยลบตัวแอนิเมชันออกไป แต่ลบเพียงเส้นทางที่ใช้เลือกแอนิเมชันเท่านั้น ไคลเอ็นท์ยังคงเล่นแอนิเมชันนี้ให้กับ Chain Crush Combo และแพทช์นี้จะส่งสกิลที่เลือกกลับไปใช้เส้นทางเดียวกัน เสียงและเอฟเฟกต์ไม่เคยได้รับผลกระทบ
+
+    # CustomSkills (group title)
+    - find: SKILL CUSTOMIZATIONS
+      replace: การปรับแต่งสกิล
+
+    # CustomPlayerSkills (title)
+    - find: Enable Custom Player skills [Experimental]
+      replace: เปิดใช้งานสกิลผู้เล่นแบบกำหนดเอง [ทดลอง]
+
+    # CustomPlayerSkills (desc)
+    - find: Enables custom player skills beyond the official skill list by loading definitions from lua files. Required for servers that add new skills. Experimental -- may require careful lua configuration.
+      replace: เปิดใช้งานสกิลผู้เล่นแบบกำหนดเองนอกเหนือจากรายการสกิลของทางการ โดยโหลดข้อมูลสกิลจากไฟล์ lua จำเป็นสำหรับเซิร์ฟเวอร์ที่เพิ่มสกิลใหม่ ยังอยู่ในขั้นทดลอง อาจต้องตั้งค่า lua อย่างระมัดระวัง
+
+    # CustomHomunSkills (title)
+    - find: Enable Custom Homunculus skills [Experimental]
+      replace: เปิดใช้งานสกิล Homunculus แบบกำหนดเอง [ทดลอง]
+
+    # CustomHomunSkills (desc)
+    - find: Enables custom homunculus skills beyond the official list by loading definitions from lua files. Required for servers that add new homunculus abilities. Experimental.
+      replace: เปิดใช้งานสกิล Homunculus แบบกำหนดเองนอกเหนือจากรายการของทางการ โดยโหลดข้อมูลจากไฟล์ lua จำเป็นสำหรับเซิร์ฟเวอร์ที่เพิ่มความสามารถใหม่ให้ Homunculus ยังอยู่ในขั้นทดลอง
+
+    # CustomMerceSkills (title)
+    - find: Enable Custom Mercenary skills [Experimental]
+      replace: เปิดใช้งานสกิล Mercenary แบบกำหนดเอง [ทดลอง]
+
+    # CustomMerceSkills (desc)
+    - find: Enables custom mercenary skills beyond the official list by loading definitions from lua files. Required for servers that add new mercenary abilities. Experimental.
+      replace: เปิดใช้งานสกิล Mercenary แบบกำหนดเองนอกเหนือจากรายการของทางการ โดยโหลดข้อมูลจากไฟล์ lua จำเป็นสำหรับเซิร์ฟเวอร์ที่เพิ่มความสามารถใหม่ให้ Mercenary ยังอยู่ในขั้นทดลอง
+
+    # ===== UI.yml =====
+
+    # CustomUI (group title)
+    - find: UI CUSTOMIZATION
+      replace: การปรับแต่ง UI
+
+    # LoadGRFOnSlashCmd (title)
+    - find: Load GRF via Slash Command
+      replace: โหลด GRF ด้วยคำสั่ง Slash
+
+    # LoadGRFOnSlashCmd (desc)
+    - find: Adds a configurable slash command (default /greyworld) that loads a specified GRF archive at runtime via CFileMgr::AddPak. Typing the command toggles the GRF on/off with chat feedback. The state persists across sessions via the registry. Assets become available on the next map change.
+      replace: เพิ่มคำสั่ง slash ที่ตั้งค่าได้ (ค่าเริ่มต้นคือ /greyworld) สำหรับโหลดไฟล์ GRF ที่ระบุขณะเกมทำงานผ่าน CFileMgr::AddPak การพิมพ์คำสั่งจะเปิด/ปิด GRF นั้นพร้อมแจ้งผลในแชท สถานะจะถูกจำไว้ข้ามเซสชั่นผ่านรีจิสทรี ไฟล์ต่างๆ จะใช้งานได้เมื่อเปลี่ยนแมพครั้งถัดไป
+
+    # NoLookalikeNameWarning (title)
+    - find: No bogus "not your guildsman" whisper warning
+      replace: ไม่แสดงคำเตือนกระซิบ "not your guildsman" ที่ผิดพลาด
+
+    # NoLookalikeNameWarning (desc)
+    - find: Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They are meant to flag impostors who swap a capital I for a lowercase l, but the comparison is far too loose -- it calls two names alike as soon as min(lenA,lenB)-2 characters match by position. A guild with a member named "Test" therefore warns on every whisper from "Gettar". Firing constantly, the warning only teaches players to ignore the one line that would matter. Verified scope -- the comparison helper is used by nothing else in the client, so only those two messages disappear.
+      replace: หยุดข้อความ "This character is not your guildsman" และ "This name is not registered in your Friend List" ที่ไคลเอ็นท์แสดงเมื่อมีข้อความกระซิบเข้ามา ข้อความเหล่านี้มีไว้เตือนผู้แอบอ้างที่สลับตัว I พิมพ์ใหญ่กับตัว l พิมพ์เล็ก แต่การเปรียบเทียบหลวมเกินไปมาก โดยจะถือว่าสองชื่อคล้ายกันทันทีที่มีตัวอักษรตรงตำแหน่งกัน min(lenA,lenB)-2 ตัว ดังนั้นกิลด์ที่มีสมาชิกชื่อ "Test" จะมีคำเตือนทุกครั้งที่ได้รับกระซิบจาก "Gettar" เมื่อเตือนอยู่ตลอดเวลา คำเตือนนี้ก็มีแต่จะสอนให้ผู้เล่นมองข้ามข้อความเดียวที่อาจสำคัญจริงๆ ตรวจสอบขอบเขตแล้ว ฟังก์ชันเปรียบเทียบนี้ไม่ได้ถูกใช้ที่อื่นในไคลเอ็นท์ จึงมีเพียงสองข้อความนี้เท่านั้นที่หายไป
+
+    # AllowShortcutsInWine (title)
+    - find: Allow shortcuts in WINE [Experimental]
+      replace: อนุญาตคีย์ลัดใน WINE [ทดลอง]
+
+    # AllowShortcutsInWine (desc)
+    - find: Fixes keyboard shortcut handling when running the client under Wine (Linux/macOS). Experimental -- may not work on all Wine versions or configurations.
+      replace: แก้ไขการทำงานของคีย์ลัดบนคีย์บอร์ดเมื่อรันไคลเอ็นท์ผ่าน Wine (Linux/macOS) ยังอยู่ในขั้นทดลอง อาจใช้ไม่ได้กับ Wine ทุกเวอร์ชันหรือทุกการตั้งค่า
+
+    # CustomMissingLauncherMsg (title)
+    - find: Customize missing launcher message
+      replace: ปรับแต่งข้อความเมื่อไม่ได้เปิดผ่าน launcher
+
+    # CustomMissingLauncherMsg (desc)
+    - find: Customizes the error message shown when the client is launched without a patcher. By default the message is blank -- use this to show a helpful message like "Please use the patcher to start the game."
+      replace: ปรับแต่งข้อความแจ้งข้อผิดพลาดที่แสดงเมื่อเปิดไคลเอ็นท์โดยไม่ผ่าน patcher โดยค่าเริ่มต้นข้อความนี้จะว่างเปล่า ใช้แพทช์นี้เพื่อแสดงข้อความที่เป็นประโยชน์ เช่น "กรุณาใช้ patcher เพื่อเปิดเกม"
+
+    # TildeForMatk (title)
+    - find: Use Tilde for Matk
+      replace: ใช้เครื่องหมาย Tilde สำหรับ Matk
+
+    # TildeForMatk (desc)
+    - find: Displays Matk as a range using the tilde <b>(~)</b> symbol (e.g., 100~150) instead of using the plus <b>(+)</b> sign (e.g., 100+50) in the Stats Window. Matches the display style many players are familiar with.
+      replace: แสดง Matk เป็นช่วงโดยใช้สัญลักษณ์ tilde <b>(~)</b> (เช่น 100~150) แทนการใช้เครื่องหมายบวก <b>(+)</b> (เช่น 100+50) ในหน้าต่างสถานะ ตรงกับรูปแบบการแสดงผลที่ผู้เล่นจำนวนมากคุ้นเคย
+
+    # NoSwearFilter (title)
+    - find: Disable Swear Filter
+      replace: ปิดใช้งานตัวกรองคำหยาบ
+
+    # NoSwearFilter (desc)
+    - find: Disables the client-side chat filter that censors words listed in <b>manner.txt</b>. Filtered words will display normally in chat instead of being replaced with asterisks.
+      replace: ปิดใช้งานตัวกรองแชทฝั่งไคลเอ็นท์ที่เซ็นเซอร์คำที่อยู่ในรายการ <b>manner.txt</b> คำที่ถูกกรองจะแสดงตามปกติในแชท แทนที่จะถูกแทนด้วยเครื่องหมายดอกจัน
+
+    # SkipServiceSelect (title)
+    - find: Skip service selection screen
+      replace: ข้ามหน้าจอเลือกเซอร์วิส
+
+    # SkipServiceSelect (desc)
+    - find: Skips the service selection screen and goes straight to the login window. Ideal for servers that only have one service and do not need the selection step.
+      replace: ข้ามหน้าจอเลือกเซอร์วิสและไปยังหน้าต่างล็อกอินทันที เหมาะสำหรับเซิร์ฟเวอร์ที่มีเซอร์วิสเดียวและไม่ต้องมีขั้นตอนการเลือก
+
+    # OpenToServiceSelect (title)
+    - find: Use 'Opening' for service selection
+      replace: ใช้ปุ่ม 'Opening' สำหรับเลือกเซอร์วิส
+
+    # OpenToServiceSelect (desc)
+    - find: Makes the 'Opening' button on the new-style login screen return to the service selection screen. Useful if players need to switch between multiple services listed in clientinfo.xml.
+      replace: ทำให้ปุ่ม 'Opening' บนหน้าจอล็อกอินแบบใหม่กลับไปยังหน้าจอเลือกเซอร์วิส เหมาะสำหรับกรณีที่ผู้เล่นต้องสลับระหว่างหลายเซอร์วิสที่ระบุไว้ใน clientinfo.xml
+
+    # GuildBrackets (title)
+    - find: Use normal guild brackets
+      replace: ใช้วงเล็บชื่อกิลด์แบบปกติ
+
+    # GuildBrackets (desc)
+    - find: Replaces the Japanese-style guild name brackets used on langtype 0 with standard square brackets [ ]. Prevents display issues with guild names on English clients.
+      replace: แทนที่วงเล็บชื่อกิลด์แบบญี่ปุ่นที่ใช้ใน langtype 0 ด้วยวงเล็บเหลี่ยมมาตรฐาน [ ] ป้องกันปัญหาการแสดงชื่อกิลด์บนไคลเอ็นท์ภาษาอังกฤษ
+
+    # FixChatAt (title)
+    - find: "@ Bug fix"
+      replace: แก้บั๊ก @
+
+    # FixChatAt (desc)
+    - find: Fixes a client bug that prevents typing the @ symbol in the chat window. Essential for servers that use @ as the prefix for GM commands (e.g., @warp, @item).
+      replace: แก้บั๊กของไคลเอ็นท์ที่ทำให้พิมพ์สัญลักษณ์ @ ในหน้าต่างแชทไม่ได้ จำเป็นมากสำหรับเซิร์ฟเวอร์ที่ใช้ @ เป็นคำนำหน้าคำสั่ง GM (เช่น @warp, @item)
+
+    # PetTalkMarker (title)
+    - find: Mark pet chatter in chat
+      replace: ทำเครื่องหมายข้อความพูดของเพ็ทในแชท
+
+    # PetTalkMarker (desc)
+    - find: Tags every automated pet line with a marker, so players can tell it apart from something a person typed. Pet chatter carries no sender and the ordinary message type, so a pet named after a player currently reads exactly like that player talking. You choose the text (default <b>pet</b>), the brackets (round, square, angled or none) and whether it goes before or after the pet name -- e.g. <b>Poring (pet) -- I am hungry!</b>. The marker also appears in the speech bubble above the pet.
+      replace: ติดเครื่องหมายให้ทุกข้อความอัตโนมัติของเพ็ท เพื่อให้ผู้เล่นแยกออกจากข้อความที่คนพิมพ์จริงได้ ข้อความพูดของเพ็ทไม่มีชื่อผู้ส่งและใช้ประเภทข้อความแบบปกติ ดังนั้นในตอนนี้เพ็ทที่ตั้งชื่อตามผู้เล่นคนหนึ่งจะดูเหมือนผู้เล่นคนนั้นพูดเองทุกประการ คุณเลือกได้ทั้งข้อความ (ค่าเริ่มต้นคือ <b>pet</b>) รูปแบบวงเล็บ (วงเล็บกลม วงเล็บเหลี่ยม วงเล็บแหลม หรือไม่มี) และจะให้อยู่ก่อนหรือหลังชื่อเพ็ท เช่น <b>Poring (pet) -- I am hungry!</b> เครื่องหมายนี้จะปรากฏในบอลลูนคำพูดเหนือเพ็ทด้วย
+
+    # AlwaysOfficialBG (title)
+    - find: Use official login BG
+      replace: ใช้พื้นหลังล็อกอินของทางการ
+
+    # AlwaysOfficialBG (desc)
+    - find: Forces the official Gravity login background images to display on all langtypes. Without this, some langtypes show a blank or different background.
+      replace: บังคับให้แสดงภาพพื้นหลังล็อกอินของทางการจาก Gravity ในทุก langtype หากไม่มีแพทช์นี้ บาง langtype จะแสดงพื้นหลังว่างเปล่าหรือพื้นหลังแบบอื่น
+
+    # NoHourly (title)
+    - find: Remove Hourly announcement
+      replace: นำประกาศรายชั่วโมงออก
+
+    # NoHourly (desc)
+    - find: Removes the hourly popup announcements about game rating and play time reminders. These are Korean regulatory requirements that are irrelevant on servers.
+      replace: นำป๊อปอัปประกาศรายชั่วโมงเกี่ยวกับเรตติ้งเกมและการเตือนเวลาเล่นออก ประกาศเหล่านี้เป็นข้อกำหนดตามกฎหมายของเกาหลี ซึ่งไม่เกี่ยวข้องกับเซิร์ฟเวอร์
+
+    # EnableFlagEmotes (title)
+    - find: Enable flag emoticons
+      replace: เปิดใช้งานอีโมติคอนธงชาติ
+
+    # EnableFlagEmotes (desc)
+    - find: Unlocks country flag emoticons for all langtypes. Requires a text file mapping flag constants to numbers 1-9 to define which flags are available.
+      replace: ปลดล็อกอีโมติคอนธงชาติสำหรับทุก langtype ต้องมีไฟล์ข้อความที่จับคู่ค่าคงที่ของธงกับตัวเลข 1-9 เพื่อกำหนดว่ามีธงใดให้ใช้ได้บ้าง
+
+    # AllowSpaceInGName (title)
+    - find: Allow blank space in guild name
+      replace: อนุญาตให้มีช่องว่างในชื่อกิลด์
+
+    # AllowSpaceInGName (desc)
+    - find: Allows spaces in guild names when creating a guild with <b>/guild "Spaced Name"</b>. By default, the client blocks space characters in guild names.
+      replace: อนุญาตให้ใส่ช่องว่างในชื่อกิลด์เมื่อสร้างกิลด์ด้วย <b>/guild "Spaced Name"</b> โดยค่าเริ่มต้น ไคลเอ็นท์จะบล็อกตัวอักษรช่องว่างในชื่อกิลด์
+
+    # CustomInventoryLimit (title)
+    - find: Custom inventory limit
+      replace: ขีดจำกัดกระเป๋าแบบกำหนดเอง
+
+    # CustomInventoryLimit (desc)
+    - find: Changes the maximum number of items that can be displayed in the inventory window. Must match the server-side inventory limit (MAX_INVENTORY in rAthena) or items beyond the limit will not appear.
+      replace: เปลี่ยนจำนวนไอเทมสูงสุดที่แสดงได้ในหน้าต่างกระเป๋า ต้องตรงกับขีดจำกัดกระเป๋าฝั่งเซิร์ฟเวอร์ (MAX_INVENTORY ใน rAthena) ไม่เช่นนั้นไอเทมที่เกินขีดจำกัดจะไม่แสดง
+
+    # CustomInventoryExpandingLimit (title)
+    - find: Change limit for cash inventory expanding value
+      replace: เปลี่ยนขีดจำกัดการขยายกระเป๋าด้วย cash
+
+    # CustomInventoryExpandingLimit (desc)
+    - find: Raises the maximum number of items that can be added through cash inventory expansion from the default 100 up to 999,999. Server-side adjustment may be required to match.
+      replace: เพิ่มจำนวนช่องสูงสุดที่ขยายได้ผ่านการขยายกระเป๋าด้วย cash จากค่าเริ่มต้น 100 เป็นสูงสุด 999,999 อาจต้องปรับฝั่งเซิร์ฟเวอร์ให้ตรงกันด้วย
+
+    # BiggerInventoryWindow (title)
+    - find: Bigger inventory window
+      replace: หน้าต่างกระเป๋าขนาดใหญ่ขึ้น
+
+    # BiggerInventoryWindow (desc)
+    - find: Raises the maximum size the inventory window can be resized to. The stock client clamps the drag-resize to 320x240; this lets you set a larger maximum (default 1280x1024) so you can drag the inventory much bigger and see many more item slots at once. The window background is tiled, so it renders correctly at any size. This changes only the window SIZE, not the item CAPACITY (use 'Custom inventory limit' for that).
+      replace: เพิ่มขนาดสูงสุดที่ปรับขนาดหน้าต่างกระเป๋าได้ ไคลเอ็นท์ดั้งเดิมจำกัดการลากปรับขนาดไว้ที่ 320x240 แพทช์นี้ให้คุณกำหนดขนาดสูงสุดที่ใหญ่ขึ้น (ค่าเริ่มต้น 1280x1024) เพื่อลากหน้าต่างกระเป๋าให้ใหญ่ขึ้นมากและเห็นช่องไอเทมได้มากขึ้นในครั้งเดียว พื้นหลังของหน้าต่างเป็นแบบปูต่อกันซ้ำ จึงแสดงผลได้ถูกต้องทุกขนาด แพทช์นี้เปลี่ยนเฉพาะขนาดของหน้าต่างเท่านั้น ไม่ได้เปลี่ยนความจุไอเทม (ใช้ 'Custom inventory limit' สำหรับเรื่องนั้น)
+
+    # DeleteCharWithEmail (title)
+    - find: Always use email for Char Deletion
+      replace: ใช้อีเมลในการลบตัวละครเสมอ
+
+    # DeleteCharWithEmail (desc)
+    - find: Requires the account's email address as the confirmation password when deleting a character, on all langtypes. Adds an extra layer of protection against accidental or unauthorized character deletion.
+      replace: กำหนดให้ใช้อีเมลของบัญชีเป็นรหัสยืนยันเมื่อลบตัวละครในทุก langtype เพิ่มการป้องกันอีกชั้นจากการลบตัวละครโดยไม่ตั้งใจหรือโดยไม่ได้รับอนุญาต
+
+    # CustomVendingLimit (title)
+    - find: Customize vending limit
+      replace: ปรับแต่งขีดจำกัดราคาในร้าน Vending
+
+    # CustomVendingLimit (desc)
+    - find: Changes the maximum zeny price a player can set per item in a vending shop. Default is 1 billion zeny. Adjust to match your server's economy or zeny cap.
+      replace: เปลี่ยนราคา zeny สูงสุดที่ผู้เล่นตั้งได้ต่อไอเทมหนึ่งชิ้นในร้าน Vending ค่าเริ่มต้นคือ 1 พันล้าน zeny ปรับให้ตรงกับเศรษฐกิจหรือเพดาน zeny ของเซิร์ฟเวอร์ของคุณ
+
+    # NoHelpMsg (title)
+    - find: No Help Message on Login
+      replace: ไม่แสดงข้อความช่วยเหลือตอนล็อกอิน
+
+    # NoHelpMsg (desc)
+    - find: Suppresses the help/tutorial popup that appears after logging in on certain langtypes. Reduces clutter for returning players who do not need the tutorial.
+      replace: ระงับป๊อปอัปช่วยเหลือ/สอนเล่นที่ปรากฏหลังล็อกอินในบาง langtype ช่วยลดความรกสำหรับผู้เล่นเก่าที่ไม่ต้องการคำแนะนำการเล่น
+
+    # HideWorldView (title)
+    - find: Hide World View Interface
+      replace: ซ่อนหน้าต่าง World View
+
+    # HideWorldView (desc)
+    - find: Hides the World View (full map overview) button normally shown at the top-right of the screen. Useful for servers that do not support the world map feature or want a cleaner UI.
+      replace: ซ่อนปุ่ม World View (ภาพรวมแผนที่ทั้งหมด) ที่ปกติแสดงอยู่มุมขวาบนของหน้าจอ เหมาะสำหรับเซิร์ฟเวอร์ที่ไม่รองรับฟีเจอร์แผนที่โลก หรือต้องการ UI ที่ดูสะอาดตาขึ้น
+
+    # CloseCutinOnEsc (title)
+    - find: Close cutin on Esc key
+      replace: ปิด cutin ด้วยปุ่ม Esc
+
+    # CloseCutinOnEsc (desc)
+    - find: Allows players to dismiss NPC cutin (portrait) images by pressing the ESC key. Without this, cutins can only be closed by the NPC script itself.
+      replace: ให้ผู้เล่นปิดภาพ cutin (ภาพตัวละคร) ของ NPC ได้ด้วยการกดปุ่ม ESC หากไม่มีแพทช์นี้ cutin จะปิดได้โดยสคริปต์ของ NPC เท่านั้น
+
+    # EnableNpcDialogueScrolling (title)
+    - find: NPC Dialog Scroll
+      replace: เลื่อนข้อความในหน้าต่างสนทนา NPC
+
+    # EnableNpcDialogueScrolling (desc)
+    - find: Allows scrolling through NPC dialog text even when a selection menu is displayed. Without this, the dialog locks when choices appear and players cannot review previous text.
+      replace: อนุญาตให้เลื่อนดูข้อความในหน้าต่างสนทนา NPC ได้แม้ขณะที่มีเมนูตัวเลือกแสดงอยู่ หากไม่มีแพทช์นี้ หน้าต่างสนทนาจะถูกล็อกเมื่อมีตัวเลือกขึ้นมา และผู้เล่นจะย้อนดูข้อความก่อนหน้าไม่ได้
+
+    # MoveUpItemCount (title)
+    - find: Move Item Count Upwards
+      replace: ย้ายตัวเลขจำนวนไอเทมขึ้นด้านบน
+
+    # MoveUpItemCount (desc)
+    - find: Moves the item quantity number upwards in the Shortcut Window so it visually aligns with skill level numbers. A cosmetic fix for cleaner-looking shortcut bars.
+      replace: ย้ายตัวเลขจำนวนไอเทมในหน้าต่างคีย์ลัดขึ้นด้านบน ให้ตรงแนวกับตัวเลขเลเวลสกิล เป็นการแก้ไขด้านความสวยงามเพื่อให้แถบคีย์ลัดดูเรียบร้อยขึ้น
+
+    # CustomFadeDelay (title)
+    - find: Customize fade in/out delay
+      replace: ปรับแต่งดีเลย์ fade in/out
+
+    # CustomFadeDelay (desc)
+    - find: Changes the duration of the screen fade-in/fade-out effect when warping within the same map. Set to 0 for instant transitions, or increase for a smoother visual effect.
+      replace: เปลี่ยนระยะเวลาของเอฟเฟกต์หน้าจอ fade-in/fade-out เมื่อวาร์ปภายในแมพเดียวกัน ตั้งเป็น 0 เพื่อเปลี่ยนฉากทันที หรือเพิ่มค่าเพื่อให้ภาพเปลี่ยนนุ่มนวลขึ้น
+
+    # RemoveBookingJobs (title)
+    - find: Remove Jobs from Booking Window
+      replace: นำอาชีพออกจากหน้าต่าง Booking
+
+    # RemoveBookingJobs (desc)
+    - find: Removes specific job classes from the Party Booking (recruitment) window's job filter list. Useful for hiding disabled or unreleased classes from the party finder UI.
+      replace: นำอาชีพที่ระบุออกจากรายการตัวกรองอาชีพในหน้าต่าง Party Booking (หาสมาชิกปาร์ตี้) เหมาะสำหรับซ่อนอาชีพที่ปิดไว้หรือยังไม่เปิดให้เล่นจาก UI ค้นหาปาร์ตี้
+
+    # RelativeDelay4CharDel (title)
+    - find: Change Deletion time to relative
+      replace: เปลี่ยนเวลาการลบตัวละครเป็นแบบนับถอยหลัง
+
+    # RelativeDelay4CharDel (desc)
+    - find: Shows character deletion wait time as a countdown (e.g., "23h 45m remaining") instead of an absolute date/time. More intuitive for players waiting to confirm a deletion.
+      replace: แสดงเวลารอการลบตัวละครแบบนับถอยหลัง (เช่น "23h 45m remaining") แทนวันที่/เวลาแบบระบุตายตัว เข้าใจง่ายกว่าสำหรับผู้เล่นที่รอยืนยันการลบ
+
+    # RestoreChatFocus (title)
+    - find: Restore chat focus
+      replace: นำโฟกัสของแชทกลับมา
+
+    # RestoreChatFocus (desc)
+    - find: Restores keyboard input focus to the chat box after clicking with the left mouse button. Fixes the issue where clicking in the game world causes the chat input to lose focus.
+      replace: คืนโฟกัสการพิมพ์ด้วยคีย์บอร์ดไปที่ช่องแชทหลังจากคลิกเมาส์ซ้าย แก้ปัญหาที่การคลิกในโลกของเกมทำให้ช่องพิมพ์แชทเสียโฟกัส
+
+    # ChatBgMainPanel (title)
+    - find: Customize main chat panel background color and opacity
+      replace: ปรับแต่งสีพื้นหลังและความทึบของแผงแชทหลัก
+
+    # ChatBgMainPanel (desc)
+    - find: Sets the color and opacity of the MAIN chat panel - its background and its active tab. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Default is black at 40% opacity (0x66).
+      replace: กำหนดสีและความทึบของแผงแชทหลัก ทั้งพื้นหลังและแท็บที่ใช้งานอยู่ จะเปิดตัวเลือกสี RGB และช่องใส่ค่าความทึบ (0 = โปร่งใส, 255 = ทึบ) ค่าเริ่มต้นคือสีดำที่ความทึบ 40% (0x66)
+
+    # ChatBgDetached (title)
+    - find: Customize detached chat windows background color and opacity
+      replace: ปรับแต่งสีพื้นหลังและความทึบของหน้าต่างแชทที่แยกออกมา
+
+    # ChatBgDetached (desc)
+    - find: Sets the color and opacity of the DETACHED chat windows - their outer border/frame and background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Default is black at 40% opacity (0x66).
+      replace: กำหนดสีและความทึบของหน้าต่างแชทที่แยกออกมา ทั้งขอบ/กรอบด้านนอกและพื้นหลัง จะเปิดตัวเลือกสี RGB และช่องใส่ค่าความทึบ (0 = โปร่งใส, 255 = ทึบ) ค่าเริ่มต้นคือสีดำที่ความทึบ 40% (0x66)
+
+    # ChatBgWhisper (title)
+    - find: Customize whisper (1:1) chat window background color and opacity
+      replace: ปรับแต่งสีพื้นหลังและความทึบของหน้าต่างแชทกระซิบ (1:1)
+
+    # ChatBgWhisper (desc)
+    - find: Sets the color and opacity of the 1:1 whisper (private message) chat window background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Leave a field unchanged to keep its default. Default is black at 40% opacity (0x66).
+      replace: กำหนดสีและความทึบของพื้นหลังหน้าต่างแชทกระซิบ 1:1 (ข้อความส่วนตัว) จะเปิดตัวเลือกสี RGB และช่องใส่ค่าความทึบ (0 = โปร่งใส, 255 = ทึบ) ปล่อยช่องใดไว้ไม่เปลี่ยนเพื่อใช้ค่าเริ่มต้นของช่องนั้น ค่าเริ่มต้นคือสีดำที่ความทึบ 40% (0x66)
+
+    # NoEquipPreview (title)
+    - find: Disable equipment preview
+      replace: ปิดใช้งานการดูตัวอย่างอุปกรณ์
+
+    # NoEquipPreview (desc)
+    - find: Removes the equipment preview button from item description windows. Use if the preview feature causes issues or is not desired on your server.
+      replace: นำปุ่มดูตัวอย่างอุปกรณ์ออกจากหน้าต่างคำอธิบายไอเทม ใช้หากฟีเจอร์ดูตัวอย่างทำให้เกิดปัญหา หรือไม่ต้องการให้มีบนเซิร์ฟเวอร์ของคุณ
+
+    # ReduceExpensiveUIRender (title)
+    - find: Reduce expensive UI rendering
+      replace: ลดการเรนเดอร์ UI ที่กินทรัพยากร
+
+    # ReduceExpensiveUIRender (desc)
+    - find: Skips the ALT+S Skill Tree repaint when nothing changed, instead of rebuilding the grid every frame. Prompts for a minimum idle repaint interval so the character preview keeps animating.
+      replace: ข้ามการวาด Skill Tree (ALT+S) ใหม่เมื่อไม่มีอะไรเปลี่ยนแปลง แทนการสร้างตารางใหม่ทุกเฟรม จะถามระยะเวลาขั้นต่ำในการวาดใหม่ขณะไม่มีการเปลี่ยนแปลง เพื่อให้ภาพตัวอย่างตัวละครยังเคลื่อนไหวต่อไปได้
+
+    # RestoreSkillInfoCheckbox (title)
+    - find: Restore the "View Skill Info." checkbox in the Skill Tree
+      replace: นำช่องทำเครื่องหมาย "View Skill Info." ใน Skill Tree กลับมา
+
+    # RestoreSkillInfoCheckbox (desc)
+    - find: Brings back the checkbox old Ragexe builds had in the top right corner of the ALT+S Skill Tree, and the behaviour it controlled -- while it is ticked, simply hovering a skill pops the skill detail window next to the cursor instead of having to right-click it. The client still owns the option (Show_SkillDescript, saved in OptionInfo.lua), its command handler and the whole display code, which was merely rebound to the right-click gesture -- this patch re-creates the missing checkbox control and the missing hover branch. Unticked, the client behaves exactly as before, right-click included.
+      replace: นำช่องทำเครื่องหมายที่ Ragexe บิลด์เก่ามีอยู่ที่มุมขวาบนของ Skill Tree (ALT+S) กลับมา พร้อมกับการทำงานที่ช่องนั้นควบคุม เมื่อทำเครื่องหมายไว้ เพียงแค่นำเมาส์ไปชี้ที่สกิลก็จะแสดงหน้าต่างรายละเอียดสกิลข้างเคอร์เซอร์ โดยไม่ต้องคลิกขวา ไคลเอ็นท์ยังคงมีตัวเลือกนี้อยู่ (Show_SkillDescript ซึ่งบันทึกไว้ใน OptionInfo.lua) รวมถึงตัวจัดการคำสั่งและโค้ดแสดงผลทั้งหมด ซึ่งเพียงแค่ถูกย้ายไปผูกกับการคลิกขวาเท่านั้น แพทช์นี้สร้างช่องทำเครื่องหมายที่หายไปและส่วนการทำงานเมื่อชี้เมาส์ที่หายไปขึ้นมาใหม่ เมื่อไม่ได้ทำเครื่องหมาย ไคลเอ็นท์จะทำงานเหมือนเดิมทุกประการ รวมถึงการคลิกขวาด้วย
+
+    # ShowPartySP (title)
+    - find: Party HP/SP Bars (Reforged)
+      replace: แถบ HP/SP ของปาร์ตี้ (Reforged)
+
+    # ShowPartySP (desc)
+    - find: Splits each party member's bar into an HP (top) and SP (bottom) half and draws the SP number beside it, in the party window and on the detached mini widgets. Optionally sets the HP and SP bar colours, with your own row separate from everyone else's, so you are easy to find in a full party. Requires the matching rAthena change (SHOW_PARTY_SP) so the server sends the 22-byte 0x0BAB party packet with sp/maxsp.
+      replace: แบ่งแถบของสมาชิกปาร์ตี้แต่ละคนออกเป็นครึ่ง HP (ด้านบน) และ SP (ด้านล่าง) พร้อมแสดงตัวเลข SP ไว้ข้างๆ ทั้งในหน้าต่างปาร์ตี้และวิดเจ็ตขนาดเล็กที่แยกออกมา สามารถเลือกกำหนดสีแถบ HP และ SP ได้ โดยแยกสีแถวของคุณเองออกจากของคนอื่น เพื่อให้หาตัวเองเจอได้ง่ายในปาร์ตี้ที่เต็ม ต้องใช้การแก้ไขฝั่ง rAthena ที่คู่กัน (SHOW_PARTY_SP) เพื่อให้เซิร์ฟเวอร์ส่งแพ็กเก็ตปาร์ตี้ 0x0BAB ขนาด 22 ไบต์ที่มี sp/maxsp
+
+    # HideZeroDateInGuildWin (title)
+    - find: Hide Zero Date in Guild Window
+      replace: ซ่อนวันที่ศูนย์ในหน้าต่างกิลด์
+
+    # HideZeroDateInGuildWin (desc)
+    - find: Hides the placeholder date "1969-01-01" shown for guild members whose join date is unknown or unset. Prevents confusing epoch dates from appearing in the guild member list.
+      replace: ซ่อนวันที่ตัวยึดตำแหน่ง "1969-01-01" ที่แสดงสำหรับสมาชิกกิลด์ที่ไม่ทราบหรือไม่ได้ตั้งวันที่เข้าร่วม ป้องกันไม่ให้วันที่ epoch ที่ชวนสับสนปรากฏในรายชื่อสมาชิกกิลด์
+
+    # ShortcutForAll (title)
+    - find: Allow all items in Shortcut
+      replace: อนุญาตไอเทมทุกชนิดในคีย์ลัด
+
+    # ShortcutForAll (desc)
+    - find: Allows any item type to be placed on the shortcut bar, not just consumables and equipment. Makes it easy to quick-access items for trading, crafting, or other purposes.
+      replace: อนุญาตให้วางไอเทมทุกประเภทบนแถบคีย์ลัดได้ ไม่ใช่เฉพาะไอเทมกดใช้และอุปกรณ์ ทำให้เรียกใช้ไอเทมสำหรับการเทรด การคราฟต์ หรือจุดประสงค์อื่นได้สะดวก
+
+    # HideGameWindows (title)
+    - find: Hide in-game windows
+      replace: ซ่อนหน้าต่างในเกม
+
+    # HideGameWindows (desc)
+    - find: Hides specific in-game UI windows by their internal Window IDs, defined in a YAML configuration file. Useful for removing unused or unwanted UI elements like the navigation window or tip box.
+      replace: ซ่อนหน้าต่าง UI ในเกมที่ระบุโดยใช้ Window ID ภายใน ซึ่งกำหนดไว้ในไฟล์ตั้งค่า YAML เหมาะสำหรับนำองค์ประกอบ UI ที่ไม่ได้ใช้หรือไม่ต้องการออก เช่น หน้าต่างนำทางหรือ tip box
+
+    # EnableFlagAnimation (title)
+    - find: Enable WoE Flag Animation
+      replace: เปิดใช้งานแอนิเมชันธง WoE
+
+    # EnableFlagAnimation (desc)
+    - find: Restores the animated WoE (War of Emperium) guild flags that Gravity disabled in later client updates. Brings back the waving flag visuals on castle maps.
+      replace: นำธงกิลด์ WoE (War of Emperium) แบบเคลื่อนไหวที่ Gravity ปิดไว้ในการอัปเดตไคลเอ็นท์รุ่นหลังกลับมา ทำให้ธงโบกสะบัดได้อีกครั้งในแมพปราสาท
+
+    # RestoreBattlegroundUI (title)
+    - find: Restore Battleground UI
+      replace: นำ UI ของ Battleground กลับมา
+
+    # RestoreBattlegroundUI (desc)
+    - find: Restores the Battleground navigation button and Entry Queue UI that were hidden in newer clients. Required for servers that use the Battleground system.
+      replace: นำปุ่มนำทาง Battleground และ UI Entry Queue ที่ถูกซ่อนในไคลเอ็นท์รุ่นใหม่กลับมา จำเป็นสำหรับเซิร์ฟเวอร์ที่ใช้ระบบ Battleground
+
+    # HideItemba (title)
+    - find: Hide Item bar
+      replace: ซ่อนแถบไอเทม
+
+    # HideItemba (desc)
+    - find: Hides the Shortcut Item Bar toggle buttons (Open/Close) from the game interface. Use for a cleaner UI if the shortcut bar controls are not needed.
+      replace: ซ่อนปุ่มเปิด/ปิด (Open/Close) ของแถบไอเทมคีย์ลัดจากหน้าจอเกม ใช้เพื่อให้ UI ดูสะอาดตาขึ้นหากไม่จำเป็นต้องใช้ปุ่มควบคุมแถบคีย์ลัด
+
+    # DisableDoram (title)
+    - find: Disable Doram
+      replace: ปิดใช้งาน Doram
+
+    # DisableDoram (desc)
+    - find: Removes the Doram race option from the character creation screen. Use on servers that do not support the Doram race to avoid confusion.
+      replace: นำตัวเลือกเผ่า Doram ออกจากหน้าจอสร้างตัวละคร ใช้กับเซิร์ฟเวอร์ที่ไม่รองรับเผ่า Doram เพื่อหลีกเลี่ยงความสับสน
+
+    # HideProbabilityUI (title)
+    - find: Hide Probability UI
+      replace: ซ่อน UI แสดงโอกาส
+
+    # HideProbabilityUI (desc)
+    - find: Hides the item probability/drop rate window from the UI. Use on servers that do not implement the official probability display system or prefer to keep drop rates hidden.
+      replace: ซ่อนหน้าต่างแสดงโอกาส/อัตราดรอปไอเทมจาก UI ใช้กับเซิร์ฟเวอร์ที่ไม่ได้ใช้ระบบแสดงโอกาสของทางการ หรือต้องการซ่อนอัตราดรอปไว้
+
+    # FixSelectMenuReset (title)
+    - find: Fix NPC dialogue Select Menu Reset
+      replace: แก้ไขเมนูตัวเลือกในหน้าต่างสนทนา NPC ที่รีเซ็ตเอง
+
+    # FixSelectMenuReset (desc)
+    - find: Fixes a bug where the NPC dialogue select menu resets its scroll position unexpectedly. Keeps the menu at the player's current selection when the dialog updates.
+      replace: แก้บั๊กที่เมนูตัวเลือกในหน้าต่างสนทนา NPC รีเซ็ตตำแหน่งการเลื่อนเองโดยไม่คาดคิด ทำให้เมนูคงอยู่ที่ตัวเลือกปัจจุบันของผู้เล่นเมื่อหน้าต่างสนทนาอัปเดต
+
+    # FixSelectMenuWidthExpansion (title)
+    - find: Fix NPC dialogue Select Menu Width Expansion
+      replace: แก้ไขเมนูตัวเลือกในหน้าต่างสนทนา NPC ที่ขยายความกว้างเกิน
+
+    # FixSelectMenuWidthExpansion (desc)
+    - find: Fixes the NPC select menu becoming excessively wide when options contain color codes (^RRGGBB). Corrects the width calculation to ignore color tag characters.
+      replace: แก้ปัญหาเมนูตัวเลือกของ NPC กว้างเกินไปเมื่อตัวเลือกมีโค้ดสี (^RRGGBB) โดยแก้การคำนวณความกว้างให้ไม่นับตัวอักษรของแท็กสี
+
+    # FixSelectMenuHeightExpansion (title)
+    - find: Restore Old NPC Select Menu Behavior
+      replace: นำการทำงานแบบเก่าของเมนูตัวเลือก NPC กลับมา
+
+    # FixSelectMenuHeightExpansion (desc)
+    - find: Restores the classic NPC select menu behavior where a scrollbar appears when options exceed the visible area, instead of the newer behavior that expands the dialog window height to fit all options.
+      replace: นำการทำงานแบบคลาสสิกของเมนูตัวเลือก NPC กลับมา โดยจะมีแถบเลื่อนปรากฏเมื่อตัวเลือกเกินพื้นที่ที่มองเห็นได้ แทนการทำงานแบบใหม่ที่ขยายความสูงของหน้าต่างสนทนาให้พอดีกับตัวเลือกทั้งหมด
+
+    # FixSkillbarReset (title)
+    - find: Fix loading shortcuts / skill bar state
+      replace: แก้ไขการโหลดสถานะคีย์ลัด / แถบสกิล
+
+    # FixSkillbarReset (desc)
+    - find: Fixes a bug where shortcut bar items and skill bar positions reset every time you log in or change maps. Ensures your hotkey layout is properly saved and restored.
+      replace: แก้บั๊กที่ไอเทมบนแถบคีย์ลัดและตำแหน่งบนแถบสกิลรีเซ็ตทุกครั้งที่ล็อกอินหรือเปลี่ยนแมพ ทำให้การจัดวางคีย์ลัดของคุณถูกบันทึกและโหลดกลับมาอย่างถูกต้อง
+
+    # ChangeGoldPCMaxPoints (title)
+    - find: Change GoldPC Maximum Points Limit
+      replace: เปลี่ยนขีดจำกัดแต้มสูงสุดของ GoldPC
+
+    # ChangeGoldPCMaxPoints (desc)
+    - find: Changes the maximum Gold PC point cap from the hardcoded limit of 300 to a custom value (up to 99,999). Must be paired with a matching server-side change in rAthena's battle.cpp.
+      replace: เปลี่ยนเพดานแต้ม Gold PC สูงสุดจากขีดจำกัด 300 ที่ hardcode ไว้เป็นค่าที่กำหนดเอง (สูงสุด 99,999) ต้องแก้ไขฝั่งเซิร์ฟเวอร์ใน battle.cpp ของ rAthena ให้ตรงกันด้วย
+
+    # CustomBarterZenySep (title)
+    - find: Format Barter Zeny with Commas
+      replace: จัดรูปแบบ Zeny ในร้าน Barter ด้วยเครื่องหมายจุลภาค
+
+    # CustomBarterZenySep (desc)
+    - find: Formats zeny amounts in the Barter shop window with thousand separators (e.g., 1,000,000 z instead of 1000000 z). Makes large prices much easier to read at a glance.
+      replace: จัดรูปแบบจำนวน zeny ในหน้าต่างร้าน Barter ด้วยตัวคั่นหลักพัน (เช่น 1,000,000 z แทน 1000000 z) ทำให้อ่านราคาสูงๆ ได้ง่ายขึ้นมากในแวบเดียว
+
+    # TighterClickArea (title)
+    - find: Tighter Entity Click Area
+      replace: พื้นที่คลิกของ Entity ที่แคบลง
+
+    # TighterClickArea (desc)
+    - find: The client widens every entity's clickable rectangle (hitbox) up to a minimum computed from the window width -- <b>width / 640 x 40</b> pixels for actors, <b>x 34</b> for map NPCs and skill units, so 100 and 85 px at 1600x900. A small sprite therefore defends a box far larger than itself, so neighbouring entities overlap and fight over the same click, and the frontmost rectangle wins whoever owns it. This patch divides all three minimums by 2, 4, 8 or 16 while keeping the scaling with the window width. It cannot shrink a big sprite's rectangle, which comes from its artwork.
+      replace: ไคลเอ็นท์จะขยายกรอบสี่เหลี่ยมที่คลิกได้ (hitbox) ของทุก entity ให้มีขนาดอย่างน้อยตามค่าที่คำนวณจากความกว้างหน้าต่าง คือ <b>width / 640 x 40</b> พิกเซลสำหรับ actor และ <b>x 34</b> สำหรับ NPC บนแมพและ skill unit ซึ่งเท่ากับ 100 และ 85 px ที่ 1600x900 ดังนั้น sprite ขนาดเล็กจะครอบครองกรอบที่ใหญ่กว่าตัวเองมาก ทำให้ entity ที่อยู่ใกล้กันซ้อนทับและแย่งการคลิกเดียวกัน และกรอบที่อยู่หน้าสุดจะชนะไม่ว่าจะเป็นของใคร แพทช์นี้หารค่าขั้นต่ำทั้งสามด้วย 2, 4, 8 หรือ 16 โดยยังคงการปรับสเกลตามความกว้างหน้าต่างไว้ แพทช์นี้ย่อกรอบของ sprite ขนาดใหญ่ไม่ได้ เพราะกรอบนั้นมาจากภาพของ sprite เอง
+
+    # CaseInsensitiveSearch (group title)
+    - find: CASE INSENSITIVE SEARCH
+      replace: การค้นหาแบบไม่สนตัวพิมพ์เล็ก/ใหญ่
+
+    # InsensitiveStorageSearch (title)
+    - find: Case-Insensitive storage search
+      replace: ค้นหาในคลังเก็บของแบบไม่สนตัวพิมพ์เล็ก/ใหญ่
+
+    # InsensitiveStorageSearch (desc)
+    - find: Makes the storage window search ignore uppercase/lowercase differences, so searching "blue gem" also finds "Blue Gem". Much more convenient for finding items.
+      replace: ทำให้การค้นหาในหน้าต่างคลังเก็บของไม่สนความต่างระหว่างตัวพิมพ์ใหญ่/เล็ก ดังนั้นการค้นหา "blue gem" ก็จะเจอ "Blue Gem" ด้วย ช่วยให้หาไอเทมได้สะดวกขึ้นมาก
+
+    # InsensitiveShopSearch (title)
+    - find: Case-Insensitive cash shop search
+      replace: ค้นหาใน Cash Shop แบบไม่สนตัวพิมพ์เล็ก/ใหญ่
+
+    # InsensitiveShopSearch (desc)
+    - find: Makes the Cash Shop search ignore uppercase/lowercase differences, so items can be found regardless of how you capitalize the search term.
+      replace: ทำให้การค้นหาใน Cash Shop ไม่สนความต่างระหว่างตัวพิมพ์ใหญ่/เล็ก จึงหาไอเทมเจอไม่ว่าคุณจะพิมพ์คำค้นหาด้วยตัวพิมพ์แบบใด
+
+    # NoGravityImages (group title)
+    - find: GRAVITY IMAGE REMOVAL
+      replace: นำภาพของ Gravity ออก
+
+    # NoGravityAds (title)
+    - find: Remove gravity ads
+      replace: นำโฆษณาของ Gravity ออก
+
+    # NoGravityAds (desc)
+    - find: Removes Gravity's promotional advertisement images from the login screen background. Keeps the login screen clean for your server.
+      replace: นำภาพโฆษณาโปรโมชันของ Gravity ออกจากพื้นหลังหน้าจอล็อกอิน ทำให้หน้าจอล็อกอินของเซิร์ฟเวอร์คุณดูสะอาดตา
+
+    # NoGravityLogo (title)
+    - find: Remove gravity logo
+      replace: นำโลโก้ Gravity ออก
+
+    # NoGravityLogo (desc)
+    - find: Removes the Gravity company logo from the login screen background. Useful for servers that want a custom-branded login experience.
+      replace: นำโลโก้บริษัท Gravity ออกจากพื้นหลังหน้าจอล็อกอิน เหมาะสำหรับเซิร์ฟเวอร์ที่ต้องการหน้าจอล็อกอินที่ใช้แบรนด์ของตัวเอง
+
+    # CustomFont (group title)
+    - find: FONT CUSTOMIZATION
+      replace: การปรับแต่งฟอนท์
+
+    # CustomFontName (title)
+    - find: Customize Font name
+      replace: ปรับแต่งชื่อฟอนท์
+
+    # CustomFontName (desc)
+    - find: Changes the game font to a custom font of your choice for all langtypes. If the chosen font does not support the required character set, Windows will fall back to a compatible font automatically.
+      replace: เปลี่ยนฟอนท์ของเกมเป็นฟอนท์ที่คุณเลือกเองสำหรับทุก langtype หากฟอนท์ที่เลือกไม่รองรับชุดตัวอักษรที่ต้องใช้ Windows จะเปลี่ยนไปใช้ฟอนท์ที่เข้ากันได้ให้อัตโนมัติ
+
+    # CustomFontHeight (title)
+    - find: Customize Font height (Character)
+      replace: ปรับแต่งความสูงฟอนท์ (Character)
+
+    # CustomFontHeight (desc)
+    - find: Sets the height of all in-game fonts to a custom value measured in character height units. Use to make text larger or smaller across the entire UI.
+      replace: กำหนดความสูงของฟอนท์ทั้งหมดในเกมเป็นค่าที่กำหนดเอง โดยวัดเป็นหน่วย character height ใช้เพื่อทำให้ข้อความใหญ่ขึ้นหรือเล็กลงทั่วทั้ง UI
+
+    # CustomFontCellHeight (title)
+    - find: Customize Font Height (Cell)
+      replace: ปรับแต่งความสูงฟอนท์ (Cell)
+
+    # CustomFontCellHeight (desc)
+    - find: Sets the height of all in-game fonts to a custom value measured in cell height units. An alternative sizing method to Character Height for finer control.
+      replace: กำหนดความสูงของฟอนท์ทั้งหมดในเกมเป็นค่าที่กำหนดเอง โดยวัดเป็นหน่วย cell height เป็นอีกวิธีในการกำหนดขนาดนอกเหนือจาก Character Height เพื่อการควบคุมที่ละเอียดขึ้น
+
+    # CustomFontHgtOffset (title)
+    - find: Customize Font Height (Offset)
+      replace: ปรับแต่งความสูงฟอนท์ (Offset)
+
+    # CustomFontHgtOffset (desc)
+    - find: Adds a fixed offset to all font heights, making every font in the UI uniformly larger (positive values) or smaller (negative values) without overriding individual sizes.
+      replace: เพิ่มค่า offset คงที่ให้กับความสูงของฟอนท์ทั้งหมด ทำให้ฟอนท์ทุกตัวใน UI ใหญ่ขึ้น (ค่าบวก) หรือเล็กลง (ค่าลบ) เท่าๆ กัน โดยไม่เขียนทับขนาดของแต่ละฟอนท์
+
+    # CustomFontHgtLimits (title)
+    - find: Enable Font Height Limits
+      replace: เปิดใช้งานขีดจำกัดความสูงฟอนท์
+
+    # CustomFontHgtLimits (desc)
+    - find: Clamps all font heights to minimum and maximum values you specify. Prevents fonts from becoming too small to read or too large for the UI layout.
+      replace: จำกัดความสูงของฟอนท์ทั้งหมดให้อยู่ระหว่างค่าต่ำสุดและสูงสุดที่คุณกำหนด ป้องกันไม่ให้ฟอนท์เล็กจนอ่านไม่ออก หรือใหญ่เกินกว่าเลย์เอาต์ของ UI
+
+    # CustomFontWeight (title)
+    - find: Customize Font Weight (All)
+      replace: ปรับแต่งความหนาฟอนท์ (ทั้งหมด)
+
+    # CustomFontWeight (desc)
+    - find: Changes the boldness (weight) of all fonts -- both normal and bold -- to a single custom value. Values range from 100 (thin) to 900 (heavy), with 400 being normal and 700 being bold.
+      replace: เปลี่ยนความหนา (weight) ของฟอนท์ทั้งหมด ทั้งแบบปกติและแบบตัวหนา ให้เป็นค่าที่กำหนดเองค่าเดียว ค่าอยู่ในช่วง 100 (บาง) ถึง 900 (หนามาก) โดย 400 คือปกติ และ 700 คือตัวหนา
+
+    # CustomNormalFontWeight (title)
+    - find: Customize Font Weight (Normal)
+      replace: ปรับแต่งความหนาฟอนท์ (ปกติ)
+
+    # CustomNormalFontWeight (desc)
+    - find: Changes the boldness (weight) of normal-weight fonts only. Does not affect fonts already marked as bold. Use to make regular UI text thinner or thicker.
+      replace: เปลี่ยนความหนา (weight) เฉพาะฟอนท์ที่มีความหนาแบบปกติเท่านั้น ไม่มีผลกับฟอนท์ที่ตั้งเป็นตัวหนาอยู่แล้ว ใช้เพื่อทำให้ข้อความ UI ทั่วไปบางลงหรือหนาขึ้น
+
+    # CustomBoldFontWeight (title)
+    - find: Customize Font Weight (Bold)
+      replace: ปรับแต่งความหนาฟอนท์ (ตัวหนา)
+
+    # CustomBoldFontWeight (desc)
+    - find: Changes the boldness (weight) of bold-weight fonts only. Does not affect normal-weight fonts. Use to make bold UI text heavier or lighter.
+      replace: เปลี่ยนความหนา (weight) เฉพาะฟอนท์ตัวหนาเท่านั้น ไม่มีผลกับฟอนท์ที่มีความหนาแบบปกติ ใช้เพื่อทำให้ข้อความตัวหนาใน UI หนาขึ้นหรือบางลง
+
+    # CustomFontWgtOffset (title)
+    - find: Customize Font Weight (Offset)
+      replace: ปรับแต่งความหนาฟอนท์ (Offset)
+
+    # CustomFontWgtOffset (desc)
+    - find: Adds a fixed offset to all font weights, making every font uniformly bolder (positive values) or thinner (negative values) without overriding individual weight settings.
+      replace: เพิ่มค่า offset คงที่ให้กับความหนาของฟอนท์ทั้งหมด ทำให้ฟอนท์ทุกตัวหนาขึ้น (ค่าบวก) หรือบางลง (ค่าลบ) เท่าๆ กัน โดยไม่เขียนทับการตั้งค่าความหนาของแต่ละฟอนท์
+
+    # CustomFontCharset (title)
+    - find: Customize Font charset
+      replace: ปรับแต่ง charset ของฟอนท์
+
+    # CustomFontCharset (desc)
+    - find: Overrides the character set (charset) used for all fonts to a custom value. Use to force a specific encoding like ANSI (0), Baltic (186), or UTF-8 when the default charset causes display issues.
+      replace: เขียนทับชุดตัวอักษร (charset) ที่ใช้กับฟอนท์ทั้งหมดด้วยค่าที่กำหนดเอง ใช้เพื่อบังคับการเข้ารหัสเฉพาะ เช่น ANSI (0), Baltic (186) หรือ UTF-8 เมื่อ charset เริ่มต้นทำให้เกิดปัญหาการแสดงผล
+
+    # CustomCodePage (title)
+    - find: Override client codepage
+      replace: เขียนทับ codepage ของไคลเอ็นท์
+
+    # CustomCodePage (desc)
+    - find: Forces the 2025-07-16 client's multibyte codepage with a QJS-only static patch. Use 65001 for UTF-8; this patch does not add DLL imports or runtime hooks.
+      replace: บังคับ codepage แบบ multibyte ของไคลเอ็นท์ 2025-07-16 ด้วยแพทช์แบบ static ที่ใช้เพียง QJS ใช้ 65001 สำหรับ UTF-8 แพทช์นี้ไม่ได้เพิ่ม DLL import หรือ hook ขณะรันไทม์
+
+    # IgnoreErrors (group title)
+    - find: IGNORE ERRORS
+      replace: ละเว้นข้อผิดพลาด
+
+    # IgnoreRsrcErr (title)
+    - find: Ignore Resource errors
+      replace: ละเว้นข้อผิดพลาดของ Resource
+
+    # IgnoreRsrcErr (desc)
+    - find: Suppresses most error popups for missing resources (sprites, textures, models, etc.) and redirects them to the debug output instead. The client will try to continue running, but missing files may still cause visual glitches or crashes.
+      replace: ระงับป๊อปอัปแจ้งข้อผิดพลาดส่วนใหญ่สำหรับ resource ที่หายไป (sprite, texture, โมเดล ฯลฯ) และส่งไปยัง debug output แทน ไคลเอ็นท์จะพยายามทำงานต่อไป แต่ไฟล์ที่หายไปอาจยังทำให้ภาพผิดเพี้ยนหรือเกิดการแครชได้
+
+    # IgnorePalErr (title)
+    - find: Ignore Palette errors
+      replace: ละเว้นข้อผิดพลาดของพาเลตต์
+
+    # IgnorePalErr (desc)
+    - find: Suppresses error popups for missing palette (.pal) files and redirects them to debug output. Useful when using custom jobs or hairstyles where not all palette combinations exist yet.
+      replace: ระงับป๊อปอัปแจ้งข้อผิดพลาดสำหรับไฟล์พาเลตต์ (.pal) ที่หายไป และส่งไปยัง debug output แทน เหมาะสำหรับเมื่อใช้อาชีพหรือทรงผมแบบกำหนดเองที่ยังมีพาเลตต์ไม่ครบทุกแบบ
+
+    # IgnoreLuaErr (title)
+    - find: Ignore Lua errors
+      replace: ละเว้นข้อผิดพลาดของ Lua
+
+    # IgnoreLuaErr (desc)
+    - find: Suppresses lua runtime error popups (e.g., "attempt to call nil value") and redirects them to debug output. Prevents the client from halting on non-critical lua errors in custom scripts.
+      replace: ระงับป๊อปอัปแจ้งข้อผิดพลาดขณะรันของ lua (เช่น "attempt to call nil value") และส่งไปยัง debug output แทน ป้องกันไม่ให้ไคลเอ็นท์หยุดทำงานเพราะข้อผิดพลาด lua ที่ไม่ร้ายแรงในสคริปต์ที่กำหนดเอง
+
+    # IgnoreQuestErr (title)
+    - find: Ignore Quest errors
+      replace: ละเว้นข้อผิดพลาดของเควส
+
+    # IgnoreQuestErr (desc)
+    - find: Suppresses quest-related error popups (e.g., "Not found Quest Info = XXXX") and redirects them to debug output. Useful when the server has quests that are not yet defined in the client's quest lua files.
+      replace: ระงับป๊อปอัปแจ้งข้อผิดพลาดที่เกี่ยวกับเควส (เช่น "Not found Quest Info = XXXX") และส่งไปยัง debug output แทน เหมาะสำหรับกรณีที่เซิร์ฟเวอร์มีเควสที่ยังไม่ได้กำหนดไว้ในไฟล์ lua เควสของไคลเอ็นท์
+
+    # IgnoreEntryQueueErr (title)
+    - find: Ignore Entry Queue errors
+      replace: ละเว้นข้อผิดพลาดของ Entry Queue
+
+    # IgnoreEntryQueueErr (desc)
+    - find: Suppresses Entry Queue error popups and redirects them to debug output. Useful if the Battleground or instance queue system triggers errors on your server configuration.
+      replace: ระงับป๊อปอัปแจ้งข้อผิดพลาดของ Entry Queue และส่งไปยัง debug output แทน เหมาะสำหรับกรณีที่ระบบคิวของ Battleground หรือ instance เกิดข้อผิดพลาดกับการตั้งค่าเซิร์ฟเวอร์ของคุณ
+
+    # MessageBox (group title)
+    - find: MSGBOX CUSTOMIZATIONS
+      replace: การปรับแต่ง MessageBox
+
+    # MsgBox2Beep (title)
+    - find: Change MessageBox to Beep
+      replace: เปลี่ยน MessageBox เป็นเสียง Beep
+
+    # MsgBox2Beep (desc)
+    - find: Replaces all error/warning message popups with a system beep sound instead. The client will not pause for user input -- it plays a sound and continues running.
+      replace: แทนที่ป๊อปอัปข้อความแจ้งข้อผิดพลาด/คำเตือนทั้งหมดด้วยเสียง beep ของระบบ ไคลเอ็นท์จะไม่หยุดรอการตอบสนองจากผู้ใช้ แต่จะเล่นเสียงแล้วทำงานต่อไป
+
+    # ShowMsgIcon (title)
+    - find: Show icon in MessageBox
+      replace: แสดงไอคอนใน MessageBox
+
+    # ShowMsgIcon (desc)
+    - find: Adds an icon (error, warning, info, etc.) to message box popups that normally show only plain text. Makes it easier to distinguish between different types of client messages.
+      replace: เพิ่มไอคอน (ข้อผิดพลาด คำเตือน ข้อมูล ฯลฯ) ให้กับป๊อปอัปกล่องข้อความที่ปกติแสดงเพียงข้อความธรรมดา ทำให้แยกแยะประเภทของข้อความจากไคลเอ็นท์ได้ง่ายขึ้น
+
+    # NoMsgBox (title)
+    - find: Disable MessageBoxes
+      replace: ปิดใช้งาน MessageBox
+
+    # NoMsgBox (desc)
+    - find: Completely disables all message box popups in the client. No error, warning, or info dialogs will appear. Use with caution -- errors will be silently ignored and may cause unexpected behavior.
+      replace: ปิดใช้งานป๊อปอัปกล่องข้อความทั้งหมดในไคลเอ็นท์อย่างสมบูรณ์ จะไม่มีหน้าต่างแจ้งข้อผิดพลาด คำเตือน หรือข้อมูลปรากฏขึ้นเลย ใช้อย่างระมัดระวัง เพราะข้อผิดพลาดจะถูกละเว้นไปเงียบๆ และอาจทำให้เกิดการทำงานที่ไม่คาดคิด
+
+    # ===== Window.yml =====
+
+    # ButtonVis (group title)
+    - find: BASIC BUTTON VISIBILITY
+      replace: การแสดงปุ่มพื้นฐาน
+
+    # HideNewButtons (title)
+    - find: Hide Buttons (New UI)
+      replace: ซ่อนปุ่ม (UI แบบใหม่)
+
+    # HideNewButtons (desc)
+    - find: "Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way."
+      replace: "ซ่อนปุ่มที่เลือกไว้ใต้แถบ HP/SP ในหน้าต่าง Basic Info (UI แบบใหม่) รายการจะแสดงปุ่ม<b>ทุกปุ่ม</b>ที่ไคลเอ็นท์นี้มี ดังนั้นปุ่มจะยังเลือกได้ไม่ว่าไคลเอ็นท์จะซ่อนปุ่มนั้นไว้อยู่แล้วหรือไม่ การเลือกปุ่มที่ถูกซ่อนอยู่แล้วจะไม่มีผลใดๆ และหน้าต่างถามจะบอกว่าเป็นปุ่มใดบ้าง บนไคลเอ็นท์ 2025-07-16 ปุ่มที่ถูกซ่อนอยู่แล้วคือ <b>Battleground, Booking และ Twitter</b> (GitHub #24) อย่าเลือกปุ่มเดียวกันทั้งที่นี่และใน <i>Show Buttons (New UI)</i> เพราะจะถูกปฏิเสธพร้อมข้อความแจ้งข้อผิดพลาดที่ระบุชื่อปุ่มนั้น แทนที่จะเลือกฝั่งใดฝั่งหนึ่งไปเงียบๆ"
+
+    # ShowNewButtons (title)
+    - find: Show Buttons (New UI)
+      replace: แสดงปุ่ม (UI แบบใหม่)
+
+    # ShowNewButtons (desc)
+    - find: Restores selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has; picking one that is already shown does nothing. Use it to bring back buttons the client hides by default, which on 2025-07-16 are <b>Battleground, Booking and Twitter</b>. Do not pick the same button here and in <i>Hide Buttons (New UI)</i> - that is rejected with an error naming it.
+      replace: นำปุ่มที่เลือกไว้ใต้แถบ HP/SP ในหน้าต่าง Basic Info (UI แบบใหม่) กลับมา รายการจะแสดงปุ่ม<b>ทุกปุ่ม</b>ที่ไคลเอ็นท์นี้มี การเลือกปุ่มที่แสดงอยู่แล้วจะไม่มีผลใดๆ ใช้เพื่อนำปุ่มที่ไคลเอ็นท์ซ่อนไว้โดยค่าเริ่มต้นกลับมา ซึ่งบน 2025-07-16 คือ <b>Battleground, Booking และ Twitter</b> อย่าเลือกปุ่มเดียวกันทั้งที่นี่และใน <i>Hide Buttons (New UI)</i> เพราะจะถูกปฏิเสธพร้อมข้อความแจ้งข้อผิดพลาดที่ระบุชื่อปุ่มนั้น
+
+    # CustomBtns (group title)
+    - find: CUSTOM BUTTONS
+      replace: ปุ่มแบบกำหนดเอง
+
+    # CustomButtons (title)
+    - find: Add your own buttons
+      replace: เพิ่มปุ่มของคุณเอง
+
+    # CustomButtons (desc)
+    - find: Adds extra buttons of your own to the row below the HP/SP bars in the Basic Info Window, beyond the 25 the client ships with. Each one is written as <b>iconName = behaves like</b>, where the icon name is also the file name - the client loads <b>bt_&lt;iconName&gt;.bmp</b> and <b>bt_&lt;iconName&gt;_press.bmp</b> from <b>data\texture\&lt;UI folder&gt;\menu_icon\</b> as 32x34 24-bit BMPs with magenta (FF00FF) transparent, so without those files the button draws blank. <b>behaves like</b> names one of the stock buttons and the new one does whatever that one does.
+      replace: เพิ่มปุ่มของคุณเองในแถวใต้แถบ HP/SP ในหน้าต่าง Basic Info นอกเหนือจาก 25 ปุ่มที่ติดมากับไคลเอ็นท์ แต่ละปุ่มเขียนในรูปแบบ <b>iconName = behaves like</b> โดยชื่อไอคอนก็คือชื่อไฟล์ด้วย ไคลเอ็นท์จะโหลด <b>bt_&lt;iconName&gt;.bmp</b> และ <b>bt_&lt;iconName&gt;_press.bmp</b> จาก <b>data\texture\&lt;โฟลเดอร์ UI&gt;\menu_icon\</b> เป็นไฟล์ BMP ขนาด 32x34 แบบ 24-bit ที่ใช้สีม่วงแดง (FF00FF) เป็นสีโปร่งใส หากไม่มีไฟล์เหล่านี้ ปุ่มจะแสดงเป็นช่องว่าง ส่วน <b>behaves like</b> คือชื่อของปุ่มดั้งเดิมปุ่มใดปุ่มหนึ่ง และปุ่มใหม่จะทำงานเหมือนกับปุ่มนั้นทุกอย่าง
+
+    # CharCreation (group title)
+    - find: CHARACTER CREATION
+      replace: การสร้างตัวละคร
+
+    # CustomNewCharNameHeight (title)
+    - find: Customize new Char Name field height
+      replace: ปรับแต่งความสูงช่องชื่อตัวละครใหม่
+
+    # CustomNewCharNameHeight (desc)
+    - find: Changes the height of the character name input field in the new character creation dialog. Adjust if the default size clips text or looks misaligned with custom fonts.
+      replace: เปลี่ยนความสูงของช่องพิมพ์ชื่อตัวละครในหน้าต่างสร้างตัวละครใหม่ ปรับค่านี้หากขนาดเริ่มต้นทำให้ข้อความถูกตัด หรือดูไม่ตรงแนวเมื่อใช้ฟอนท์ที่กำหนดเอง
+
+    # IncrNewCharHairs (title)
+    - find: Increase char create Hair limits (Reforged)
+      replace: เพิ่มขีดจำกัดทรงผมตอนสร้างตัวละคร (Reforged)
+
+    # IncrNewCharHairs (desc)
+    - find: Pages the character creation hair picker so it can offer more than the built-in 23 styles. Max 128. Needs one thumbnail per extra style in <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO ships 01 to 23 only). Pair with <i>Allow 65k Hair Styles</i>.
+      replace: แบ่งตัวเลือกทรงผมตอนสร้างตัวละครเป็นหน้าๆ เพื่อให้มีทรงผมได้มากกว่า 23 ทรงที่มีมาในตัว สูงสุด 128 ทรง ต้องมีภาพตัวอย่างหนึ่งภาพต่อทรงผมที่เพิ่มขึ้นใน <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO มีให้เฉพาะ 01 ถึง 23) ใช้คู่กับ <i>Allow 65k Hair Styles</i>
+
+    # HairColorGuard (title)
+    - find: Hair colour guard, and extra hair colours
+      replace: ตัวป้องกันสีผม และสีผมเพิ่มเติม
+
+    # HairColorGuard (desc)
+    - find: Ignores a hair colour in character creation when that style ships no matching <b>.pal</b> file. Without this the client shows a <i>Cannot find File</i> palette error and then <b>crashes</b> with an access violation, because it dereferences the palette it failed to load. Only affects hair colour in the creation window; nothing else is suppressed.<br><br>It also repaints the swatch row when a style change forces the colour back to <b>none</b>, so the lit swatch stops disagreeing with the character.<br><br>Then it asks <b>how many hair colours</b> the picker should offer. <b>9</b> is the client default and changes no layout at all. Above 9 the row keeps its size and gains a <b>tenth cell that pages to the next nine</b>, the way the hair style grid does; it wraps round to the first page at the end. The buttons move to a relocated array because a tenth would otherwise land on the gender button. Each added colour needs its own <b>.pal</b> files, or the guard above will refuse it, and its own <b>color&lt;NN&gt;_off/_over/_on.bmp</b> art under <b>data\texture\...\make_character_ver2\</b>, or the swatch falls back to the first face. Your server's <b>max hair colour</b> has to allow the range too.
+      replace: ละเว้นสีผมในหน้าสร้างตัวละครเมื่อทรงผมนั้นไม่มีไฟล์ <b>.pal</b> ที่ตรงกัน หากไม่มีแพทช์นี้ ไคลเอ็นท์จะแสดงข้อผิดพลาดพาเลตต์ <i>Cannot find File</i> แล้ว<b>แครช</b>ด้วย access violation เพราะไปอ้างอิงพาเลตต์ที่โหลดไม่สำเร็จ มีผลเฉพาะสีผมในหน้าต่างสร้างตัวละครเท่านั้น ไม่มีการระงับสิ่งอื่น<br><br>นอกจากนี้ยังวาดแถวตัวอย่างสีใหม่เมื่อการเปลี่ยนทรงผมบังคับให้สีกลับไปเป็น <b>none</b> เพื่อให้ช่องสีที่ไฮไลต์อยู่ตรงกับตัวละคร<br><br>จากนั้นจะถามว่าต้องการให้ตัวเลือกสีมี<b>สีผมกี่สี</b> <b>9</b> คือค่าเริ่มต้นของไคลเอ็นท์และไม่เปลี่ยนเลย์เอาต์ใดๆ เลย หากมากกว่า 9 แถวจะยังมีขนาดเท่าเดิม แต่จะมี<b>ช่องที่สิบสำหรับเปลี่ยนไปยังเก้าสีถัดไป</b> แบบเดียวกับตารางทรงผม และจะวนกลับไปหน้าแรกเมื่อถึงหน้าสุดท้าย ปุ่มต่างๆ จะถูกย้ายไปยังอาร์เรย์ใหม่ เพราะไม่เช่นนั้นปุ่มที่สิบจะไปทับปุ่มเลือกเพศ สีที่เพิ่มแต่ละสีต้องมีไฟล์ <b>.pal</b> ของตัวเอง ไม่เช่นนั้นตัวป้องกันข้างต้นจะไม่ยอมรับ และต้องมีภาพ <b>color&lt;NN&gt;_off/_over/_on.bmp</b> ของตัวเองใน <b>data\texture\...\make_character_ver2\</b> ไม่เช่นนั้นช่องสีจะกลับไปใช้ภาพแรก นอกจากนี้ <b>max hair colour</b> ของเซิร์ฟเวอร์คุณต้องรองรับช่วงนี้ด้วย
+
+    # CustomCharCreateId (title)
+    - find: Customize job id in char create dialog
+      replace: ปรับแต่ง job id ในหน้าต่างสร้างตัวละคร
+
+    # CustomCharCreateId (desc)
+    - find: Overrides the default starting job ID sent in the character creation packet. Use when your server starts new characters as a different class than Novice (e.g., Super Novice or a custom job).
+      replace: เขียนทับ job ID เริ่มต้นที่ส่งไปในแพ็กเก็ตสร้างตัวละคร ใช้เมื่อเซิร์ฟเวอร์ของคุณให้ตัวละครใหม่เริ่มต้นด้วยอาชีพอื่นที่ไม่ใช่ Novice (เช่น Super Novice หรืออาชีพแบบกำหนดเอง)
+
+    # FixLatestNCWin (title)
+    - find: Fix latest new char window
+      replace: แก้ไขหน้าต่างสร้างตัวละครรุ่นล่าสุด
+
+    # FixLatestNCWin (desc)
+    - find: Fixes visual issues in the latest character creation window, including a misaligned background image and off-center window positioning. Recommended for a clean character creation experience.
+      replace: แก้ปัญหาด้านภาพในหน้าต่างสร้างตัวละครรุ่นล่าสุด รวมถึงภาพพื้นหลังที่วางไม่ตรงแนวและตำแหน่งหน้าต่างที่ไม่อยู่กึ่งกลาง แนะนำเพื่อให้การสร้างตัวละครแสดงผลได้เรียบร้อย
+
+    # DoramCharCreation (group title)
+    - find: CHARACTER CREATION (DORAM)
+      replace: การสร้างตัวละคร (Doram)
+
+    # CustomCharCreateSecond (title)
+    - find: Customize second job id in char create dialog
+      replace: ปรับแต่ง job id ที่สองในหน้าต่างสร้างตัวละคร
+
+    # CustomCharCreateSecond (desc)
+    - find: Replaces the Doram race slot in the character creation window with a custom job ID of your choice. Use to offer an alternative race or class in the second creation slot.
+      replace: แทนที่ช่องเผ่า Doram ในหน้าต่างสร้างตัวละครด้วย job ID ที่คุณเลือกเอง ใช้เพื่อเสนอเผ่าหรืออาชีพทางเลือกในช่องสร้างตัวละครช่องที่สอง
+
+    # NoDoramCreation (title)
+    - find: Disable Doram character creation UI [Experimental]
+      replace: ปิดใช้งาน UI สร้างตัวละคร Doram [ทดลอง]
+
+    # NoDoramCreation (desc)
+    - find: Removes the Doram race option from the character creation UI entirely. Server-side disabling is also recommended to prevent bypasses. Experimental -- may have visual quirks.
+      replace: นำตัวเลือกเผ่า Doram ออกจาก UI สร้างตัวละครทั้งหมด แนะนำให้ปิดฝั่งเซิร์ฟเวอร์ด้วยเพื่อป้องกันการเลี่ยง ยังอยู่ในขั้นทดลอง อาจมีความผิดปกติด้านภาพบ้าง
+
+    # CustomFriendWin (group title)
+    - find: FRIEND/PARTY WINDOW CUSTOMIZATION
+      replace: การปรับแต่งหน้าต่างเพื่อน/ปาร์ตี้
+
+    # CustomPartyLimit (title)
+    - find: Customize party limit
+      replace: ปรับแต่งขีดจำกัดสมาชิกปาร์ตี้
+
+    # CustomPartyLimit (desc)
+    - find: Changes the maximum number of party members shown in the party window (Alt+Z). Increase this if your server supports larger parties than the default limit.
+      replace: เปลี่ยนจำนวนสมาชิกปาร์ตี้สูงสุดที่แสดงในหน้าต่างปาร์ตี้ (Alt+Z) เพิ่มค่านี้หากเซิร์ฟเวอร์ของคุณรองรับปาร์ตี้ที่ใหญ่กว่าขีดจำกัดเริ่มต้น
+
+    # NoAdvAgencyInParty (title)
+    - find: Remove Adventurer Agency from Party
+      replace: นำ Adventurer Agency ออกจากหน้าต่างปาร์ตี้
+
+    # NoAdvAgencyInParty (desc)
+    - find: Removes the Adventurer Agency (party recruitment) button from the party window. Use on servers that do not support or want the automated party matching system.
+      replace: นำปุ่ม Adventurer Agency (หาสมาชิกปาร์ตี้) ออกจากหน้าต่างปาร์ตี้ ใช้กับเซิร์ฟเวอร์ที่ไม่รองรับหรือไม่ต้องการระบบจับคู่ปาร์ตี้อัตโนมัติ
+
+    # CustomEquipWin (group title)
+    - find: EQUIP WINDOW CUSTOMIZATION
+      replace: การปรับแต่งหน้าต่างอุปกรณ์
+
+    # NoEquipSwap (title)
+    - find: Remove Eq Swap button
+      replace: นำปุ่ม Eq Swap ออก
+
+    # NoEquipSwap (desc)
+    - find: Removes the equipment swap button from the equipment window. Use on servers that do not support the gear swap feature or want a simpler equipment UI.
+      replace: นำปุ่มสลับอุปกรณ์ออกจากหน้าต่างอุปกรณ์ ใช้กับเซิร์ฟเวอร์ที่ไม่รองรับฟีเจอร์สลับอุปกรณ์ หรือต้องการ UI อุปกรณ์ที่เรียบง่ายขึ้น
+
+    # NoEquipWinTitle (title)
+    - find: Remove Eq Window title
+      replace: นำชื่อหน้าต่างอุปกรณ์ออก
+
+    # NoEquipWinTitle (desc)
+    - find: Removes the title bar text from the equipment window. A cosmetic change for a cleaner equipment window appearance.
+      replace: นำข้อความบนแถบชื่อเรื่องออกจากหน้าต่างอุปกรณ์ เป็นการเปลี่ยนแปลงด้านความสวยงามเพื่อให้หน้าต่างอุปกรณ์ดูสะอาดตาขึ้น
+
+    # DisableEquipAttrButton (title)
+    - find: Disable Equipment Attribute Button
+      replace: ปิดใช้งานปุ่ม Equipment Attribute
+
+    # DisableEquipAttrButton (desc)
+    - find: Disables the Equipment Attribute (Properties) button in the Equipment Window so clicking it does nothing. Use on servers where the Equipment Properties panel is not applicable.
+      replace: ปิดใช้งานปุ่ม Equipment Attribute (Properties) ในหน้าต่างอุปกรณ์ ทำให้คลิกแล้วไม่มีอะไรเกิดขึ้น ใช้กับเซิร์ฟเวอร์ที่ไม่ได้ใช้แผง Equipment Properties
+
+    # CustomExpBars (group title)
+    - find: EXP BAR CUSTOMIZATION
+      replace: การปรับแต่งแถบ EXP
+
+    # CustomBarLimits (title)
+    - find: Customize Experience bar limits
+      replace: ปรับแต่งขีดจำกัดแถบค่าประสบการณ์
+
+    # CustomBarLimits (desc)
+    - find: Overrides the experience bar display limits for Base and Job levels using a custom configuration file. Required if your server has higher max levels than the client normally supports.
+      replace: เขียนทับขีดจำกัดการแสดงผลแถบค่าประสบการณ์ของ Base Level และ Job Level โดยใช้ไฟล์ตั้งค่าที่กำหนดเอง จำเป็นหากเซิร์ฟเวอร์ของคุณมีเลเวลสูงสุดมากกว่าที่ไคลเอ็นท์รองรับตามปกติ
+
+    # ShowExpNumbers (title)
+    - find: Show Experience numbers
+      replace: แสดงตัวเลขค่าประสบการณ์
+
+    # ShowExpNumbers (desc)
+    - find: Displays numeric Base and Job experience values directly on top of the EXP bars in the Basic Info Window. Shows exact numbers instead of just a progress bar.
+      replace: แสดงตัวเลขค่าประสบการณ์ Base และ Job บนแถบ EXP ในหน้าต่าง Basic Info โดยตรง แสดงตัวเลขที่แน่นอนแทนที่จะมีเพียงแถบความคืบหน้า
+
+    # ReturnToLogin (group title)
+    - find: RETURN TO LOGIN
+      replace: กลับไปหน้าล็อกอิน
+
+    # DisConnToLogin (title)
+    - find: Disconnect to Login Window
+      replace: กลับไปหน้าต่างล็อกอินเมื่อหลุดการเชื่อมต่อ
+
+    # DisConnToLogin (desc)
+    - find: Returns to the login window instead of closing the client when disconnected from the server. Lets players reconnect without having to relaunch the game.
+      replace: กลับไปยังหน้าต่างล็อกอินแทนการปิดไคลเอ็นท์เมื่อหลุดการเชื่อมต่อจากเซิร์ฟเวอร์ ทำให้ผู้เล่นเชื่อมต่อใหม่ได้โดยไม่ต้องเปิดเกมใหม่
+
+    # ShowButton (group title)
+    - find: SHOW BUTTON
+      replace: แสดงปุ่ม
+
+    # ShowReplayBtn (title)
+    - find: Always show Replay button in Service Select
+      replace: แสดงปุ่ม Replay ในหน้าเลือกเซอร์วิสเสมอ
+
+    # ShowReplayBtn (desc)
+    - find: Shows the Replay button on the Service Select screen, allowing players to browse and watch saved replay files. Normally hidden on most langtypes.
+      replace: แสดงปุ่ม Replay บนหน้าจอเลือกเซอร์วิส ให้ผู้เล่นเปิดดูและชมไฟล์ replay ที่บันทึกไว้ ปกติจะถูกซ่อนในเกือบทุก langtype
+
+    # ShowRegisterBtn (title)
+    - find: Always show Register button in Login
+      replace: แสดงปุ่ม Register ในหน้าล็อกอินเสมอ
+
+    # ShowRegisterBtn (desc)
+    - find: Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page. On this client the Sign Up button is always there and opens that page, except at langtype 0, where it first asks whether to go to the official website (or, with a Gravity ID, opens Gravity's Korean signup); the patch makes langtype 0 open your page straight away.
+      replace: แสดงปุ่ม Register บนหน้าจอล็อกอินในทุก langtype เมื่อคลิกจะเปิด URL สมัครสมาชิกที่กำหนดไว้ในแท็ก &lt;registrationweb&gt; ของ clientinfo.xml แล้วปิดไคลเอ็นท์ เหมาะสำหรับพาผู้เล่นใหม่ไปยังหน้าสมัครสมาชิกของคุณ บนไคลเอ็นท์นี้ปุ่ม Sign Up จะมีอยู่เสมอและเปิดหน้านั้น ยกเว้นที่ langtype 0 ซึ่งจะถามก่อนว่าจะไปยังเว็บไซต์ทางการหรือไม่ (หรือหากใช้ Gravity ID จะเปิดหน้าสมัครสมาชิกภาษาเกาหลีของ Gravity) แพทช์นี้ทำให้ langtype 0 เปิดหน้าของคุณทันที
+
+    # NoLetterLimit (group title)
+    - find: 4/6 LETTER LIMIT REMOVAL
+      replace: ยกเลิกขีดจำกัดตัวอักษร 4/6 ตัว
+
+    # NoCharnameLimit (title)
+    - find: Remove 4/6 letter Character Name limit
+      replace: ยกเลิกขีดจำกัดชื่อตัวละคร 4/6 ตัวอักษร
+
+    # NoCharnameLimit (desc)
+    - find: Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for character names. Allows shorter names like "GM" or "Ace". Server-side limits may still apply.
+      replace: ยกเลิกเงื่อนไขที่ชื่อตัวละครต้องมีอย่างน้อย 4 ตัวอักษร (หรือ 6 ตัวอักษรในบาง langtype) ทำให้ตั้งชื่อสั้นๆ อย่าง "GM" หรือ "Ace" ได้ แต่ขีดจำกัดฝั่งเซิร์ฟเวอร์อาจยังมีผลอยู่
+
+    # NoUsernameLimit (title)
+    - find: Remove 4/6 letter User Name limit
+      replace: ยกเลิกขีดจำกัดชื่อผู้ใช้ 4/6 ตัวอักษร
+
+    # NoUsernameLimit (desc)
+    - find: Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for account usernames. Server-side limits may still apply.
+      replace: ยกเลิกเงื่อนไขที่ชื่อผู้ใช้ของบัญชีต้องมีอย่างน้อย 4 ตัวอักษร (หรือ 6 ตัวอักษรในบาง langtype) แต่ขีดจำกัดฝั่งเซิร์ฟเวอร์อาจยังมีผลอยู่
+
+    # NoPasswordLimit (title)
+    - find: Remove 4/6 letter Password limit
+      replace: ยกเลิกขีดจำกัดรหัสผ่าน 4/6 ตัวอักษร
+
+    # NoPasswordLimit (desc)
+    - find: Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for passwords on the client side. Server-side limits may still apply.
+      replace: ยกเลิกเงื่อนไขที่รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร (หรือ 6 ตัวอักษรในบาง langtype) ฝั่งไคลเอ็นท์ แต่ขีดจำกัดฝั่งเซิร์ฟเวอร์อาจยังมีผลอยู่
+
+    # LicenseScreenVis (group title)
+    - find: LICENSE SCREEN VISIBILITY
+      replace: การแสดงหน้าจอ License
+
+    # HideLicense (title)
+    - find: Always hide License Screen
+      replace: ซ่อนหน้าจอ License เสมอ
+
+    # HideLicense (desc)
+    - find: Skips the EULA/license agreement screen entirely on startup, going directly to the Service Select or login screen. Saves time for players on every launch.
+      replace: ข้ามหน้าจอข้อตกลง EULA/License ทั้งหมดตอนเปิดเกม และไปยังหน้าจอเลือกเซอร์วิสหรือหน้าจอล็อกอินโดยตรง ช่วยประหยัดเวลาผู้เล่นทุกครั้งที่เปิดเกม
+
+    # ShowLicense (title)
+    - find: Always show License Screen
+      replace: แสดงหน้าจอ License เสมอ
+
+    # ShowLicense (desc)
+    - find: Forces the EULA/license agreement screen to show on every startup for all langtypes. Use if your server requires players to accept terms of service before playing.
+      replace: บังคับให้แสดงหน้าจอข้อตกลง EULA/License ทุกครั้งที่เปิดเกมในทุก langtype ใช้หากเซิร์ฟเวอร์ของคุณต้องการให้ผู้เล่นยอมรับข้อกำหนดการใช้บริการก่อนเล่น
+
+    # TraitStatusButton (group title)
+    - find: TRAIT STATUS BUTTON BEHAVIOR
+      replace: การทำงานของปุ่ม Trait Status
+
+    # DisableTraitStatusButton (title)
+    - find: Disable Trait Status Button
+      replace: ปิดใช้งานปุ่ม Trait Status
+
+    # DisableTraitStatusButton (desc)
+    - find: Disables the Trait Status button in the Status Window so clicking it does nothing. Use on pre-4th job servers where the Trait Status panel is not applicable.
+      replace: ปิดใช้งานปุ่ม Trait Status ในหน้าต่างสถานะ ทำให้คลิกแล้วไม่มีอะไรเกิดขึ้น ใช้กับเซิร์ฟเวอร์ที่ยังไม่มีอาชีพคลาส 4 ซึ่งไม่ได้ใช้แผง Trait Status
+
+    # HideTraitStatusButton (title)
+    - find: Hide Trait Status Button
+      replace: ซ่อนปุ่ม Trait Status
+
+    # HideTraitStatusButton (desc)
+    - find: Completely hides the Trait Status expansion button from the Status Window. Use on pre-4th job servers to remove the button entirely rather than just disabling it.
+      replace: ซ่อนปุ่มขยาย Trait Status ออกจากหน้าต่างสถานะทั้งหมด ใช้กับเซิร์ฟเวอร์ที่ยังไม่มีอาชีพคลาส 4 เพื่อนำปุ่มออกไปเลย แทนที่จะแค่ปิดใช้งาน
+
+    # ===== Part 2 pull requests: #68 (Sound.yml) and #70 (UI.yml) =====
+
+    # PlayFirstFrameSounds (title)
+    - find: "Play the sound placed on the first frame of an animation"
+      replace: "เล่นเสียงที่วางไว้ในเฟรมแรกของแอนิเมชัน"
+
+    # PlayFirstFrameSounds (desc)
+    - find: "The client never plays a sound event placed on frame 0 of an animation that has just REPLACED another one. On an action change it rewinds its \"last sounded frame\" cursor to 0 and then plays the frames after it, so frame 0 is skipped. Looping animations and actions replayed as-is are unaffected -- which is why hurt and attack sounds are already heard from the second blow onwards, only the first one missing. Death animations always follow another action and are never replayed, so their frame-0 sound is never heard at all: over the 2103 monster sprites of a 2025 kRO data.grf that is 47 silent death sounds, among them Doppelganger and the twelve Bio Lab clones, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune and Elder Willow. This patch rewinds the cursor to -1 instead, so the loop starts at frame 0 and those sounds are heard. (Warning: doppleganger_die.wav is a bit annoying :D)"
+      replace: "ไคลเอ็นท์ไม่เคยเล่นเสียงที่วางไว้ในเฟรม 0 ของแอนิเมชันที่เพิ่งมาแทนที่แอนิเมชันอื่น เมื่อเปลี่ยนแอ็กชัน มันจะรีเซ็ตเคอร์เซอร์ \"เฟรมที่เล่นเสียงล่าสุด\" เป็น 0 แล้วเล่นเฟรมถัดจากนั้น เฟรม 0 จึงถูกข้ามไป แอนิเมชันแบบวนซ้ำและแอ็กชันที่เล่นซ้ำแบบเดิมไม่ได้รับผลกระทบ -- นี่คือเหตุผลที่เสียงโดนตีและเสียงโจมตีได้ยินตั้งแต่การโจมตีครั้งที่สอง ขาดแค่ครั้งแรก แอนิเมชันตายจะตามหลังแอ็กชันอื่นเสมอและไม่เคยเล่นซ้ำ เสียงในเฟรม 0 ของมันจึงไม่เคยได้ยินเลย: จาก sprite มอนสเตอร์ 2103 ตัวใน data.grf ของ kRO ปี 2025 มีเสียงตาย 47 เสียงที่เงียบ รวมถึง Doppelganger และร่างโคลน Bio Lab ทั้งสิบสอง, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune และ Elder Willow แพตช์นี้รีเซ็ตเคอร์เซอร์เป็น -1 แทน ลูปจึงเริ่มที่เฟรม 0 และได้ยินเสียงเหล่านั้น (คำเตือน: doppleganger_die.wav ค่อนข้างน่ารำคาญ :D)"
+
+    # NativeActJobPreviews (title)
+    - find: "Fix HD Job Sprite Previews (Alt+Q / Alt+S)"
+      replace: "แก้ภาพตัวอย่าง sprite อาชีพแบบ HD (Alt+Q / Alt+S)"
+
+    # NativeActJobPreviews (desc)
+    - find: "Applies ACT layer scale, mirror and rotation to the existing Equipment and Skill Tree sprite resources on 2025-07-16. HD sprites render at their intended size in the native window surfaces. No generated preview pack or runtime DLL is required. Uses the client's existing resource names and GRF priority; install complete matching SPR/ACT pairs."
+      replace: "ใช้สเกล การกลับด้าน และการหมุนของเลเยอร์ ACT กับ sprite resource เดิมของหน้าต่าง Equipment และ Skill Tree บน 2025-07-16 ทำให้ sprite แบบ HD แสดงในขนาดที่ตั้งใจไว้ในหน้าต่างเนทีฟ ไม่ต้องใช้ preview pack ที่สร้างขึ้นหรือ runtime DLL ใช้ชื่อ resource เดิมของไคลเอ็นท์และลำดับความสำคัญของ GRF ให้ติดตั้งไฟล์ SPR/ACT ที่ครบและตรงกันเป็นคู่"

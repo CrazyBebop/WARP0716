@@ -21,54 +21,65 @@
 *                                                                          *
 |**************************************************************************|
 *                                                                          *
-*   Author(s)     : Andrei (4144), Neo-Mind                                *
+*   Author(s)     : Andrei (4144), Neo-Mind, CrazyBebop                    *
 *   Created Date  : 2020-11-21                                             *
-*   Last Modified : 2024-08-08                                             *
+*   Last Modified : 2026-11-02                                             *
 *                                                                          *
 \**************************************************************************/
 
 // TODO - Pattern not present in clients before 2017-10-18
 
 ///
-/// \brief Change the conditional jump to JMP inside CGameMode_virt24 to
-///        ignore test for other members being on same map
+/// \brief When the party leader types /leave, the client walks the party list:
+///        an online member on the leader's map is made leader and the leave
+///        goes out; with nobody online it asks to disband (msgstring 0xCB9,
+///        "There is no party member that can be delegated. Do you want to
+///        disband the party instead?") and Yes sends the leave. The case left
+///        over, members online but none on the leader's map, prints 0xCC9
+///        ("You can leave a party after delegation.") and stops.
+///
+///        This sends that case to the 0xCB9 prompt as well, so the leader can
+///        leave without walking to a member first. (On rAthena a leader who
+///        leaves always disbands the party, which is what the prompt says.)
+///
+///        GitHub #76: the old version searched for its jump with
+///        `a + b + FullVer == 14.29 ? x : y`, which JavaScript reads as
+///        `(a + b + FullVer) == 14.29 ? x : y`, so the TEST/Jcc half of the
+///        pattern was dropped and the patch wrote over a MOV beside it instead
+///        of a jump. It applied and changed nothing.
 ///
 AllowPL2Leave = function(_)
 {
-	$$(_, 1.1, `Find the PUSHes `)
-	let code =
-		(ROC.FullVer == 14.29 ? PUSH_0 : '')  //push 0 or <blank>
-	+	JZ(WCp)                               //jz _next
-	+	(ROC.FullVer == 14.29 ? '' : PUSH_0)  //<blank> or push 0
-	+	PUSH_0       //push 0
+	$$(_, 1, `Find the "You can leave a party after delegation." refusal`)
+	// Shared tail of both layouts: the message arguments and the jump to the chat printer.
+	const tail =
+		PUSH_0       //push 0
 	+	PUSH(0xFF)   //push 0FFh
-	+	PUSH(0XCC9)  //push 0CC9h
-	+	JMP()        //jmp _next
+	+	PUSH(0xCC9)  //push 0CC9h  ; "You can leave a party after delegation."
+	+	JMP()        //jmp _printMsg
 	;
 
-	const refAddr = Exe.FindHex(code);
-	if (refAddr < 0)
-		throw Error("Reference pattern missing");
+	// Newer builds (2025-07-16 among them) push the argument both paths share BEFORE the jump:
+	//   push 0 ; jz _disbandPrompt ; push 0 ; push 0FFh ; push 0CC9h ; jmp _printMsg
+	let jzAddr = -1;
+	let addr = Exe.FindHex(PUSH_0 + JZ(WCp) + tail);
+	if (addr >= 0)
+	{
+		jzAddr = addr + 2;
+	}
+	else
+	{
+		// Older builds: jz _disbandPrompt ; push 0 ; push 0 ; push 0FFh ; push 0CC9h ; jmp _printMsg
+		addr = Exe.FindHex(JZ(WCp) + PUSH_0 + tail);
+		if (addr < 0)
+			throw Error("Reference pattern missing");
 
-	$$(_, 1.2, `Find the JZ/JNZ pattern before it`)
-	code =
-		TEST(AL, AL)              //test al, al
-	+	" [0111010.] [0011....]"  //jz/jnz short _skip          <------- patch here
-	+	ROC.FullVer == 14.29
-	?
-		MOV([EBP, WCn], 0x6A)     //mov dword ptr [LOCAL.x], 6Ah
-	+	JMP(WCp)                  //jmp short _skip#2
-	:
-		MOV([EBP, WCn], -1)       //mov dword ptr [LOCAL.x], -1
-	+	LEA(ECX, [EBP, ALLWC])    //lea ecx, [LOCAL.fInfo]       ; EBP + <fInfo>
-	+	CALL(ALLWC)               //call FRIEND_INFO_destructor
-	;
-	const addr = Exe.FindHex(code, refAddr - 0x40, refAddr);
-	if (addr < 0)
-		throw Error("JZ/JNZ Pattern not found");
+		jzAddr = addr;
+	}
 
-	$$(_, 2, `Enforce the Jump`)
-	Exe.SetJMP(addr + 2);
+	$$(_, 2, `Go to the disband prompt instead of refusing`)
+	// The jump keeps what the compiler built for the taken path, the shared PUSH included.
+	Exe.SetJMP(jzAddr);
 
 	return true;
 };

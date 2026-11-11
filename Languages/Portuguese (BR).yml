@@ -16,6 +16,8 @@
 ## Text orientation & other settings #
 ##===================================#
 #
+# 2026-10-27: newer patch titles and descriptions added by the WARP0716 maintainers (machine-assisted translation; corrections from native speakers welcome).
+
 RTL: no
 #
 ##============================#
@@ -127,7 +129,7 @@ actions:
         tooltip: Seleciona todos os patches marcados com 'recomendado'
     
     loadChangedScripts:
-        title: Carrgear<br>Scripts
+        title: Carregar<br>Scripts
         tooltip: Carrega/Recarrega (Alt+C) todos os arquivos de script .qjs modificados (desde o último carregamento) que estão nas subpastas 'Patches', 'Support' e 'Extensions' dentro do diretório 'Scripts'
     
     clearOutput:
@@ -136,7 +138,6 @@ actions:
     
     evalScript: 
         title: Avaliar
-        tooltip: Evaluate (Ctrl+R) the script in the Editor & dump the result to the Output
         tooltip: Avaliar (Ctrl+R) o script no editor e despeja o resultado na Saída
     
     clearEditor: 
@@ -301,13 +302,13 @@ messages:
     yamlErr: "Falha ao analisar o arquivo YAML (%0) : <b>%1</b>"
     evalErr: "Erro na linha %0 de %1 : <b>%2</b>"
     grpErr: "<b>'groups'</b> devem estar presentes como um array/sequência"
-    extErr: “Extensões devem ser informadas como um array/sequência”
+    extErr: "Extensões devem ser informadas como um array/sequência"
 
     loadFail: "Falha ao carregar o item <b>'%0'</b>"
     callFail: "<b>Patch de Função</b> não pôde ser chamado"
     applyFail: "<b>Patches</b> não puderam ser aplicados"
     tgtFail: "<b>Exe de Destino</b> não pôde ser gravado"
-    funcFail: "<b>%0 Função</b> ausente  or inacessível"
+    funcFail: "<b>%0 Função</b> ausente ou inacessível"
     allocFail: "Falha na alocação de espaço"
     dependFail: "A dependência '<b>%0</b>' não pôde ser selecionada"
     
@@ -414,7 +415,7 @@ texts:
     # Other prompts #
     #===============#
     
-    fontSizePrompt: "Tamango da Font :"
+    fontSizePrompt: "Tamanho da Fonte :"
     fontNamePrompt: "Nome da font :"
     langPrompt: "Idioma :"
     stylePrompt: "Estilo :"
@@ -550,8 +551,8 @@ translations:
     - find : Changes the height in input field of the new char creation dialog to user specified value.
       replace : Altera a altura do campo de entrada da caixa de diálogo na criação de um novo personagem pelo valor especificado pelo usuário.
 
-    - find : Increase char create Hair limits
-      replace : Aumenta o limite de cabelos na criação de personagem
+    - find : Increase char create Hair limits (Reforged)
+      replace : Aumenta o limite de cabelos na criação de personagem (Reforged)
 
     - find : Increase the Hair Style and Color limits used in Make Character Window to user specified values.
       replace : Aumenta o limite de Cor e Estilos de Cabelo usados na Janela de Criação de Personagem pelo número especificado pelo usuário.
@@ -1123,7 +1124,7 @@ translations:
       replace : Faz com que o cliente mostre o emblema em cima do personagem no modo Battleground e também no GvG.
 
     - find : Restore model culling
-      replace : Restaurar seleção de modelo
+      replace : Restaurar o culling de modelos
 
     - find : Culls models in front of player by turning them transparent.
       replace : Seleciona modelos na frente do jogador, tornando-os transparentes.
@@ -1185,7 +1186,7 @@ translations:
     - find : INCREASE HAIRS
       replace : AUMENTAR QUANTIDADE DE CABELOS
 
-    - find : Allow 65k hair styles
+    - find : Allow 65k Hair Styles
       replace : Permitir 65 mil estilos de cabelo
 
     - find : Raises the maximum hairstyle limit to 65535 from the default value.
@@ -1198,7 +1199,7 @@ translations:
       replace : Aumenta o limite máximo de penteados para o valor especificado pelo usuário (até 65.535).
 
     - find : AUTO FOLLOW CUSTOMIZATION
-      replace : PERSONALIZAÇÃO DE SEGUIMENTO AUTOMÁTICO
+      replace : PERSONALIZAÇÃO DE ACOMPANHAMENTO AUTOMÁTICO
 
     - find : Disable auto follow
       replace : Desativar acompanhamento automático
@@ -1290,8 +1291,8 @@ translations:
     - find : Add no delay to walking clicks. But client may likely send more/duplicated packets.
       replace : Remove atraso dos cliques ao andar. Mas o cliente provavelmente pode enviar mais pacotes/pacotes duplicados.
 
-    - find : Customize Walk Delay
-      replace : Personalizar atraso de caminhada
+    - find : Walk Delay (Reforged)
+      replace : Atraso de caminhada (Reforged)
 
     - find : Change the delay for walking clicks to user specified value. But client may likely send more/duplicated packets.
       replace : Altera o atraso dos cliques ao andar para o valor especificado pelo usuário. Mas o cliente provavelmente pode enviar mais pacotes/pacotes duplicados.
@@ -1376,7 +1377,7 @@ translations:
       replace : Habilita o comando <b>/showname</b> para todos os tipos de Idioma
 
     - find : Allow unknown '/command's [Experimental]
-      replace : Permitir '/comandos desconhecidos [Experimental]
+      replace : Permitir '/comandos' desconhecidos [Experimental]
 
     - find : Sends all unknown '<b>/command</b>' sequences to server (for allowing server side '<b>/command</b>'s) instead of showing "Invalid command".
       replace : Envia todas as sequências '<b>/command</b>' desconhecidas para o servidor (para permitir '<b>/command</b>' do lado do servidor) em vez de mostrar "Comando inválido".
@@ -1598,8 +1599,8 @@ translations:
     - find : Enables the use of Custom Shield Types (using Lua Files similar to Xray).
       replace : Permite o uso de Tipos de Escudo Personalizados (usando arquivos Lua semelhantes ao Xray).
 
-    - find : Enable Custom Jobs
-      replace : Habilitar Classes personalizadas
+    - find : Enable Custom Jobs (Reforged)
+      replace : Habilitar Classes personalizadas (Reforged)
 
     - find : Enables the use of Custom Jobs (using Lua Files similar to Xray).
       replace : Permite o uso de Classes Personalizados (usando arquivos Lua semelhantes ao Xray).
@@ -1765,13 +1766,13 @@ translations:
       replace : Adicionar DLLs personalizadas
 
     - find : Makes the hexed client load the specified DLL and functions.
-      replace : Faz com que o cliente hexadecimal carregue a DLL e as funções especificadas.
+      replace : Faz com que o cliente editado em hex carregue a DLL e as funções especificadas.
 
     - find : Hide build info
       replace : Ocultar informações de compilação
 
     - find : Hide the actual build info in client by 'NULL' ifying all related values.
-      replace : Oculta as informações reais de compilação no cliente 'NULL', verificando todos os valores relacionados.
+      replace : Oculta as informações reais de compilação no cliente, anulando ('NULL') todos os valores relacionados.
 
     - find : Disable camera lock
       replace : Desativar bloqueio da câmera
@@ -1837,7 +1838,7 @@ translations:
       replace : Desativa o Anti-Cheat Game Guard de novos clientes.
 
     - find : SKIP LUB
-      replace : SKIP LUB
+      replace : IGNORAR LUB
 
     - find : Skip SignBoard lubs
       replace : Pular lubs do SignBoard
@@ -2104,8 +2105,8 @@ translations:
     - find : Customize App icon
       replace : Customizar Ícone do App
 
-    - find : Makes the client use the User specified icon (any size and bit depth). For Win7 & higher suggested spec is <b><font color='deepskyblue'>256x256 32bit along with a 16x16 one</b><font>.<br><br>For older clients, you would need to select images from the icon since there is a limit of 3.
-      replace : Faz o cliente usar o ícone especificado pelo usuário (qualquer tamanho e profundidade de bits). Para Win7 e superior, a especificação sugerida é <b><font color='deepskyblue'>256x256 32 bits junto com uma de 16x16</b><font>.<br><br>Para clientes mais antigos, você precisa selecionar imagens do ícone, pois há um limite de 3.
+    - find : Makes the client use the User specified icon (any size and bit depth). For Win7 & higher suggested spec is <b><font color='deepskyblue'>256x256 32bit along with a 16x16 one</font></b>.<br><br>For older clients, you would need to select images from the icon since there is a limit of 3.
+      replace : Faz o cliente usar o ícone especificado pelo usuário (qualquer tamanho e profundidade de bits). Para Win7 e superior, a especificação sugerida é <b><font color='deepskyblue'>256x256 32 bits junto com uma de 16x16</font></b>.<br><br>Para clientes mais antigos, você precisa selecionar imagens do ícone, pois há um limite de 3.
 
     - find : PRIORITY ALTERATION
       replace : ALTERAÇÃO DE PRIORIDADE
@@ -2222,8 +2223,6 @@ translations:
     - find : DISABLE ENCRYPTION
       replace : DESATIVAR CRIPTOGRAFIA
 
-    - find : Disable Login password encryption
-      replace : Desativa a criptografia de senha de login
 
     - find : Disable encryption in Login Packet 0x2b0 for old clients.
       replace : Desativa a criptografia no pacote de login 0x2b0 para clientes antigos.
@@ -2246,3 +2245,1405 @@ translations:
     - find : Disable encryption of password in login packet 0x64 for langtypes 4 & 7.
       replace : Desativa a criptografia de senha no pacote de login 0x64 para langtypes 4 e 7.
 
+    # --- Added 2026-10-27: patches and wording newer than this pack (machine-assisted; corrections welcome) ---
+
+    # ===== Character.yml =====
+
+    # OfficialPal (desc)
+    - find: Forces the client to use Gravity's official cloth color palettes on all langtypes. <b>WARNING:</b> Incompatible with the 'Enable Custom Jobs' patch.
+      replace: Força o cliente a usar as paletas de cores de roupa oficiais da Gravity em todos os langtypes. <b>AVISO:</b> Incompatível com o patch 'Habilitar Classes personalizadas'.
+
+    # NoGMSprite (desc)
+    - find: Hides the special GM sprite (the yellow character) while keeping all GM functionality intact, including the yellow name color and admin right-click menu. GMs appear as their normal job class.
+      replace: Oculta o sprite especial de GM (o personagem amarelo), mantendo intactas todas as funcionalidades de GM, incluindo a cor amarela do nome e o menu de administrador do clique direito. Os GMs aparecem com a sua classe normal.
+
+    # RestoreGMWeaponTrail (title)
+    - find: Restore GM weapon trails
+      replace: Restaurar rastros de arma do GM
+
+    # RestoreGMWeaponTrail (desc)
+    - find: Gives back the weapon-trail sprites (the blade gleam drawn while attacking) to accounts listed under &lt;admin&gt; in clientinfo. The client stores 0 in that layer for GM accounts, leaving it without its sprite, so the renderer drops it entirely. <b>Disable GM sprite</b> only covers the two name-list functions and leaves these call sites untouched, so it is required here and gets selected automatically. Bug reported by Monsii.
+      replace: Devolve os sprites de rastro de arma (o brilho da lâmina desenhado durante o ataque) às contas listadas em &lt;admin&gt; no clientinfo. O cliente grava 0 nessa camada para contas de GM, deixando-a sem sprite, e por isso o renderizador a descarta por completo. <b>Desativar sprite de GM</b> cobre apenas as duas funções de lista de nomes e não mexe nesses pontos de chamada, por isso ele é necessário aqui e é selecionado automaticamente. Bug relatado por Monsii.
+
+    # ShowBGEmblem (desc)
+    - find: Displays guild emblems above characters in Battleground maps, the same way they appear during Guild vs Guild (WoE). Helps identify team members in BG. Experimental -- may have visual quirks.
+      replace: "Exibe os emblemas de guilda acima dos personagens em mapas de Battleground, da mesma forma que aparecem no GvG (WoE). Ajuda a identificar os membros da equipe no BG. Experimental: pode ter falhas visuais."
+
+    # RestoreModelCulling (desc)
+    - find: Makes 3D models (buildings, walls, objects) that block your view of the player character turn transparent. Improves visibility in areas with large obstructing models.
+      replace: Faz com que os modelos 3D (prédios, paredes, objetos) que bloqueiam a visão do seu personagem fiquem transparentes. Melhora a visibilidade em áreas com modelos grandes que atrapalham a visão.
+
+    # Intravision (desc)
+    - find: Makes hidden and cloaked characters/objects always visible as dark silhouettes, as if the player permanently has the Intravision buff. Useful for GMs or testing -- gives an unfair advantage in PvP.
+      replace: Torna personagens e objetos escondidos ou camuflados sempre visíveis como silhuetas escuras, como se o jogador tivesse o efeito Intravisão permanentemente. Útil para GMs ou para testes, mas dá uma vantagem injusta no PvP.
+
+    # CustomQSDelay (desc)
+    - find: Changes the cooldown delay (in ticks) for the quick equipment swap feature. Lower values allow faster gear switching; higher values enforce a longer wait between swaps.
+      replace: Altera o tempo de espera (em tiques) da troca rápida de equipamentos. Valores menores permitem trocar de equipamento mais rápido; valores maiores impõem uma espera mais longa entre as trocas.
+
+    # AllowPL2Leave (desc)
+    - find: Allows the party leader to leave the party when no other members are on the same map. By default, the client prevents the leader from leaving while the party still exists. On rAthena, a leader who leaves disbands the party.
+      replace: Permite que o líder do grupo saia do grupo quando nenhum outro membro estiver no mesmo mapa. Por padrão, o cliente impede que o líder saia enquanto o grupo ainda existir. No rAthena, um líder que sai desfaz o grupo.
+
+    # AllowSkillSpam (desc)
+    - find: Allows rapid skill casting by holding down a hotkey instead of having to press it repeatedly. Removes the client-side cooldown between hotkey activations. Optionally switched on and off in game with a slash command (default /skillspam, starts off).
+      replace: Permite usar habilidades rapidamente mantendo pressionada uma tecla de atalho, em vez de ter que pressioná-la repetidas vezes. Remove o tempo de espera do lado do cliente entre as ativações da tecla de atalho. Opcionalmente, pode ser ligado e desligado no jogo com um comando de barra (padrão /skillspam, começa desligado).
+
+    # AllowGuildInClan (desc)
+    - find: Removes the client-side restriction that blocks guild features (creating/joining guilds, GvG, etc.) while the player is a member of a clan. Allows both memberships to coexist.
+      replace: Remove a restrição do lado do cliente que bloqueia os recursos de guilda (criar ou entrar em guildas, GvG etc.) enquanto o jogador é membro de um clã. Permite que as duas participações coexistam.
+
+    # CustomAFStopDelay (desc)
+    - find: Changes the delay before auto-follow stops after the target moves out of range. Lower values make the character stop sooner; higher values keep following longer.
+      replace: Altera o atraso antes que o acompanhamento automático pare depois que o alvo sai do alcance. Valores menores fazem o personagem parar mais cedo; valores maiores o mantêm seguindo por mais tempo.
+
+    # ShowGvGDamage (desc)
+    - find: Shows damage numbers on Guild vs Guild (WoE) maps. By default, the client hides all damage digits during GvG to reduce visual clutter, but this makes it hard to gauge effectiveness.
+      replace: Mostra os números de dano em mapas de GvG (WoE). Por padrão, o cliente oculta todos os dígitos de dano durante o GvG para reduzir a poluição visual, mas isso dificulta avaliar a eficácia dos ataques.
+
+
+    # Allow65kHairs (desc)
+    - find: Removes the hard-coded hair style limit, allowing the client to load any hair sprite by number. Supports up to 65535 styles.
+      replace: Remove o limite fixo no código para estilos de cabelo, permitindo que o cliente carregue qualquer sprite de cabelo pelo número. Suporta até 65535 estilos.
+
+    # MoreBodyStyles (title)
+    - find: More Body Styles (alternate outfits)
+      replace: Mais estilos de corpo (roupas alternativas)
+
+    # MoreBodyStyles (desc)
+    - find: Lets a job have more alternate outfits than the one the client knows. List each extra outfit as outfit id = job id, costume; its sprites load from costume_<N>. The server must know the outfit id (job enum, script constant, AlternateOutfits, and on rAthena a Jobs entry of its own in job_stats, or @bodystyle answers Appearance changed and nothing changes). Stock outfits are unchanged.
+      replace: Permite que uma classe tenha mais roupas alternativas do que a única que o cliente conhece. Liste cada roupa extra como outfit id = job id, costume; os sprites dela são carregados de costume_<N>. O servidor precisa conhecer o outfit id (enum de classe, constante de script, AlternateOutfits e, no rAthena, uma entrada Jobs própria no job_stats; caso contrário, o @bodystyle responde Appearance changed e nada muda). As roupas originais continuam iguais.
+
+    # NoAutoFollow (desc)
+    - find: Completely disables the Shift+Right-Click auto-follow feature. Use on servers where auto-follow is considered an exploit or is not desired.
+      replace: Desativa completamente o acompanhamento automático com Shift + clique direito. Use em servidores onde o acompanhamento automático é considerado exploit ou não é desejado.
+
+    # DecrAFDelay (desc)
+    - find: Reduces the initial delay before auto-follow starts moving after Shift+Right-Click. Lower values make the character begin following sooner.
+      replace: Reduz o atraso inicial antes que o acompanhamento automático comece a se mover após Shift + clique direito. Valores menores fazem o personagem começar a seguir mais cedo.
+
+    # CustomAuraSprites (desc)
+    - find: Separates aura sprites from warp portal effects by using dedicated files (aurafloat.tga and auraring.bmp in 'data\\texture\\effect'). Prevents high-level character auras from visually interfering with warp portals.
+      replace: Separa os sprites de aura dos efeitos de portal de warp usando arquivos dedicados (aurafloat.tga e auraring.bmp em 'data\\texture\\effect'). Evita que as auras de personagens de nível alto interfiram visualmente nos portais de warp.
+
+    # CustomAuraLimits (desc)
+    - find: Customizes which character classes and levels display the standard aura effect. Set minimum levels and allowed job classes for aura visibility to match your server's progression system.
+      replace: Personaliza quais classes e níveis de personagem exibem o efeito de aura padrão. Defina os níveis mínimos e as classes permitidas para a aura aparecer, de acordo com o sistema de progressão do seu servidor.
+
+    # CustomGMColor (desc)
+    - find: Changes the color of GM chat messages to a custom hex value. Default is ffff00 (yellow). Use to make GM announcements stand out in your preferred color.
+      replace: Altera a cor das mensagens de chat de GM para um valor hexadecimal personalizado. O padrão é ffff00 (amarelo). Use para destacar os anúncios de GM na cor que preferir.
+
+    # CustomGuildColor (desc)
+    - find: Changes the color of guild chat messages to a custom hex value. Default is b4ffb4 (light green).
+      replace: Altera a cor das mensagens do chat da guilda para um valor hexadecimal personalizado. O padrão é b4ffb4 (verde-claro).
+
+    # CustomPartyColor (desc)
+    - find: Changes the color of party chat messages from other members to a custom hex value. Default is ffc8c8 (pinkish).
+      replace: Altera a cor das mensagens do chat de grupo enviadas pelos outros membros para um valor hexadecimal personalizado. O padrão é ffc8c8 (rosado).
+
+    # CustomPartyColorSelf (desc)
+    - find: Changes the color of your own party chat messages to a custom hex value. Default is ffc800 (orange).
+      replace: Altera a cor das suas próprias mensagens no chat de grupo para um valor hexadecimal personalizado. O padrão é ffc800 (laranja).
+
+    # CustomPublicColor (desc)
+    - find: Changes the color of public chat messages from other players to a custom hex value. Default is ffffff (white).
+      replace: Altera a cor das mensagens do chat público enviadas por outros jogadores para um valor hexadecimal personalizado. O padrão é ffffff (branco).
+
+    # CustomPublicColorSelf (desc)
+    - find: Changes the color of your own public chat messages to a custom hex value. Default is 00ff00 (green).
+      replace: Altera a cor das suas próprias mensagens no chat público para um valor hexadecimal personalizado. O padrão é 00ff00 (verde).
+
+    # SkipInFriendList (desc)
+    - find: Disables the "possible impersonation" warning when receiving a PM from someone whose name resembles a friend on your list. The warning is meant to detect name spoofing but causes false positives.
+      replace: Desativa o aviso de "possível falsificação de identidade" ao receber uma PM de alguém cujo nome se parece com o de um amigo da sua lista. O aviso serve para detectar nomes falsificados, mas gera falsos positivos.
+
+    # SkipInGuildList (desc)
+    - find: Disables the "possible impersonation" warning when receiving a PM from someone whose name resembles a guild member. Same as the friend list version but for guild members.
+      replace: Desativa o aviso de "possível falsificação de identidade" ao receber uma PM de alguém cujo nome se parece com o de um membro da guilda. É igual à versão da lista de amigos, mas para membros da guilda.
+
+    # CustomWalkDelay (desc)
+    - find: "Sets the delay between walk-click inputs, in milliseconds. The client default is 600, and lower values make movement more responsive. <b>Do not go below 10.</b> At very low values the character walks onto an NPC's cell while its message box or shop window is open (GitHub issue #39); 10 is the lowest value confirmed working. 0 is still accepted and reproduces the old separate <i>Remove Walk Delay</i> patch exactly, including that bug. This patch replaces both <i>Remove Walk Delay</i> and <i>Customize Walk Delay</i>, which were the same setting: removing the delay was simply this value set to 0."
+      replace: "Define o atraso entre os cliques de caminhada, em milissegundos. O padrão do cliente é 600, e valores menores deixam o movimento mais responsivo. <b>Não use menos de 10.</b> Com valores muito baixos, o personagem entra na célula de um NPC enquanto a caixa de mensagem ou a janela de loja dele está aberta (issue #39 do GitHub); 10 é o menor valor confirmado como funcional. O 0 ainda é aceito e reproduz exatamente o antigo patch separado <i>Remover atraso de caminhada</i>, incluindo esse bug. Este patch substitui tanto <i>Remover atraso de caminhada</i> quanto <i>Personalizar atraso de caminhada</i>, que eram a mesma configuração: remover o atraso era simplesmente definir este valor como 0."
+
+    # HideResButton (desc)
+    - find: Hides the Token of Ziegfried resurrection button when the player dies, even if one is in inventory. Use on servers where self-resurrection is not desired or the token has been repurposed.
+      replace: Oculta o botão de ressurreição do Amuleto de Ziegfried quando o jogador morre, mesmo que haja um no inventário. Use em servidores onde a autorressurreição não é desejada ou onde o amuleto tem outra função.
+
+    # ShowResButton (desc)
+    - find: Always shows the Token of Ziegfried resurrection button on death regardless of the map type. By default, the button is hidden on certain map types like PvP or GvG maps.
+      replace: Sempre mostra o botão de ressurreição do Amuleto de Ziegfried ao morrer, independentemente do tipo de mapa. Por padrão, o botão fica oculto em certos tipos de mapa, como mapas de PvP ou GvG.
+
+    # ===== Client.yml =====
+
+    # ResizePlayerBar (desc)
+    - find: Changes the width of your own character's HP and SP bars to a custom size. Useful for making health bars easier to read at a glance.
+      replace: Altera a largura das barras de HP e SP do seu próprio personagem para um tamanho personalizado. Útil para deixar as barras de vida mais fáceis de ler num relance.
+
+    # ResizeNormalBar (desc)
+    - find: Changes the width of the HP bar displayed above regular monsters to a custom size.
+      replace: Altera a largura da barra de HP exibida acima dos monstros comuns para um tamanho personalizado.
+
+    # ResizeMiniBossBar (desc)
+    - find: Changes the width of the HP bar displayed above Mini-Boss monsters to a custom size. Helpful for distinguishing Mini-Bosses from regular mobs.
+      replace: Altera a largura da barra de HP exibida acima dos monstros Mini-Chefe para um tamanho personalizado. Ajuda a distinguir os Mini-Chefes dos monstros comuns.
+
+    # ResizeBossBar (desc)
+    - find: Changes the width of the HP bar displayed above Boss (MVP) monsters to a custom size. Helpful for distinguishing Bosses from regular mobs.
+      replace: Altera a largura da barra de HP exibida acima dos monstros Chefe (MVP) para um tamanho personalizado. Ajuda a distinguir os Chefes dos monstros comuns.
+
+    # AllianceChatHotkeySelector (title)
+    - find: Alliance Chat Hotkey Selector
+      replace: Seletor de atalho do chat de aliança
+
+    # AllianceChatHotkeySelector (desc)
+    - find: Allows you to choose a custom symbol to trigger Alliance Chat instead of the default '#'. This is useful to avoid conflicts with GM command symbols such as @ or !.
+      replace: Permite escolher um símbolo personalizado para ativar o chat de aliança no lugar do '#' padrão. Útil para evitar conflitos com símbolos de comandos de GM, como @ ou !.
+
+    # NoEarthQuake (desc)
+    - find: Disables the screen-shaking Earthquake skill effect. Prevents motion sickness and visual discomfort caused by this skill.
+      replace: Desativa o efeito de tremor de tela da habilidade Terremoto. Evita enjoo e desconforto visual causados por essa habilidade.
+
+    # NoBlindness (desc)
+    - find: Disables the Blind status effect that darkens the entire screen. Prevents the disorienting black-screen visual when blinded.
+      replace: Desativa o efeito do status Cegueira, que escurece a tela inteira. Evita a tela preta desorientadora quando você fica cego.
+
+    # RestoreSongsEffect (title)
+    - find: Restore Bard/Dancer Song Effects (Old Song Patch)
+      replace: Restaurar efeitos das músicas de Bardo/Odalisca (Old Song Patch)
+
+    # RestoreSongsEffect (desc)
+    - find: Restores the visual ground effects for Bard and Dancer song skills. Otherwise known as the Restore Old Song patch. These effects were removed in newer clients but this patch reconstructs them using LandProtector's rendering code.
+      replace: Restaura os efeitos visuais no chão das habilidades de música do Bardo e da Odalisca. Também é conhecido como o patch Restore Old Song. Esses efeitos foram removidos nos clientes mais novos, mas este patch os reconstrói usando o código de renderização do LandProtector.
+
+    # EnableWho (desc)
+    - find: Enables the <b>/w</b> and <b>/who</b> commands on all langtypes to show the current number of online players. Normally restricted to certain service regions.
+      replace: Habilita os comandos <b>/w</b> e <b>/who</b> em todos os langtypes para mostrar o número atual de jogadores online. Normalmente é restrito a certas regiões de serviço.
+
+    # EnableShowName (desc)
+    - find: Enables the <b>/showname</b> command on all langtypes, allowing players to toggle the display of character names, party names, and guild names above sprites.
+      replace: Habilita o comando <b>/showname</b> em todos os langtypes, permitindo que os jogadores alternem a exibição dos nomes de personagem, de grupo e de guilda acima dos sprites.
+
+    # EnableUnknCmds (desc)
+    - find: Sends unrecognized '<b>/command</b>' inputs to the server instead of showing "Invalid command". Allows server-side slash commands (like custom scripts) to work through the chat box.
+      replace: Envia ao servidor as entradas '<b>/command</b>' não reconhecidas, em vez de mostrar "Comando inválido". Permite que comandos de barra do lado do servidor (como scripts personalizados) funcionem pela caixa de chat.
+
+    # NoDancerScream (desc)
+    - find: Removes the random chat messages that appear when the Dancer's Scream skill is used (loaded from dc_scream.txt). Reduces chat spam in busy areas.
+      replace: Remove as mensagens aleatórias de chat que aparecem quando a habilidade Escândalo da Odalisca é usada (carregadas de dc_scream.txt). Reduz o spam no chat em áreas movimentadas.
+
+    # NoBardFrostJoke (desc)
+    - find: Removes the random chat messages that appear when the Bard's Frost Joke skill is used (loaded from ba_frostjoke.txt). Reduces chat spam in busy areas.
+      replace: Remove as mensagens aleatórias de chat que aparecem quando a habilidade Piada Infame do Bardo é usada (carregadas de ba_frostjoke.txt). Reduz o spam no chat em áreas movimentadas.
+
+    # ResizeChatBox (desc)
+    - find: Increases the character limit in the Main/Battle chat input box from <b>70</b> to a custom value. Most servers use 234 to allow longer messages.
+      replace: Aumenta o limite de caracteres da caixa de entrada do chat Principal/de Batalha de <b>70</b> para um valor personalizado. A maioria dos servidores usa 234 para permitir mensagens mais longas.
+
+    # ResizeChatRoomBox (desc)
+    - find: Increases the character limit in chat room input boxes from <b>70</b> to a custom value. Most servers use 234 to allow longer messages.
+      replace: Aumenta o limite de caracteres das caixas de entrada das salas de bate-papo de <b>70</b> para um valor personalizado. A maioria dos servidores usa 234 para permitir mensagens mais longas.
+
+    # ResizePMBox (desc)
+    - find: Increases the character limit in the PM (whisper) input box from <b>70</b> to a custom value. Most servers use 234 to allow longer private messages.
+      replace: Aumenta o limite de caracteres da caixa de entrada de PM (mensagem privada) de <b>70</b> para um valor personalizado. A maioria dos servidores usa 234 para permitir mensagens privadas mais longas.
+
+    # ResizeNpcBox (desc)
+    - find: Increases the maximum character limit for NPC dialog input fields to a custom value (between 2052 and 4096). Useful for servers with NPCs that accept longer text input.
+      replace: Aumenta o limite máximo de caracteres dos campos de entrada nos diálogos de NPC para um valor personalizado (entre 2052 e 4096). Útil para servidores com NPCs que aceitam textos mais longos.
+
+    # ShowRoulette (desc)
+    - find: Restores the Roulette icon that Gravity removed in newer clients. Use this if your server has Roulette functionality enabled.
+      replace: Restaura o ícone da Roleta que a Gravity removeu nos clientes mais novos. Use se o seu servidor tiver a Roleta habilitada.
+
+    # MoveShopIcon (desc)
+    - find: Repositions the Cash Shop icon to custom screen coordinates. Positive values offset from the top-left corner; negative values offset from the bottom-right corner.
+      replace: Move o ícone da Loja de Cash para coordenadas de tela personalizadas. Valores positivos contam a partir do canto superior esquerdo; valores negativos, a partir do canto inferior direito.
+
+    # ZeroCinShop (desc)
+    - find: Forces the <b>C</b> (cash point) field to display 0 instead of random garbage values in the Cash Shop. Fixes a display bug on servers that do not use Gravity's cash point system.
+      replace: Força o campo <b>C</b> (pontos de cash) a mostrar 0 em vez de valores aleatórios sem sentido na Loja de Cash. Corrige um erro de exibição em servidores que não usam o sistema de pontos de cash da Gravity.
+
+    # PreviewInShop (desc)
+    - find: Adds an equipment preview button in the Cash Shop (right-click items to see it). Lets players see how gear looks before buying. Requires server-side support to be enabled as well.
+      replace: Adiciona um botão de pré-visualização de equipamento na Loja de Cash (clique com o botão direito nos itens para vê-lo). Permite que os jogadores vejam como o equipamento fica antes de comprar. Também exige suporte habilitado no lado do servidor.
+
+    # PreviewInTrader (desc)
+    - find: Adds an equipment preview button in the older-style Trader Shop (right-click items to see it). Requires server-side support to be enabled as well.
+      replace: Adiciona um botão de pré-visualização de equipamento na Loja de Troca de estilo antigo (clique com o botão direito nos itens para vê-lo). Também exige suporte habilitado no lado do servidor.
+
+    # HideCashShop (desc)
+    - find: Hides the Cash Shop icon from the game interface. Useful for servers that do not use a Cash Shop or want a cleaner UI.
+      replace: Oculta o ícone da Loja de Cash da interface do jogo. Útil para servidores que não usam Loja de Cash ou que querem uma interface mais limpa.
+
+    # LowCamAngle (desc)
+    - find: Expands the allowed camera tilt range to about <b>30 degrees</b>, letting you angle the view slightly lower than default. A subtle improvement for general gameplay.
+      replace: Amplia a faixa de inclinação permitida da câmera para cerca de <b>30 graus</b>, permitindo inclinar a visão um pouco mais baixo que o padrão. Uma melhoria sutil para o jogo em geral.
+
+    # MediumCamAngle (desc)
+    - find: Expands the allowed camera tilt range to about <b>42 degrees</b>, providing a good balance between visibility and immersion. Recommended for most players.
+      replace: Amplia a faixa de inclinação permitida da câmera para cerca de <b>42 graus</b>, oferecendo um bom equilíbrio entre visibilidade e imersão. Recomendado para a maioria dos jogadores.
+
+    # HighCamAngle (desc)
+    - find: Expands the allowed camera tilt range to about <b>65 degrees</b>, enabling a near ground-level view. Great for screenshots, but may cause visual glitches on some maps.
+      replace: Amplia a faixa de inclinação permitida da câmera para cerca de <b>65 graus</b>, permitindo uma visão quase no nível do chão. Ótimo para capturas de tela, mas pode causar falhas visuais em alguns mapas.
+
+    # ZoomIn25Percent (desc)
+    - find: Pulls the camera <b>closer</b> than default, to about a quarter of the stock distance (480 &rarr; 128). The odd one out in this group - every other entry here zooms out.
+      replace: "Deixa a câmera <b>mais perto</b> do que o padrão, a cerca de um quarto da distância original (480 &rarr; 128). É a exceção deste grupo: todas as outras opções aqui afastam o zoom."
+
+    # ZoomOut25Percent (title)
+    - find: Increase Zoom Out (to 25%)
+      replace: Aumentar o zoom (para 25%)
+
+    # ZoomOut25Percent (desc)
+    - find: Extends the zoom-out range by <b>25%</b> over the default (480 &rarr; 600). The gentlest of the four increases - use it when Max feels too far out. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: "Amplia o alcance do zoom out em <b>25%</b> além do padrão (480 &rarr; 600). É o mais suave dos quatro aumentos: use quando a opção máxima parecer longe demais. &#9733; <b>Lembre-se de usar /zoom no jogo</b>, senão nada disso aparece. O cliente tem a sua própria configuração de zoom out e, com ela desligada, a câmera fica limitada a 400, mais perto que o padrão original."
+
+    # Zoom50Percent (desc)
+    - find: Extends the zoom-out range by <b>50%</b> over the default (480 &rarr; 720), letting you see more of the map around your character. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: Amplia o alcance do zoom out em <b>50%</b> além do padrão (480 &rarr; 720), permitindo ver mais do mapa ao redor do seu personagem. &#9733; <b>Lembre-se de usar /zoom no jogo</b>, senão nada disso aparece. O cliente tem a sua própria configuração de zoom out e, com ela desligada, a câmera fica limitada a 400, mais perto que o padrão original.
+
+    # Zoom75Percent (desc)
+    - find: Extends the zoom-out range by <b>75%</b> over the default (480 &rarr; 840). A wide field of view, useful for WoE, PvP and large-scale fights. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: Amplia o alcance do zoom out em <b>75%</b> além do padrão (480 &rarr; 840). Um campo de visão amplo, útil para WoE, PvP e batalhas em grande escala. &#9733; <b>Lembre-se de usar /zoom no jogo</b>, senão nada disso aparece. O cliente tem a sua própria configuração de zoom out e, com ela desligada, a câmera fica limitada a 400, mais perto que o padrão original.
+
+    # ZoomMax (desc)
+    - find: Pulls the camera back as far as this client can actually draw (480 &rarr; 1127). Maximum visibility, though sprites get small. &#9733; This was 1224 until 2026-08-25; that value is past the render limit and shows black at the screen edges. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: Afasta a câmera o máximo que este cliente realmente consegue desenhar (480 &rarr; 1127). Visibilidade máxima, embora os sprites fiquem pequenos. &#9733; Era 1224 até 2026-08-25; esse valor passa do limite de renderização e mostra preto nas bordas da tela. &#9733; <b>Lembre-se de usar /zoom no jogo</b>, senão nada disso aparece. O cliente tem a sua própria configuração de zoom out e, com ela desligada, a câmera fica limitada a 400, mais perto que o padrão original.
+
+    # ZoomCustom (title)
+    - find: Increase Zoom Out (custom %)
+      replace: Aumentar o zoom (% personalizado)
+
+    # ZoomCustom (desc)
+    - find: Asks you for the increase as a <b>percentage over the client default</b> and converts it for you, so typing <b>60</b> gives the camera 60% more range (480 &rarr; 768). The presets above are the common values; this one covers everything in between. Defaults to <b>134</b>, just under Max. Anything above 135 draws black at the screen edges, and is allowed here anyway so you can experiment. &#9733; <b>Remember to use /zoom in game</b>, or none of this shows. The client keeps its own zoom-out setting, and with that off the camera is capped at 400, which is tighter than stock.
+      replace: Pede o aumento como uma <b>porcentagem sobre o padrão do cliente</b> e faz a conversão para você, então digitar <b>60</b> dá à câmera 60% mais alcance (480 &rarr; 768). As predefinições acima são os valores mais comuns; esta opção cobre tudo o que fica entre eles. O padrão é <b>134</b>, logo abaixo do máximo. Qualquer valor acima de 135 desenha preto nas bordas da tela, e mesmo assim é permitido aqui para você experimentar. &#9733; <b>Lembre-se de usar /zoom no jogo</b>, senão nada disso aparece. O cliente tem a sua própria configuração de zoom out e, com ela desligada, a câmera fica limitada a 400, mais perto que o padrão original.
+
+    # UseSSOLogin (desc)
+    - find: Forces all langtypes to use the SSO login packet (0x825) instead of the old login packet (0x64). Required when using a patcher/launcher that passes credentials via command-line token. <b>WARNING:</b> Incompatible with 'Disable Login password encryption' (NoPassEncr).
+      replace: Força todos os langtypes a usar o pacote de login SSO (0x825) em vez do pacote de login antigo (0x64). Necessário ao usar um patcher/launcher que passa as credenciais por um token na linha de comando. <b>AVISO:</b> Incompatível com 'Desativar criptografia de senha de login' (NoPassEncr).
+
+    # UseOldLogin (desc)
+    - find: Forces the client to use the old login packet (0x64) for authentication. Required for newer clients where 'Restore Login Window' no longer works. The standard choice for most servers with direct username/password login.
+      replace: Força o cliente a usar o pacote de login antigo (0x64) para autenticação. Necessário em clientes mais novos onde 'Restaurar janela de login' não funciona mais. É a escolha padrão para a maioria dos servidores com login direto por usuário e senha.
+
+    # UnlimitedChatRepeat (desc)
+    - find: Removes the client-side limit on repeating the same chat message. By default, the client blocks you from sending the same message more than a few times in a row.
+      replace: Remove o limite do lado do cliente para repetir a mesma mensagem no chat. Por padrão, o cliente impede que você envie a mesma mensagem mais do que algumas vezes seguidas.
+
+    # LimitedChatRepeat (desc)
+    - find: Changes the maximum number of identical consecutive chat messages allowed from the default of 2 to a custom value. Provides more control than fully removing the limit.
+      replace: Altera o número máximo de mensagens de chat idênticas e consecutivas permitidas, do padrão de 2 para um valor personalizado. Oferece mais controle do que remover o limite por completo.
+
+    # AddInpDelay (desc)
+    - find: Adds extra milliseconds to the client's input processing delay. Can be used to throttle input speed for testing or to reduce CPU usage on low-end machines.
+      replace: Adiciona milissegundos extras ao atraso de processamento de entrada do cliente. Pode ser usado para limitar a velocidade de entrada em testes ou para reduzir o uso de CPU em máquinas mais fracas.
+
+    # CustomGameLoopDelay (desc)
+    - find: Changes the Sleep() delay in the main game loop to a custom value (in milliseconds). Lower values make the client more responsive but use more CPU; higher values save CPU at the cost of smoothness.
+      replace: Altera o atraso do Sleep() no loop principal do jogo para um valor personalizado (em milissegundos). Valores menores deixam o cliente mais responsivo, mas usam mais CPU; valores maiores economizam CPU à custa da fluidez.
+
+    # ===== Data.yml =====
+
+    # CustomMaxEmbFileSize (desc)
+    - find: Changes the maximum allowed file size for guild emblems. Increase this if players are getting errors when uploading detailed or high-resolution guild emblems.
+      replace: Altera o tamanho máximo de arquivo permitido para emblemas de guilda. Aumente se os jogadores estiverem recebendo erros ao enviar emblemas de guilda detalhados ou de alta resolução.
+
+    # CustomRodexTax (desc)
+    - find: Changes the tax percentage deducted when sending zeny through the RoDEx (mail) system. Set to 0 to remove the tax entirely, or adjust to your server's economy.
+      replace: Altera a porcentagem de imposto descontada ao enviar zeny pelo sistema RoDEx (correio). Defina 0 para remover o imposto por completo, ou ajuste conforme a economia do seu servidor.
+
+    # CustomGuildExpLimit (desc)
+    - find: Changes the maximum percentage of experience a player can donate to their guild. Default is 50%. Adjust to match your server's guild configuration.
+      replace: Altera a porcentagem máxima de experiência que um jogador pode doar à sua guilda. O padrão é 50%. Ajuste conforme a configuração de guildas do seu servidor.
+
+    # CustomAdvAgencyLimits (desc)
+    - find: Changes the minimum and maximum level range shown in the Adventurer Agency (party finder) window. Adjust to match your server's level cap and party requirements.
+      replace: Altera a faixa de nível mínimo e máximo mostrada na janela da Agência de Aventureiros (busca de grupo). Ajuste conforme o nível máximo e os requisitos de grupo do seu servidor.
+
+    # EnableCustomFonts (title)
+    - find: Enable Official Custom Fonts (Reforged)
+      replace: Ativar fontes personalizadas oficiais (Reforged)
+
+    # EnableCustomFonts (desc)
+    - find: Loads custom .ttf fonts via AddFontResourceExA at init, bypassing the broken T2Embed API on modern Windows. Prompts to copy included .ttf fonts to your client folder on first apply. Requires FixFontsCharset (auto-enabled).
+      replace: Carrega fontes .ttf personalizadas via AddFontResourceExA na inicialização, contornando a API T2Embed, que não funciona no Windows moderno. Na primeira aplicação, pergunta se deve copiar as fontes .ttf incluídas para a pasta do seu cliente. Requer FixFontsCharset (ativado automaticamente).
+
+    # FixFontsCharset (desc)
+    - find: Fixes the character encoding (charset) used for official custom fonts (EOT and OTF) so they render correctly on all langtypes. Prevents garbled text when using custom fonts on non-Korean service types. Fixed EDI register clobber for 07-16.
+      replace: Corrige a codificação de caracteres (charset) usada pelas fontes personalizadas oficiais (EOT e OTF) para que sejam exibidas corretamente em todos os langtypes. Evita texto corrompido ao usar fontes personalizadas em tipos de serviço que não são coreanos. Corrigida a sobrescrita do registrador EDI no 07-16.
+
+    # AlwaysAscii (desc)
+    - find: Forces ASCII text rendering regardless of the selected font or langtype. Ensures English characters always display correctly on all service types.
+      replace: Força a renderização de texto em ASCII independentemente da fonte ou do langtype selecionado. Garante que os caracteres em inglês sejam sempre exibidos corretamente em todos os tipos de serviço.
+
+    # CustomSSQuality (desc)
+    - find: Changes the JPEG compression quality for in-game screenshots (0-100). Higher values produce sharper images but larger files. Default quality is relatively low.
+      replace: Altera a qualidade de compressão JPEG das capturas de tela do jogo (0-100). Valores maiores geram imagens mais nítidas, mas arquivos maiores. A qualidade padrão é relativamente baixa.
+
+    # CallKoreaClientInfo (desc)
+    - find: Ensures SelectKoreaClientInfo() is always called alongside SelectClientInfo(), unlocking features normally restricted to the Korean service type. Recommended for most servers to enable full client functionality.
+      replace: Garante que SelectKoreaClientInfo() seja sempre chamado junto com SelectClientInfo(), liberando recursos normalmente restritos ao tipo de serviço coreano. Recomendado para a maioria dos servidores, para habilitar todas as funcionalidades do cliente.
+
+    # DataFolderFirst (desc)
+    - find: Loads loose files from the 'data' folder before checking GRF archives. Useful for development and testing custom sprites, textures, or lua files without repacking the GRF.
+      replace: Carrega os arquivos soltos da pasta 'data' antes de procurar nos arquivos GRF. Útil para desenvolver e testar sprites, texturas ou arquivos lua personalizados sem reempacotar a GRF.
+
+    # PlainTextDesc (desc)
+    - find: Forces the client to read item and skill description .txt files as plain ASCII text instead of encoded Korean. Required for English-language description files to display correctly.
+      replace: Força o cliente a ler os arquivos .txt de descrição de itens e habilidades como texto ASCII simples em vez de coreano codificado. Necessário para que os arquivos de descrição em inglês sejam exibidos corretamente.
+
+    # LoadKrExtSettings (desc)
+    - find: Forces loading of the Korean ExternalSettings lua file on all langtypes. This file controls many client features and UI options that are otherwise unavailable outside the Korean service type.
+      replace: Força o carregamento do arquivo lua ExternalSettings coreano em todos os langtypes. Esse arquivo controla muitos recursos do cliente e opções de interface que, de outra forma, ficam indisponíveis fora do tipo de serviço coreano.
+
+    # IncrViewID (desc)
+    - find: Raises the maximum headgear View ID limit from the default (1000-3000 depending on client version) up to 32000. Required for servers with large numbers of custom headgear sprites.
+      replace: Aumenta o limite máximo de ID de visualização dos capacetes do padrão (1000-3000, dependendo da versão do cliente) para até 32000. Necessário para servidores com muitos sprites de capacetes personalizados.
+
+    # No3DBoneLimit (desc)
+    - find: Removes the hardcoded monster ID limit for 3D Granny models, allowing custom 3D monsters beyond the official range. Required for servers that add new 3D monster sprites.
+      replace: Remove o limite fixo no código para IDs de monstros com modelos 3D Granny, permitindo monstros 3D personalizados além da faixa oficial. Necessário para servidores que adicionam novos sprites de monstros 3D.
+
+    # IncrMapQuality (desc)
+    - find: Upgrades map texture rendering from 16-bit to 32-bit color depth, resulting in smoother color gradients and reduced banding on ground textures. May slightly increase memory usage.
+      replace: Aumenta a profundidade de cor da renderização das texturas do mapa de 16 bits para 32 bits, resultando em degradês mais suaves e menos faixas nas texturas do chão. Pode aumentar um pouco o uso de memória.
+
+    # EnableEffectTool (desc)
+    - find: Makes the client load per-map effect files from the EffectTool folder on all maps, not just select ones. Allows custom map effects (weather, ambient particles, etc.) to work everywhere.
+      replace: Faz o cliente carregar os arquivos de efeito por mapa da pasta EffectTool em todos os mapas, não apenas em alguns. Permite que efeitos de mapa personalizados (clima, partículas de ambiente etc.) funcionem em qualquer lugar.
+
+    # ItemInfoPerServer (desc)
+    - find: Loads the ItemInfo lua file and passes the selected character server name as an argument. Allows different item databases per server when hosting multiple char servers (e.g., Renewal vs Pre-Renewal).
+      replace: Carrega o arquivo lua ItemInfo e passa o nome do servidor de personagens selecionado como argumento. Permite bancos de dados de itens diferentes por servidor ao hospedar vários servidores de personagens (por exemplo, Renewal e Pre-Renewal).
+
+    # UseStateLubIcon (desc)
+    - find: Disables hardcoded status effect icons and loads them exclusively from stateiconimginfo.lub instead. Allows full customization of buff/debuff icons through lua.
+      replace: Desativa os ícones de efeitos de status fixos no código e os carrega exclusivamente do stateiconimginfo.lub. Permite personalizar por completo os ícones de buff/debuff via lua.
+
+    # CustomDLL (desc)
+    - find: Injects custom DLL loading into the client at startup. Specify the DLL filename and exported functions to call. Used for adding custom functionality like anticheat, custom rendering, or server-specific features.
+      replace: Injeta o carregamento de DLLs personalizadas no cliente durante a inicialização. Especifique o nome do arquivo da DLL e as funções exportadas a chamar. Usado para adicionar funcionalidades personalizadas, como anticheat, renderização personalizada ou recursos específicos do servidor.
+
+    # HideBuildInfo (desc)
+    - find: Hides the client's build date, time, and version information by zeroing out all related strings. Prevents players from seeing which exact client version the server uses.
+      replace: Oculta a data, a hora e as informações de versão do build do cliente, zerando todas as strings relacionadas. Impede que os jogadores vejam exatamente qual versão de cliente o servidor usa.
+
+    # NoCameraLock (desc)
+    - find: Disables the per-map camera lock defined in ViewPointTable.txt, allowing free camera rotation on all maps. Useful for players who prefer manual camera control indoors and in dungeons.
+      replace: Desativa o bloqueio de câmera por mapa definido em ViewPointTable.txt, permitindo girar a câmera livremente em todos os mapas. Útil para jogadores que preferem controlar a câmera manualmente em ambientes internos e dungeons.
+
+    # NoMapInfo (desc)
+    - find: Disables the map name signs (location banners) that appear when entering a new map, controlled by mapInfo.lub. Removes visual clutter for players who find them distracting.
+      replace: Desativa as placas com o nome do mapa (faixas de localização) que aparecem ao entrar em um novo mapa, controladas pelo mapInfo.lub. Remove a poluição visual para jogadores que acham isso uma distração.
+
+    # FixArrowsCharset (desc)
+    - find: Translates the arrow symbols and menu button labels in the hotkey settings UI from Korean to English. Fixes unreadable Korean text in the shortcut key configuration window.
+      replace: Traduz os símbolos de seta e os rótulos dos botões de menu na interface de configuração de teclas de atalho de coreano para inglês. Corrige o texto em coreano ilegível na janela de configuração de teclas de atalho.
+
+    # BossDropIdentified (desc)
+    - find: Forces items dropped by Boss (MVP) monsters to show their identified names in the drop announcement, so players can see exactly what dropped instead of 'Unknown Item'.
+      replace: Faz os itens dropados por monstros Chefe (MVP) mostrarem seus nomes identificados no anúncio do drop, para que os jogadores vejam exatamente o que caiu em vez de 'Item Desconhecido'.
+
+    # TranslateClient (desc)
+    - find: Replaces hardcoded Korean text strings in the client with translations from a mapping file (defaults to <b>Translations_EN.yml</b>). Covers system messages, UI labels, and other text that cannot be changed through lua or txt files.
+      replace: Substitui as strings de texto em coreano fixas no código do cliente por traduções de um arquivo de mapeamento (o padrão é <b>Translations_EN.yml</b>). Abrange mensagens do sistema, rótulos da interface e outros textos que não podem ser alterados via arquivos lua ou txt.
+
+    # CustomCaptchaDecomp (desc)
+    - find: Changes the maximum zlib decompression buffer size for captcha images. Increase this if captcha images fail to load due to exceeding the default size limit.
+      replace: Altera o tamanho máximo do buffer de descompressão zlib para imagens de captcha. Aumente se as imagens de captcha não carregarem por excederem o limite de tamanho padrão.
+
+    # RestoreCpsDll (title)
+    - find: Restore Cps Dll
+      replace: Restaurar Cps Dll
+
+    # RestoreCpsDll (desc)
+    - find: Restores the loading of Cps.dll (Gravity's protection DLL) which was removed in newer clients. Only enable if your server requires this DLL. <b>WARNING:</b> Requires the 'Add custom DLLs' patch to be active; may crash without it.
+      replace: Restaura o carregamento do Cps.dll (a DLL de proteção da Gravity), que foi removido nos clientes mais novos. Só ative se o seu servidor exigir essa DLL. <b>AVISO:</b> Requer que o patch 'Adicionar DLLs personalizadas' esteja ativo; pode travar sem ele.
+
+    # NoGGuard (desc)
+    - find: Disables nProtect GameGuard, Gravity's anti-cheat system built into Renewal clients. Required for servers since GameGuard expects Gravity's official servers and will block connections otherwise.
+      replace: Desativa o nProtect GameGuard, o sistema anticheat da Gravity embutido nos clientes Renewal. Necessário para servidores, já que o GameGuard espera os servidores oficiais da Gravity e, caso contrário, bloqueia as conexões.
+
+    # SkipSignBoard (desc)
+    - find: Skips loading of SignBoardList lub files. Useful if you do not use sign board features or want to avoid errors from missing files.
+      replace: Pula o carregamento dos arquivos lub do SignBoardList. Útil se você não usa os recursos de placas (sign board) ou quer evitar erros por arquivos ausentes.
+
+    # SkipTownInfo (desc)
+    - find: Skips loading of Towninfo.lub file. Use this if you handle town information through other means or want to avoid errors from a missing file.
+      replace: Pula o carregamento do arquivo Towninfo.lub. Use se você trata as informações das cidades de outra forma ou quer evitar erros por um arquivo ausente.
+
+    # CustomDefaultBGM (desc)
+    - find: Changes the default background music played on the login screen from <b>bgm\01.mp3</b> to a custom MP3 file of your choice.
+      replace: Altera a música de fundo padrão tocada na tela de login de <b>bgm\01.mp3</b> para um arquivo MP3 personalizado de sua escolha.
+
+    # CustomItemInfoLub (desc)
+    - find: Loads a custom lua file for item data instead of the default <b>Iteminfo*.lub</b>. Lets you use a renamed or restructured item database file.
+      replace: Carrega um arquivo lua personalizado para os dados de itens em vez do padrão <b>Iteminfo*.lub</b>. Permite usar um arquivo de banco de dados de itens renomeado ou reestruturado.
+
+    # CustomAchieveLub (desc)
+    - find: Loads a custom lua file for achievement data instead of the default <b>AchievementList*.lub</b>. Useful for servers with custom achievement systems.
+      replace: Carrega um arquivo lua personalizado para os dados de conquistas em vez do padrão <b>AchievementList*.lub</b>. Útil para servidores com sistemas de conquistas personalizados.
+
+    # CustomMonSizeEffLub (desc)
+    - find: Loads a custom lua file for monster size effects instead of the default <b>MonsterSizeEffect*.lub</b>. Controls which monsters display enlarged or reduced sprites.
+      replace: Carrega um arquivo lua personalizado para os efeitos de tamanho de monstros em vez do padrão <b>MonsterSizeEffect*.lub</b>. Controla quais monstros exibem sprites ampliados ou reduzidos.
+
+    # CustomTownInfoLub (desc)
+    - find: Loads a custom lua file for town/city data instead of the default <b>Towninfo*.lub</b>. Controls warp portal labels and town information displayed on the world map.
+      replace: Carrega um arquivo lua personalizado para os dados de cidades em vez do padrão <b>Towninfo*.lub</b>. Controla os rótulos dos portais de warp e as informações das cidades exibidas no mapa-múndi.
+
+    # CustomPetEvoClnLub (desc)
+    - find: Loads a custom lua file for pet evolution data instead of the default <b>PetEvolutionCln*.lub</b>. Use when adding custom pet evolution paths.
+      replace: Carrega um arquivo lua personalizado para os dados de evolução de pets em vez do padrão <b>PetEvolutionCln*.lub</b>. Use ao adicionar caminhos de evolução de pets personalizados.
+
+    # CustomTipboxLub (desc)
+    - find: Loads a custom lua file for the Tip Box (loading screen tips) instead of the default <b>Tipbox*.lub</b>. Allows custom loading tips for your server.
+      replace: Carrega um arquivo lua personalizado para a Caixa de Dicas (dicas da tela de carregamento) em vez do padrão <b>Tipbox*.lub</b>. Permite dicas de carregamento personalizadas para o seu servidor.
+
+    # CustomCheckAttLub (desc)
+    - find: Loads a custom lua file for the attendance check-in system instead of the default <b>CheckAttendance*.lub</b>. Use when customizing daily login reward data.
+      replace: Carrega um arquivo lua personalizado para o sistema de presença (check-in) em vez do padrão <b>CheckAttendance*.lub</b>. Use ao personalizar os dados das recompensas de login diário.
+
+    # CustomPrivAirplaneLub (desc)
+    - find: Loads a custom lua file for the Private Airship system instead of the default <b>PrivateAirplane*.lub</b>. Use when customizing airship destinations or teleport data.
+      replace: Carrega um arquivo lua personalizado para o sistema de Aeronave Privada em vez do padrão <b>PrivateAirplane*.lub</b>. Use ao personalizar os destinos da aeronave ou os dados de teleporte.
+
+    # CustomMapInfoLub (desc)
+    - find: Loads a custom lua file for map information instead of the default <b>MapInfo*.lub</b>. Controls map name banners and location data shown when entering maps.
+      replace: Carrega um arquivo lua personalizado para as informações de mapas em vez do padrão <b>MapInfo*.lub</b>. Controla as faixas com o nome do mapa e os dados de localização mostrados ao entrar nos mapas.
+
+    # CustomOngQuestInfoLub (desc)
+    - find: Loads a custom lua file for ongoing quest information instead of the default <b>OngoingQuestInfoList*.lub</b>. Use when customizing the quest tracker display.
+      replace: Carrega um arquivo lua personalizado para as informações de missões em andamento em vez do padrão <b>OngoingQuestInfoList*.lub</b>. Use ao personalizar a exibição do rastreador de missões.
+
+    # CustomRcmdQuestInfoLub (desc)
+    - find: Loads a custom lua file for recommended quest data instead of the default <b>RecommendedQuestInfoList*.lub</b>. Use when customizing suggested quests shown to players.
+      replace: Carrega um arquivo lua personalizado para os dados de missões recomendadas em vez do padrão <b>RecommendedQuestInfoList*.lub</b>. Use ao personalizar as missões sugeridas aos jogadores.
+
+    # CustomspopupLub (title)
+    - find: Customize spopup lub
+      replace: Personalizar spopup lub
+
+    # CustomspopupLub (desc)
+    - find: Loads a custom lua file for skill popup data instead of the default <b>spopup.lub</b>. Controls the popup text shown when hovering over skills.
+      replace: Carrega um arquivo lua personalizado para os dados de pop-up de habilidades em vez do padrão <b>spopup.lub</b>. Controla o texto do pop-up mostrado ao passar o mouse sobre as habilidades.
+
+    # CustomChangeMatLub (title)
+    - find: Customize ChangeMaterial lub
+      replace: Personalizar ChangeMaterial lub
+
+    # CustomChangeMatLub (desc)
+    - find: Loads a custom lua file for material change data instead of the default <b>ChangeMaterial.lub</b>. Controls the material/ingredient lists shown in crafting UIs.
+      replace: Carrega um arquivo lua personalizado para os dados de troca de materiais em vez do padrão <b>ChangeMaterial.lub</b>. Controla as listas de materiais e ingredientes mostradas nas interfaces de criação.
+
+    # CustomQuestQualiLub (title)
+    - find: Customize QuestClassificationInfo lub
+      replace: Personalizar QuestClassificationInfo lub
+
+    # CustomQuestQualiLub (desc)
+    - find: Loads a custom lua file for quest classification data instead of the default <b>QuestClassificationInfo.lub</b>. Controls quest category labels and sorting in the quest window.
+      replace: Carrega um arquivo lua personalizado para os dados de classificação de missões em vez do padrão <b>QuestClassificationInfo.lub</b>. Controla os rótulos de categoria e a ordenação das missões na janela de missões.
+
+    # CustomRuneDescLub (title)
+    - find: Customize Rune\rune_desc lub
+      replace: Personalizar Rune\rune_desc lub
+
+    # CustomRuneDescLub (desc)
+    - find: Loads a custom lua file for rune descriptions instead of the default <b>Rune\rune_desc.lub</b>. Use when customizing rune tooltip text.
+      replace: Carrega um arquivo lua personalizado para as descrições de runas em vez do padrão <b>Rune\rune_desc.lub</b>. Use ao personalizar o texto das dicas (tooltips) das runas.
+
+    # CustomRuneSetDescLub (title)
+    - find: Customize Rune\runeset_desc lub
+      replace: Personalizar Rune\runeset_desc lub
+
+    # CustomRuneSetDescLub (desc)
+    - find: Loads a custom lua file for rune set descriptions instead of the default <b>Rune\runeset_desc.lub</b>. Use when customizing rune set bonus tooltip text.
+      replace: Carrega um arquivo lua personalizado para as descrições de conjuntos de runas em vez do padrão <b>Rune\runeset_desc.lub</b>. Use ao personalizar o texto das dicas de bônus de conjunto de runas.
+
+    # CustomitemDecomLub (title)
+    - find: Customize Rune\itemDecom lub
+      replace: Personalizar Rune\itemDecom lub
+
+    # CustomitemDecomLub (desc)
+    - find: Loads a custom lua file for rune item decomposition data instead of the default <b>Rune\itemDecom.lub</b>. Controls which items can be broken down in the rune system.
+      replace: Carrega um arquivo lua personalizado para os dados de decomposição de itens de runa em vez do padrão <b>Rune\itemDecom.lub</b>. Controla quais itens podem ser desmontados no sistema de runas.
+
+    # CustomRuneInfoLub (title)
+    - find: Customize Rune\rune_info lub
+      replace: Personalizar Rune\rune_info lub
+
+    # CustomRuneInfoLub (desc)
+    - find: Loads a custom lua file for rune information instead of the default <b>Rune\rune_info.lub</b>. Controls rune stats and properties displayed in the UI.
+      replace: Carrega um arquivo lua personalizado para as informações de runas em vez do padrão <b>Rune\rune_info.lub</b>. Controla os atributos e as propriedades das runas exibidos na interface.
+
+    # CustomRuneSetInfoLub (title)
+    - find: Customize Rune\runeset_info lub
+      replace: Personalizar Rune\runeset_info lub
+
+    # CustomRuneSetInfoLub (desc)
+    - find: Loads a custom lua file for rune set information instead of the default <b>Rune\runeset_info.lub</b>. Controls rune set data and bonuses shown in the UI.
+      replace: Carrega um arquivo lua personalizado para as informações de conjuntos de runas em vez do padrão <b>Rune\runeset_info.lub</b>. Controla os dados e os bônus de conjuntos de runas mostrados na interface.
+
+    # CustomRuneSystemTableLub (title)
+    - find: Customize Rune\runeSystem_table lub
+      replace: Personalizar Rune\runeSystem_table lub
+
+    # CustomRuneSystemTableLub (desc)
+    - find: Loads a custom lua file for the rune system table instead of the default <b>Rune\runeSystem_table.lub</b>. Controls the master rune system configuration data.
+      replace: Carrega um arquivo lua personalizado para a tabela do sistema de runas em vez do padrão <b>Rune\runeSystem_table.lub</b>. Controla os dados de configuração principais do sistema de runas.
+
+    # CustomRuneSystemIdLub (title)
+    - find: Customize Rune\runesystemid lub
+      replace: Personalizar Rune\runesystemid lub
+
+    # CustomRuneSystemIdLub (desc)
+    - find: Loads a custom lua file for rune system IDs instead of the default <b>Rune\runesystemid.lub</b>. Controls the mapping of rune IDs used by the system.
+      replace: Carrega um arquivo lua personalizado para os IDs do sistema de runas em vez do padrão <b>Rune\runesystemid.lub</b>. Controla o mapeamento dos IDs de runa usados pelo sistema.
+
+    # CustomRuneSystemInfoLub (title)
+    - find: Customize Rune\runesystemInfo lub
+      replace: Personalizar Rune\runesystemInfo lub
+
+    # CustomRuneSystemInfoLub (desc)
+    - find: Loads a custom lua file for rune system display info instead of the default <b>Rune\runesystemInfo.lub</b>. Controls rune system UI labels and descriptions.
+      replace: Carrega um arquivo lua personalizado para as informações de exibição do sistema de runas em vez do padrão <b>Rune\runesystemInfo.lub</b>. Controla os rótulos e as descrições do sistema de runas na interface.
+
+    # CustomRuneRewardLub (title)
+    - find: Customize Rune\runeset_reward lub
+      replace: Personalizar Rune\runeset_reward lub
+
+    # CustomRuneRewardLub (desc)
+    - find: Loads a custom lua file for rune set rewards instead of the default <b>Rune\runeset_reward.lub</b>. Controls rune set completion reward data.
+      replace: Carrega um arquivo lua personalizado para as recompensas de conjuntos de runas em vez do padrão <b>Rune\runeset_reward.lub</b>. Controla os dados das recompensas por completar conjuntos de runas.
+
+    # CustomLicenseTxt (desc)
+    - find: Changes the EULA license file path from the default <b>..\licence.txt</b> to a custom filename. Path is relative to the Data folder. Use to display your own server rules or terms of service.
+      replace: Altera o caminho do arquivo de licença (EULA) do padrão <b>..\licence.txt</b> para um nome de arquivo personalizado. O caminho é relativo à pasta Data. Use para exibir as regras ou os termos de serviço do seu próprio servidor.
+
+    # CustomClientInfo (desc)
+    - find: Changes the clientinfo XML filename from the default *clientinfo.xml to a custom name. Useful for maintaining multiple server configurations or using a non-standard filename.
+      replace: Altera o nome do arquivo XML do clientinfo do padrão *clientinfo.xml para um nome personalizado. Útil para manter várias configurações de servidor ou usar um nome de arquivo fora do padrão.
+
+    # AllowHomunSkills (title)
+    - find: Unlock all valid skills for homunculus and mercenary AI
+      replace: Liberar todas as habilidades válidas para a IA de homúnculos e mercenários
+
+    # AllowHomunSkills (desc)
+    - find: Removes the client-side restriction on which skills homunculus and mercenary AI can use, allowing all valid skills to be cast. Server-side skill availability still applies.
+      replace: Remove a restrição do lado do cliente sobre quais habilidades a IA de homúnculos e mercenários pode usar, permitindo usar todas as habilidades válidas. A disponibilidade das habilidades no lado do servidor continua valendo.
+
+    # BodyPalMF (desc)
+    - find: Uses one shared set of cloth/body palettes (body_%s_%d.pal) across all job classes while keeping male and female palettes separate. Greatly reduces the number of palette files needed.
+      replace: Usa um único conjunto compartilhado de paletas de roupa/corpo (body_%s_%d.pal) para todas as classes, mantendo separadas as paletas masculinas e femininas. Reduz muito o número de arquivos de paleta necessários.
+
+    # BodyPalUnisex (desc)
+    - find: Uses one shared set of cloth/body palettes (body_%d.pal) for all job classes and both genders. The simplest option -- minimizes palette files to just one set.
+      replace: "Usa um único conjunto compartilhado de paletas de roupa/corpo (body_%d.pal) para todas as classes e os dois sexos. É a opção mais simples: reduz os arquivos de paleta a um único conjunto."
+
+    # HeadPalMF (desc)
+    - find: Uses one shared set of hair palettes (head_%s_%d.pal) across all hairstyles while keeping male and female palettes separate. Reduces the number of hair palette files needed.
+      replace: Usa um único conjunto compartilhado de paletas de cabelo (head_%s_%d.pal) para todos os estilos de cabelo, mantendo separadas as paletas masculinas e femininas. Reduz o número de arquivos de paleta de cabelo necessários.
+
+    # HeadPalUnisex (desc)
+    - find: Uses one shared set of hair palettes (head_%d.pal) for all hairstyles and both genders. The simplest option -- minimizes hair palette files to just one set.
+      replace: "Usa um único conjunto compartilhado de paletas de cabelo (head_%d.pal) para todos os estilos de cabelo e os dois sexos. É a opção mais simples: reduz os arquivos de paleta de cabelo a um único conjunto."
+
+    # SharedDoramPal (group title)
+    - find: SHARED PALETTES - DORAM
+      replace: PALETAS COMPARTILHADAS - DORAM
+
+    # DoramHeadPalShared (title)
+    - find: Enable shared head palettes for Doram
+      replace: Habilitar paletas de cabeça compartilhadas para Doram
+
+    # DoramHeadPalShared (desc)
+    - find: Applies the shared hair palette naming to the Doram races too, which the human patch ignores entirely -- without it a Doram needs one palette file per hairstyle AND per gender. Files stay in the Doram race folder (doram\hair\head_%d.pal) because Doram sprites do not share the human palette indexing -- pointing them at the human files leaves most of the character black. Follows whichever flavour (MF or Unisex) you enabled for the other races, which is required.
+      replace: "Aplica a nomenclatura de paletas de cabelo compartilhadas também às raças Doram, que o patch humano ignora por completo: sem ele, um Doram precisa de um arquivo de paleta por estilo de cabelo E por sexo. Os arquivos ficam na pasta da raça Doram (doram\\hair\\head_%d.pal), porque os sprites Doram não compartilham a indexação de paletas dos humanos: apontá-los para os arquivos humanos deixa a maior parte do personagem preta. Segue a variante (MF ou Unissex) que você habilitou para as outras raças, o que é obrigatório."
+
+    # GRFsFromIni (desc)
+    - find: Allows loading up to 10 GRF files listed in an INI file (DATA.INI) in your client folder. GRFs are loaded in order, with earlier entries taking priority. The standard way to use multiple GRFs on servers.
+      replace: Permite carregar até 10 arquivos GRF listados em um arquivo INI (DATA.INI) na pasta do seu cliente. As GRFs são carregadas em ordem, e as primeiras entradas têm prioridade. É a forma padrão de usar várias GRFs nos servidores.
+
+    # GRFsEmbedded (desc)
+    - find: Embeds GRF filenames directly into the client executable instead of reading from an external INI file. You provide the GRF list at patch time and it gets baked into the exe. No DATA.INI file needed in the client folder.
+      replace: Incorpora os nomes dos arquivos GRF diretamente no executável do cliente em vez de lê-los de um arquivo INI externo. Você informa a lista de GRFs na hora de aplicar o patch e ela é gravada no exe. Não é necessário nenhum arquivo DATA.INI na pasta do cliente.
+
+    # ===== Env.yml =====
+
+    # HKLMtoHKCU (desc)
+    - find: Switches registry access from HKEY_LOCAL_MACHINE to HKEY_CURRENT_USER. Allows the client to save settings without admin privileges, which is required on shared or restricted PCs.
+      replace: Muda o acesso ao registro de HKEY_LOCAL_MACHINE para HKEY_CURRENT_USER. Permite que o cliente salve as configurações sem privilégios de administrador, o que é necessário em PCs compartilhados ou restritos.
+
+    # NoAdminNeeded (desc)
+    - find: Removes the client's requirement for administrator privileges, so it launches without the UAC elevation prompt. Useful for players who cannot or prefer not to run the game as admin.
+      replace: Remove a exigência de privilégios de administrador do cliente, para que ele abra sem o aviso de elevação do UAC. Útil para jogadores que não podem ou preferem não rodar o jogo como administrador.
+
+    # LoadClientPlugins (desc)
+    - find: Forces loading of client plugins (3rd party DLLs in the plugins folder) regardless of the client's sound configuration. Normally plugins only load when sound is enabled.
+      replace: Força o carregamento dos plugins do cliente (DLLs de terceiros, ou 3rd party, na pasta plugins) independentemente da configuração de som do cliente. Normalmente os plugins só são carregados quando o som está habilitado.
+
+    # NoMultiWindow (desc)
+    - find: Prevents launching more than one game client at a time on all langtypes. Blocks multi-clienting by showing an error if a second instance is opened.
+      replace: Impede abrir mais de um cliente do jogo ao mesmo tempo, em todos os langtypes. Bloqueia o uso de múltiplos clientes mostrando um erro se uma segunda instância for aberta.
+
+    # CustomMinResolution (desc)
+    - find: Changes the minimum allowed screen resolution from the default 1024x768 to custom values. Useful for supporting smaller resolutions on older hardware or for testing.
+      replace: Altera a resolução de tela mínima permitida do padrão 1024x768 para valores personalizados. Útil para suportar resoluções menores em hardware antigo ou para testes.
+
+    # IgnoreDebugger (desc)
+    - find: Disables the IsDebuggerPresent() anti-debug check, allowing the client to run under a debugger. Intended for development and reverse engineering only -- do not use on production clients distributed to players.
+      replace: "Desativa a verificação antidepuração IsDebuggerPresent(), permitindo que o cliente rode sob um depurador. Destinado apenas a desenvolvimento e engenharia reversa: não use em clientes de produção distribuídos aos jogadores."
+
+    # DisableIndoorRSW (title)
+    - find: Disable indoor RSW lighting
+      replace: Desativar iluminação RSW de ambientes internos
+
+    # DisableIndoorRSW (desc)
+    - find: Disables the IndoorRswTable.txt lookup that forces fixed camera angles and lighting on indoor maps. Grants free camera rotation indoors, similar to the NoCameraLock patch but specifically targeting RSW-based indoor restrictions.
+      replace: Desativa a consulta ao IndoorRswTable.txt, que força ângulos de câmera e iluminação fixos em mapas internos. Libera a rotação da câmera em ambientes internos, de forma parecida com o patch NoCameraLock, mas voltada especificamente às restrições internas baseadas em RSW.
+
+    # RemovePremiumService (title)
+    - find: Remove Premium Service text
+      replace: Remover o texto Premium Service
+
+    # RemovePremiumService (desc)
+    - find: Removes the "Premium Service" text from the character selection screen. This text is irrelevant on servers since there is no premium subscription system.
+      replace: Remove o texto "Premium Service" da tela de seleção de personagem. Esse texto não faz sentido nos servidores, já que não existe um sistema de assinatura premium.
+
+    # EnableSysMenu (desc)
+    - find: Adds standard Windows title bar buttons (Minimize, Maximize, Close) and the application icon to the game window. Makes the client behave like a normal window instead of a borderless frame.
+      replace: Adiciona os botões padrão da barra de título do Windows (Minimizar, Maximizar, Fechar) e o ícone do aplicativo à janela do jogo. Faz o cliente se comportar como uma janela normal em vez de um quadro sem bordas.
+
+    # UseMiniTitle (desc)
+    - find: Switches the game window to use a compact/miniature title bar instead of the standard-size one. Saves screen space while still showing window controls.
+      replace: Faz a janela do jogo usar uma barra de título compacta, em miniatura, em vez da de tamanho padrão. Economiza espaço na tela e ainda mostra os controles da janela.
+
+    # CustomWinTitle (desc)
+    - find: Changes the text shown in the game window's title bar to a custom string. Use to display your server name instead of the default "Ragnarok" title.
+      replace: Altera o texto mostrado na barra de título da janela do jogo para uma string personalizada. Use para exibir o nome do seu servidor em vez do título padrão "Ragnarok".
+
+    # BorderlessFSW (desc)
+    - find: Enables borderless fullscreen mode -- removes the window frame and borders when the game resolution matches your screen resolution. Provides a seamless fullscreen experience while allowing easy Alt-Tab.
+      replace: "Habilita o modo de tela cheia sem bordas: remove a moldura e as bordas da janela quando a resolução do jogo é igual à resolução da sua tela. Oferece uma tela cheia sem emendas e ainda facilita o Alt-Tab."
+
+    # No1and1Arg (desc)
+    - find: Removes the requirement for launcher arguments (1rag1, 1sak1, etc.) so the client can be started directly by double-clicking the exe. Without this, the client refuses to launch unless opened through a patcher.
+      replace: Remove a exigência de argumentos do launcher (1rag1, 1sak1 etc.) para que o cliente possa ser iniciado diretamente com um clique duplo no exe. Sem isso, o cliente se recusa a abrir se não for iniciado por um patcher.
+
+    # RestoreIcon (desc)
+    - find: Restores the original Ragnarok Online icon embedded in the executable instead of showing the generic Windows application icon. Fixes the missing icon in the taskbar and window title.
+      replace: Restaura o ícone original do Ragnarok Online embutido no executável, em vez de mostrar o ícone genérico de aplicativo do Windows. Corrige o ícone ausente na barra de tarefas e no título da janela.
+
+    # CustomIcon (desc)
+    - find: Replaces the application icon with a custom .ico file of your choice (any size and bit depth). For Win7 and later, use <b><font color='deepskyblue'>256x256 32-bit along with a 16x16 version</font></b>.<br><br>Older clients have a limit of 3 icon sizes, so you may need to select which resolutions to include.
+      replace: Substitui o ícone do aplicativo por um arquivo .ico personalizado de sua escolha (qualquer tamanho e profundidade de bits). Para o Win7 e superiores, use <b><font color='deepskyblue'>256x256 de 32 bits junto com uma versão de 16x16</font></b>.<br><br>Clientes mais antigos têm um limite de 3 tamanhos de ícone, então talvez você precise escolher quais resoluções incluir.
+
+    # Idle2NormalPriority (desc)
+    - find: Raises the thread priority of the game when its window is inactive from Idle to Normal. Prevents the game from slowing down significantly when alt-tabbed or in the background.
+      replace: Aumenta a prioridade do thread do jogo de Ociosa para Normal quando a janela dele está inativa. Evita que o jogo fique muito mais lento quando você usa Alt-Tab ou o deixa em segundo plano.
+
+    # Normal2HighPriority (desc)
+    - find: Raises the thread priority of the active game window from Normal to High. Gives the client more CPU time, which can improve performance on systems running many background applications.
+      replace: Aumenta a prioridade do thread da janela ativa do jogo de Normal para Alta. Dá mais tempo de CPU ao cliente, o que pode melhorar o desempenho em sistemas com muitos aplicativos rodando em segundo plano.
+
+    # ===== Network.yml =====
+
+    # SendMD5Hash (desc)
+    - find: Makes the client send its own MD5 hash to the server on login for all langtypes. Used for integrity verification to detect modified client executables. Only enable if your server is configured to receive and check this packet.
+      replace: Faz o cliente enviar o seu próprio hash MD5 ao servidor no login, em todos os langtypes. Usado na verificação de integridade para detectar executáveis do cliente modificados. Só ative se o seu servidor estiver configurado para receber e verificar esse pacote.
+
+    # NoNagle (desc)
+    - find: Disables TCP Nagle buffering so packets are sent immediately. Reduces input lag and improves responsiveness at the cost of slightly more network traffic. Recommended for most servers.
+      replace: Desativa o buffer de Nagle do TCP para que os pacotes sejam enviados imediatamente. Reduz o atraso de entrada e melhora a resposta, ao custo de um pouco mais de tráfego de rede. Recomendado para a maioria dos servidores.
+
+    # EnableProxy (desc)
+    - find: Ignores the IP addresses sent by the server when transitioning between login, char, and map servers. Keeps the client connecting to the address from clientinfo.xml instead. Required when playing through a proxy, VPN, or when the server reports internal LAN addresses.
+      replace: Ignora os endereços IP enviados pelo servidor na transição entre os servidores de login, char e mapa, e mantém o cliente conectando ao endereço do clientinfo.xml. Necessário ao jogar por um proxy ou VPN, ou quando o servidor informa endereços internos de LAN.
+
+    # SendClientFlags (desc)
+    - find: Sends the client's feature flags to the server during login, keeping client and server in sync about which features are supported. Prevents mismatches that can cause missing UI elements or broken functionality.
+      replace: Envia os sinalizadores de recursos do cliente ao servidor durante o login, mantendo cliente e servidor em sincronia sobre quais recursos são suportados. Evita divergências que podem causar elementos de interface ausentes ou funcionalidades quebradas.
+
+    # CustomFirstKey (desc)
+    - find: Sets a custom value for the 1st packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other.
+      replace: "Define um valor personalizado para a 1ª chave de criptografia de pacotes. Deve ser igual à chave configurada no seu servidor. <b>AVISO:</b> Não combine com 'Desativar criptografia de pacote de mapa': use uma abordagem ou a outra."
+
+    # CustomSecondKey (desc)
+    - find: Sets a custom value for the 2nd packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other.
+      replace: "Define um valor personalizado para a 2ª chave de criptografia de pacotes. Deve ser igual à chave configurada no seu servidor. <b>AVISO:</b> Não combine com 'Desativar criptografia de pacote de mapa': use uma abordagem ou a outra."
+
+    # CustomThirdKey (desc)
+    - find: Sets a custom value for the 3rd packet encryption key. Must match the key configured on your server. <b>WARNING:</b> Do not combine with 'Disable Map packet encryption' -- use one approach or the other.
+      replace: "Define um valor personalizado para a 3ª chave de criptografia de pacotes. Deve ser igual à chave configurada no seu servidor. <b>AVISO:</b> Não combine com 'Desativar criptografia de pacote de mapa': use uma abordagem ou a outra."
+
+    # NoPacketEncr (desc)
+    - find: Disables packet obfuscation (encryption) for communication with the map server. Simplifies packet handling on servers that do not use encryption.<br> Also known as 'Skip Packet Obfuscation'.
+      replace: Desativa a ofuscação (criptografia) de pacotes na comunicação com o servidor de mapa. Simplifica o tratamento de pacotes em servidores que não usam criptografia.<br> Também conhecido como 'Skip Packet Obfuscation'.
+
+    # NoEncrForLC (desc)
+    - find: Disables packet encryption for communication with the login and character servers. Required by most server emulators that do not implement Gravity's encryption handshake.
+      replace: Desativa a criptografia de pacotes na comunicação com os servidores de login e de personagens. Necessário para a maioria dos emuladores de servidor que não implementam o handshake de criptografia da Gravity.
+
+    # NoPassEncr (desc)
+    - find: Disables password encryption in the old login packet (0x64) for langtypes 4 and 7. Required for servers using plaintext or bcrypt password authentication with these langtypes. <b>WARNING:</b> Conflicts with 'Use SSO Login Packet' -- do not enable both.
+      replace: "Desativa a criptografia da senha no pacote de login antigo (0x64) para os langtypes 4 e 7. Necessário para servidores que usam autenticação de senha em texto puro ou bcrypt com esses langtypes. <b>AVISO:</b> Conflita com 'Usar pacote de login SSO': não ative os dois."
+
+    # ===== Sound.yml =====
+
+    # Enable44kHzAudio (desc)
+    - find: Upgrades the audio sampling rate from the default (22 kHz) to 44.1 kHz (CD quality). Improves sound effect and BGM clarity at a slight increase in memory usage.
+      replace: Aumenta a taxa de amostragem de áudio do padrão (22 kHz) para 44,1 kHz (qualidade de CD). Melhora a clareza dos efeitos sonoros e da BGM com um pequeno aumento no uso de memória.
+
+    # AutoMute (desc)
+    - find: Automatically mutes all game audio when the client window loses focus (e.g., when alt-tabbed). Audio resumes when the window is active again. Experimental -- may not work with all sound configurations.
+      replace: "Silencia automaticamente todo o áudio do jogo quando a janela do cliente perde o foco (por exemplo, ao usar Alt-Tab). O áudio volta quando a janela fica ativa de novo. Experimental: pode não funcionar com todas as configurações de som."
+
+    # NoBGMAudio (desc)
+    - find: Disables background music loading from mp3NameTable.txt, preventing BGM from playing on any map. Use if you want a completely silent game or handle music through external means.
+      replace: Desativa o carregamento da música de fundo a partir do mp3NameTable.txt, impedindo que a BGM toque em qualquer mapa. Use se quiser um jogo totalmente silencioso ou se cuida da música por meios externos.
+
+    # ===== Special.yml =====
+
+    # CustomShields (desc)
+    - find: Enables custom shield sprites beyond the default set by loading shield definitions from lua files (similar to the Xray system). Required for servers with custom shield graphics.
+      replace: Habilita sprites de escudo personalizados além do conjunto padrão, carregando as definições de escudos a partir de arquivos lua (de forma parecida com o sistema Xray). Necessário para servidores com gráficos de escudo personalizados.
+
+    # CustomJobs (desc)
+    - find: Adds support for custom job classes beyond the official set. Jobs are defined via lua files in the data folder. Required for servers with custom classes like Druid or other fan-made jobs.
+      replace: Adiciona suporte a classes personalizadas além do conjunto oficial. As classes são definidas por arquivos lua na pasta data. Necessário para servidores com classes personalizadas, como Druid, ou outras classes criadas por fãs.
+
+    # EnableDruidClasses (title)
+    - find: Enable Druid classes (2026)
+      replace: Habilitar as classes Druid (2026)
+
+    # EnableDruidClasses (desc)
+    - find: Teaches this client Gravity's Druid line (Druid, Karnos, Alitea, their riding forms and the Werewolf/Wereraptor forms) the way the 2026 kRO clients know it, straight from data.grf with no Lua job files. Needs a server that has these jobs and a data.grf that carries their art. WARPGATE's English translation carries its five skill files, so a client that takes it answers No when the patch offers its own copies.
+      replace: Ensina a este cliente a linha Druid da Gravity (Druid, Karnos, Alitea, suas formas montadas e as formas Werewolf/Wereraptor) do jeito que os clientes kRO de 2026 a conhecem, direto do data.grf e sem arquivos lua de classe. Exige um servidor que tenha essas classes e um data.grf que traga a arte delas. A tradução em inglês do WARPGATE já traz os cinco arquivos de habilidade dessa linha, então, num cliente que a usa, responda Não quando o patch oferecer as próprias cópias.
+
+    # QoL2026 (title)
+    - find: Quality of Life Changes (2026)
+      replace: Mudanças de Qualidade de Vida (2026)
+
+    # QoL2026 (desc)
+    - find: In progress and experimental (still in beta), more are added with each update. Adds kRO 2026's quality-of-life changes, translated from kRO's own 2026 client. When you apply it, you choose which ones to add (all by default).
+      replace: Em andamento e experimental (ainda em beta); mais mudanças são adicionadas a cada atualização. Adiciona as mudanças de qualidade de vida do kRO de 2026, traduzidas do próprio cliente 2026 do kRO. Ao aplicar, você escolhe quais adicionar (todas por padrão).
+
+    # RelaunchOnRestart (title)
+    - find: Restart relaunches the client
+      replace: Reiniciar reabre o cliente
+
+    # RelaunchOnRestart (desc)
+    - find: When a setting needs a client restart (resolution, window mode, Render Scaling) and you press OK, the client starts itself again with the same arguments, instead of opening the restart web address from msgstringtable (kRO points it at its official site, ROenglishRE at its GitHub page).
+      replace: Quando uma configuração exige reiniciar o cliente (resolução, modo de janela, Render Scaling) e você aperta OK, o cliente se inicia novamente com os mesmos argumentos, em vez de abrir o endereço web de reinício do msgstringtable (o kRO aponta para o site oficial, o ROenglishRE para a página dele no GitHub).
+
+    # CustomHomuns (desc)
+    - find: Enables custom homunculus types beyond the official set using lua files. Uses the same <b>'ReqJobName'</b> function as custom jobs, so no extra configuration files are needed beyond the job lua.
+      replace: Habilita tipos de homúnculos personalizados além do conjunto oficial usando arquivos lua. Usa a mesma função <b>'ReqJobName'</b> das classes personalizadas, então não são necessários arquivos de configuração extras além do lua das classes.
+
+    # AddLuaOverrides (desc)
+    - find: Loads additional lua override files by llchrisll that extend and patch the client's existing lua tables and functions. Adds quality-of-life improvements and fixes. See <a href="https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua">documentation</a> for the full list of changes. Experimental.
+      replace: Carrega arquivos lua de substituição adicionais do llchrisll, que estendem e modificam as tabelas e funções lua existentes do cliente. Adiciona melhorias de qualidade de vida e correções. Veja a <a href="https://llchrisll.github.io/ROTPDocs/addons/cls/?h=lua">documentation</a> para a lista completa de mudanças. Experimental.
+
+    # AllowAPBarforAllJobs (title)
+    - find: Allow AP Bar for all Jobs
+      replace: Permitir barra de AP para todas as classes
+
+    # AllowAPBarforAllJobs (desc)
+    - find: Displays the AP (Activity Points) bar for all job classes, not just 4th jobs. Internally treats every class as a 4th job for the AP gauge check. Useful for servers that give AP to all classes.
+      replace: Exibe a barra de AP (Activity Points) para todas as classes, não apenas para a 4ª classe. Internamente, trata toda classe como 4ª classe na verificação do medidor de AP. Útil para servidores que dão AP a todas as classes.
+
+    # RemoveMaxNumbersLimit (title)
+    - find: Remove the limit of max number displayed in damage/heal
+      replace: Remover o limite do número máximo exibido em dano/cura
+
+    # RemoveMaxNumbersLimit (desc)
+    - find: Removes the cap on displayed damage, healing, and other floating numbers. Without this, very large numbers get clamped to a maximum display value. Required for high-rate servers with large damage output.
+      replace: Remove o limite dos números de dano, cura e outros números flutuantes exibidos. Sem isso, números muito grandes ficam travados num valor máximo de exibição. Necessário para servidores de rate alta com muito dano.
+
+    # AllHatEffectsWorldDepthOracle (title)
+    - find: All HatEffects Screen-Size World Depth [QJS]
+      replace: Profundidade de mundo em tamanho de tela para todos os HatEffects [QJS]
+
+    # AllHatEffectsWorldDepthOracle (desc)
+    - find: 2025-07-16 build-specific global HatEffect depth patch, live validated on 2026-07-14. It preserves every original HatEffect STR resource, animation, actor attachment, metadata, teardown, screen-space position, apparent scale, and RHW. During only the two generic HatEffect render methods, vertices at/below actor-anchor Y retain a floor-safe four-quantum contact-biased depth; upper vertices reconstruct Y-up reciprocal depth using projection-matrix +0x10/+0x14 and convert it through 0x00554040. Native world STR NPCs remain unchanged.
+      replace: Patch global de profundidade de HatEffect específico para o build 2025-07-16, validado ao vivo em 2026-07-14. Ele preserva todos os recursos STR originais de HatEffect, a animação, a vinculação ao ator, os metadados, a desmontagem (teardown), a posição no espaço da tela, a escala aparente e o RHW. Somente durante os dois métodos genéricos de renderização de HatEffect, os vértices na altura Y da âncora do ator ou abaixo dela mantêm uma profundidade segura para o chão, com viés de contato de quatro quanta; os vértices superiores reconstroem a profundidade recíproca com Y para cima usando +0x10/+0x14 da matriz de projeção e a convertem por meio de 0x00554040. Os NPCs STR nativos do mundo permanecem inalterados.
+
+    # AllowDualWeaponSprites (title)
+    - find: Dual-Wield Original Weapon Sprites [QJS]
+      replace: Sprites de arma originais ao empunhar duas armas [QJS]
+
+    # AllowDualWeaponSprites (desc)
+    - find: Self-contained QJS/EXE patch; no weapon DLL is required. The D403A0 equipment hook drives the stock single-item loader for each equipped item and installs the original parallel SPR/ACT resources in native weapon slots 5 and 6 instead of generic combined types 25..30. A live-slot renderer bridge direction-preservingly maps blank item ACT actions 88..95 to populated actions 80..87. Off-hand-only equipment also receives its real item pair in slot 6. Applies to every valid item resource without an item-ID allowlist.
+      replace: Patch QJS/EXE autossuficiente; nenhuma DLL de arma é necessária. O hook de equipamento em D403A0 aciona o carregador padrão de item único para cada item equipado e instala os recursos SPR/ACT paralelos originais nos slots de arma nativos 5 e 6, em vez dos tipos combinados genéricos 25..30. Uma ponte no renderizador de slots ativos mapeia, preservando a direção, as ações ACT vazias 88..95 do item para as ações preenchidas 80..87. Equipamentos só da mão secundária também recebem o seu par real de itens no slot 6. Vale para todo recurso de item válido, sem lista de IDs de itens permitidos.
+
+    # AllowChatWhileBerserk (title)
+    - find: Allow Chatting While Berserk
+      replace: Permitir chat durante o Berserk
+
+    # AllowChatWhileBerserk (desc)
+    - find: "Self-contained QJS/EXE patch. The client helper Status_IsBerserkActive (0x00D8E6C0) scans the local status-icon list for EFST_BERSERK (0x6B) and returns 1 while Berserk is up; every chat-channel handler in CModeMgr::SendMsg drops the outgoing CZ_REQUEST_CHAT (opcode 0xF3) on that 1, so the input clears but nothing is sent. Emotes use another command and stay usable. This forces the helper to always return 0, unblocking chat on every channel while Berserk without touching the item/skill Berserk restrictions. NOTE: removes ONLY the client gate; any server-side chat gate for SC_BERSERK must also be removed for chat to go through."
+      replace: "Patch QJS/EXE autossuficiente. A função auxiliar do cliente Status_IsBerserkActive (0x00D8E6C0) percorre a lista local de ícones de status em busca de EFST_BERSERK (0x6B) e retorna 1 enquanto o Berserk estiver ativo; todo manipulador de canal de chat em CModeMgr::SendMsg descarta o CZ_REQUEST_CHAT de saída (opcode 0xF3) diante desse 1, então o campo de texto é limpo mas nada é enviado. Os emotes usam outro comando e continuam utilizáveis. Este patch força a função auxiliar a sempre retornar 0, liberando o chat em todos os canais durante o Berserk sem mexer nas restrições de item e habilidade do Berserk. NOTA: remove APENAS a trava do cliente; qualquer trava de chat no lado do servidor para SC_BERSERK também precisa ser removida para que o chat funcione."
+
+    # RestoreSkillAttackAnimation (title)
+    - find: Restore Skill Attack Animation
+      replace: Restaurar a animação de ataque das habilidades
+
+    # RestoreSkillAttackAnimation (desc)
+    - find: "Gives Sonic Blow and Arrow Vulcan back the attacker's sprite animation -- pick either one or both. Gravity never removed the animations themselves, only the routing that selected them: the client still plays it for Chain Crush Combo, and this sends the chosen skills back through the same path. Sound and effects were never affected."
+      replace: "Devolve a animação do sprite do atacante a Sonic Blow e Arrow Vulcan: escolha uma delas ou as duas. A Gravity nunca removeu as animações em si, apenas o roteamento que as selecionava: o cliente ainda a reproduz para Chain Crush Combo, e este patch envia as habilidades escolhidas de volta pelo mesmo caminho. Som e efeitos nunca foram afetados."
+
+    # CustomPlayerSkills (desc)
+    - find: Enables custom player skills beyond the official skill list by loading definitions from lua files. Required for servers that add new skills. Experimental -- may require careful lua configuration.
+      replace: "Habilita habilidades de jogador personalizadas além da lista oficial, carregando as definições a partir de arquivos lua. Necessário para servidores que adicionam novas habilidades. Experimental: pode exigir uma configuração cuidadosa dos arquivos lua."
+
+    # CustomHomunSkills (desc)
+    - find: Enables custom homunculus skills beyond the official list by loading definitions from lua files. Required for servers that add new homunculus abilities. Experimental.
+      replace: Habilita habilidades de homúnculo personalizadas além da lista oficial, carregando as definições a partir de arquivos lua. Necessário para servidores que adicionam novas habilidades de homúnculo. Experimental.
+
+    # CustomMerceSkills (desc)
+    - find: Enables custom mercenary skills beyond the official list by loading definitions from lua files. Required for servers that add new mercenary abilities. Experimental.
+      replace: Habilita habilidades de mercenário personalizadas além da lista oficial, carregando as definições a partir de arquivos lua. Necessário para servidores que adicionam novas habilidades de mercenário. Experimental.
+
+    # ===== UI.yml =====
+
+    # LoadGRFOnSlashCmd (title)
+    - find: Load GRF via Slash Command
+      replace: Carregar GRF por comando de barra
+
+    # LoadGRFOnSlashCmd (desc)
+    - find: Adds a configurable slash command (default /greyworld) that loads a specified GRF archive at runtime via CFileMgr::AddPak. Typing the command toggles the GRF on/off with chat feedback. The state persists across sessions via the registry. Assets become available on the next map change.
+      replace: Adiciona um comando de barra configurável (padrão /greyworld) que carrega uma GRF especificada durante o jogo via CFileMgr::AddPak. Digitar o comando liga e desliga a GRF, com um retorno no chat. O estado é mantido entre sessões pelo registro. Os recursos ficam disponíveis na próxima troca de mapa.
+
+    # NoLookalikeNameWarning (title)
+    - find: No bogus "not your guildsman" whisper warning
+      replace: Sem o falso aviso "not your guildsman" nas mensagens privadas
+
+    # NoLookalikeNameWarning (desc)
+    - find: Stops the "This character is not your guildsman" and "This name is not registered in your Friend List" lines the client prints on incoming whispers. They are meant to flag impostors who swap a capital I for a lowercase l, but the comparison is far too loose -- it calls two names alike as soon as min(lenA,lenB)-2 characters match by position. A guild with a member named "Test" therefore warns on every whisper from "Gettar". Firing constantly, the warning only teaches players to ignore the one line that would matter. Verified scope -- the comparison helper is used by nothing else in the client, so only those two messages disappear.
+      replace: "Suprime as linhas \"This character is not your guildsman\" e \"This name is not registered in your Friend List\" que o cliente mostra nas mensagens privadas recebidas. Elas servem para sinalizar impostores que trocam um I maiúsculo por um l minúsculo, mas a comparação é solta demais: ela considera dois nomes parecidos assim que min(lenA,lenB)-2 caracteres coincidem por posição. Uma guilda com um membro chamado \"Test\" passa, portanto, a avisar em toda mensagem privada de \"Gettar\". Disparando o tempo todo, o aviso só ensina os jogadores a ignorar justamente a linha que importaria. Escopo verificado: a função auxiliar de comparação não é usada por mais nada no cliente, então só essas duas mensagens desaparecem."
+
+    # AllowShortcutsInWine (desc)
+    - find: Fixes keyboard shortcut handling when running the client under Wine (Linux/macOS). Experimental -- may not work on all Wine versions or configurations.
+      replace: "Corrige o tratamento dos atalhos de teclado ao rodar o cliente no Wine (Linux/macOS). Experimental: pode não funcionar em todas as versões ou configurações do Wine."
+
+    # CustomMissingLauncherMsg (desc)
+    - find: Customizes the error message shown when the client is launched without a patcher. By default the message is blank -- use this to show a helpful message like "Please use the patcher to start the game."
+      replace: "Personaliza a mensagem de erro exibida quando o cliente é aberto sem um patcher. Por padrão a mensagem fica em branco: use isto para mostrar uma mensagem útil, como \"Use o patcher para iniciar o jogo.\""
+
+    # TildeForMatk (desc)
+    - find: Displays Matk as a range using the tilde <b>(~)</b> symbol (e.g., 100~150) instead of using the plus <b>(+)</b> sign (e.g., 100+50) in the Stats Window. Matches the display style many players are familiar with.
+      replace: Exibe o Matk como um intervalo usando o símbolo til <b>(~)</b> (por exemplo, 100~150) em vez do sinal de mais <b>(+)</b> (por exemplo, 100+50) na Janela de Status. Segue o estilo de exibição com que muitos jogadores estão acostumados.
+
+    # NoSwearFilter (desc)
+    - find: Disables the client-side chat filter that censors words listed in <b>manner.txt</b>. Filtered words will display normally in chat instead of being replaced with asterisks.
+      replace: Desativa o filtro de chat do lado do cliente que censura as palavras listadas em <b>manner.txt</b>. As palavras filtradas aparecem normalmente no chat em vez de serem substituídas por asteriscos.
+
+    # SkipServiceSelect (desc)
+    - find: Skips the service selection screen and goes straight to the login window. Ideal for servers that only have one service and do not need the selection step.
+      replace: Pula a tela de seleção de serviço e vai direto para a janela de login. Ideal para servidores que têm apenas um serviço e não precisam da etapa de seleção.
+
+    # OpenToServiceSelect (desc)
+    - find: Makes the 'Opening' button on the new-style login screen return to the service selection screen. Useful if players need to switch between multiple services listed in clientinfo.xml.
+      replace: Faz o botão 'Abertura' da nova tela de login voltar para a tela de seleção de serviço. Útil se os jogadores precisam alternar entre vários serviços listados no clientinfo.xml.
+
+    # GuildBrackets (desc)
+    - find: Replaces the Japanese-style guild name brackets used on langtype 0 with standard square brackets [ ]. Prevents display issues with guild names on English clients.
+      replace: Substitui os colchetes de estilo japonês usados nos nomes de guilda no langtype 0 por colchetes comuns [ ]. Evita problemas de exibição com nomes de guilda em clientes em inglês.
+
+    # FixChatAt (desc)
+    - find: Fixes a client bug that prevents typing the @ symbol in the chat window. Essential for servers that use @ as the prefix for GM commands (e.g., @warp, @item).
+      replace: Corrige um bug do cliente que impede digitar o símbolo @ na janela de chat. Essencial para servidores que usam @ como prefixo dos comandos de GM (por exemplo, @warp, @item).
+
+    # PetTalkMarker (title)
+    - find: Mark pet chatter in chat
+      replace: Marcar as falas de pets no chat
+
+    # PetTalkMarker (desc)
+    - find: Tags every automated pet line with a marker, so players can tell it apart from something a person typed. Pet chatter carries no sender and the ordinary message type, so a pet named after a player currently reads exactly like that player talking. You choose the text (default <b>pet</b>), the brackets (round, square, angled or none) and whether it goes before or after the pet name -- e.g. <b>Poring (pet) -- I am hungry!</b>. The marker also appears in the speech bubble above the pet.
+      replace: "Marca cada fala automática de pet com um marcador, para que os jogadores consigam diferenciá-la de algo que uma pessoa digitou. As falas de pet não têm remetente e usam o tipo de mensagem comum, então hoje um pet com o nome de um jogador parece exatamente esse jogador falando. Você escolhe o texto (padrão <b>pet</b>), os delimitadores (parênteses, colchetes, colchetes angulares ou nenhum) e se ele vai antes ou depois do nome do pet, por exemplo <b>Poring (pet): Estou com fome!</b>. O marcador também aparece no balão de fala acima do pet."
+
+    # AlwaysOfficialBG (desc)
+    - find: Forces the official Gravity login background images to display on all langtypes. Without this, some langtypes show a blank or different background.
+      replace: Força a exibição das imagens de fundo de login oficiais da Gravity em todos os langtypes. Sem isso, alguns langtypes mostram um fundo em branco ou diferente.
+
+    # NoHourly (desc)
+    - find: Removes the hourly popup announcements about game rating and play time reminders. These are Korean regulatory requirements that are irrelevant on servers.
+      replace: Remove os anúncios de hora em hora sobre a classificação do jogo e os lembretes de tempo de jogo. São exigências regulatórias coreanas que não fazem sentido nos servidores.
+
+    # EnableFlagEmotes (desc)
+    - find: Unlocks country flag emoticons for all langtypes. Requires a text file mapping flag constants to numbers 1-9 to define which flags are available.
+      replace: Libera os emoticons de bandeiras de países em todos os langtypes. Requer um arquivo de texto que associe as constantes de bandeira aos números 1-9, definindo quais bandeiras ficam disponíveis.
+
+    # AllowSpaceInGName (desc)
+    - find: Allows spaces in guild names when creating a guild with <b>/guild "Spaced Name"</b>. By default, the client blocks space characters in guild names.
+      replace: Permite espaços nos nomes de guilda ao criar uma guilda com <b>/guild "Nome Com Espaço"</b>. Por padrão, o cliente bloqueia espaços nos nomes de guilda.
+
+    # CustomInventoryLimit (desc)
+    - find: Changes the maximum number of items that can be displayed in the inventory window. Must match the server-side inventory limit (MAX_INVENTORY in rAthena) or items beyond the limit will not appear.
+      replace: Altera o número máximo de itens que podem ser exibidos na janela de inventário. Deve ser igual ao limite de inventário do lado do servidor (MAX_INVENTORY no rAthena), senão os itens além do limite não aparecem.
+
+    # CustomInventoryExpandingLimit (title)
+    - find: Change limit for cash inventory expanding value
+      replace: Alterar o limite de expansão do inventário por cash
+
+    # CustomInventoryExpandingLimit (desc)
+    - find: Raises the maximum number of items that can be added through cash inventory expansion from the default 100 up to 999,999. Server-side adjustment may be required to match.
+      replace: Aumenta o número máximo de itens que podem ser adicionados pela expansão de inventário por cash, do padrão de 100 para até 999.999. Pode ser necessário um ajuste no lado do servidor para combinar.
+
+    # BiggerInventoryWindow (title)
+    - find: Bigger inventory window
+      replace: Janela de inventário maior
+
+    # BiggerInventoryWindow (desc)
+    - find: Raises the maximum size the inventory window can be resized to. The stock client clamps the drag-resize to 320x240; this lets you set a larger maximum (default 1280x1024) so you can drag the inventory much bigger and see many more item slots at once. The window background is tiled, so it renders correctly at any size. This changes only the window SIZE, not the item CAPACITY (use 'Custom inventory limit' for that).
+      replace: Aumenta o tamanho máximo para o qual a janela de inventário pode ser redimensionada. O cliente original limita o redimensionamento a 320x240; este patch permite definir um máximo maior (padrão 1280x1024), para que você possa arrastar o inventário bem maior e ver muito mais espaços de item de uma vez. O fundo da janela é feito de blocos repetidos, então ele é exibido corretamente em qualquer tamanho. Isto muda apenas o TAMANHO da janela, não a CAPACIDADE de itens (para isso, use 'Personalizar limite de inventário').
+
+    # DeleteCharWithEmail (desc)
+    - find: Requires the account's email address as the confirmation password when deleting a character, on all langtypes. Adds an extra layer of protection against accidental or unauthorized character deletion.
+      replace: Exige o endereço de e-mail da conta como senha de confirmação ao excluir um personagem, em todos os langtypes. Adiciona uma camada extra de proteção contra exclusões de personagem acidentais ou não autorizadas.
+
+    # CustomVendingLimit (desc)
+    - find: Changes the maximum zeny price a player can set per item in a vending shop. Default is 1 billion zeny. Adjust to match your server's economy or zeny cap.
+      replace: Altera o preço máximo em zeny que um jogador pode definir por item numa loja de venda. O padrão é 1 bilhão de zeny. Ajuste conforme a economia ou o limite de zeny do seu servidor.
+
+    # NoHelpMsg (desc)
+    - find: Suppresses the help/tutorial popup that appears after logging in on certain langtypes. Reduces clutter for returning players who do not need the tutorial.
+      replace: Suprime o pop-up de ajuda/tutorial que aparece depois do login em certos langtypes. Reduz a poluição visual para jogadores veteranos que não precisam do tutorial.
+
+    # HideWorldView (desc)
+    - find: Hides the World View (full map overview) button normally shown at the top-right of the screen. Useful for servers that do not support the world map feature or want a cleaner UI.
+      replace: Oculta o botão da Visão Mundial (visão geral do mapa completo), normalmente mostrado no canto superior direito da tela. Útil para servidores que não suportam o recurso de mapa-múndi ou que querem uma interface mais limpa.
+
+    # CloseCutinOnEsc (desc)
+    - find: Allows players to dismiss NPC cutin (portrait) images by pressing the ESC key. Without this, cutins can only be closed by the NPC script itself.
+      replace: Permite que os jogadores fechem as imagens de cutin (retrato) de NPC apertando a tecla ESC. Sem isso, os cutins só podem ser fechados pelo próprio script do NPC.
+
+    # EnableNpcDialogueScrolling (title)
+    - find: NPC Dialog Scroll
+      replace: Rolagem do diálogo de NPC
+
+    # EnableNpcDialogueScrolling (desc)
+    - find: Allows scrolling through NPC dialog text even when a selection menu is displayed. Without this, the dialog locks when choices appear and players cannot review previous text.
+      replace: Permite rolar o texto do diálogo de NPC mesmo quando um menu de seleção está aberto. Sem isso, o diálogo trava quando as opções aparecem e os jogadores não conseguem rever o texto anterior.
+
+    # MoveUpItemCount (desc)
+    - find: Moves the item quantity number upwards in the Shortcut Window so it visually aligns with skill level numbers. A cosmetic fix for cleaner-looking shortcut bars.
+      replace: Move para cima o número de quantidade dos itens na Janela de Atalhos, para que ele fique alinhado com os números de nível das habilidades. Um ajuste estético para barras de atalho mais organizadas.
+
+    # CustomFadeDelay (desc)
+    - find: Changes the duration of the screen fade-in/fade-out effect when warping within the same map. Set to 0 for instant transitions, or increase for a smoother visual effect.
+      replace: Altera a duração do efeito de esmaecimento da tela (fade in/fade out) ao usar warp dentro do mesmo mapa. Defina 0 para transições instantâneas, ou aumente para um efeito visual mais suave.
+
+    # RemoveBookingJobs (desc)
+    - find: Removes specific job classes from the Party Booking (recruitment) window's job filter list. Useful for hiding disabled or unreleased classes from the party finder UI.
+      replace: Remove classes específicas da lista de filtro de classes da janela de Reserva de Grupo (recrutamento). Útil para esconder classes desativadas ou ainda não lançadas da interface de busca de grupo.
+
+    # RelativeDelay4CharDel (desc)
+    - find: Shows character deletion wait time as a countdown (e.g., "23h 45m remaining") instead of an absolute date/time. More intuitive for players waiting to confirm a deletion.
+      replace: Mostra o tempo de espera para excluir o personagem como uma contagem regressiva (por exemplo, "23h 45m restantes") em vez de uma data/hora absoluta. Mais intuitivo para jogadores que esperam para confirmar uma exclusão.
+
+    # RestoreChatFocus (desc)
+    - find: Restores keyboard input focus to the chat box after clicking with the left mouse button. Fixes the issue where clicking in the game world causes the chat input to lose focus.
+      replace: Restaura o foco do teclado na caixa de chat depois de clicar com o botão esquerdo do mouse. Corrige o problema em que clicar no mundo do jogo faz a entrada do chat perder o foco.
+
+    # ChatBgMainPanel (title)
+    - find: Customize main chat panel background color and opacity
+      replace: Personalizar a cor e a opacidade do fundo do painel de chat principal
+
+    # ChatBgMainPanel (desc)
+    - find: Sets the color and opacity of the MAIN chat panel - its background and its active tab. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Default is black at 40% opacity (0x66).
+      replace: "Define a cor e a opacidade do painel de chat PRINCIPAL: o fundo e a aba ativa. Abre um seletor de cor RGB e um valor de opacidade (0 = transparente, 255 = opaco). O padrão é preto com 40% de opacidade (0x66)."
+
+    # ChatBgDetached (title)
+    - find: Customize detached chat windows background color and opacity
+      replace: Personalizar a cor e a opacidade do fundo das janelas de chat destacadas
+
+    # ChatBgDetached (desc)
+    - find: Sets the color and opacity of the DETACHED chat windows - their outer border/frame and background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Default is black at 40% opacity (0x66).
+      replace: "Define a cor e a opacidade das janelas de chat DESTACADAS: a borda/moldura externa e o fundo. Abre um seletor de cor RGB e um valor de opacidade (0 = transparente, 255 = opaco). O padrão é preto com 40% de opacidade (0x66)."
+
+    # ChatBgWhisper (title)
+    - find: Customize whisper (1:1) chat window background color and opacity
+      replace: Personalizar a cor e a opacidade do fundo da janela de chat privado (1:1)
+
+    # ChatBgWhisper (desc)
+    - find: Sets the color and opacity of the 1:1 whisper (private message) chat window background. Opens an RGB color picker and an opacity value (0 = transparent, 255 = opaque). Leave a field unchanged to keep its default. Default is black at 40% opacity (0x66).
+      replace: Define a cor e a opacidade do fundo da janela de chat privado 1:1 (mensagem privada). Abre um seletor de cor RGB e um valor de opacidade (0 = transparente, 255 = opaco). Deixe um campo sem alteração para manter o padrão dele. O padrão é preto com 40% de opacidade (0x66).
+
+    # NoEquipPreview (desc)
+    - find: Removes the equipment preview button from item description windows. Use if the preview feature causes issues or is not desired on your server.
+      replace: Remove o botão de pré-visualização de equipamento das janelas de descrição de itens. Use se o recurso de pré-visualização causar problemas ou não for desejado no seu servidor.
+
+    # ReduceExpensiveUIRender (title)
+    - find: Reduce expensive UI rendering
+      replace: Reduzir a renderização pesada da interface
+
+    # ReduceExpensiveUIRender (desc)
+    - find: Skips the ALT+S Skill Tree repaint when nothing changed, instead of rebuilding the grid every frame. Prompts for a minimum idle repaint interval so the character preview keeps animating.
+      replace: Pula o redesenho da Árvore de Habilidades (ALT+S) quando nada mudou, em vez de reconstruir a grade a cada quadro. Pede um intervalo mínimo de redesenho em repouso para que a pré-visualização do personagem continue animada.
+
+    # RestoreSkillInfoCheckbox (title)
+    - find: Restore the "View Skill Info." checkbox in the Skill Tree
+      replace: Restaurar a caixa de seleção "View Skill Info." na Árvore de Habilidades
+
+    # RestoreSkillInfoCheckbox (desc)
+    - find: Brings back the checkbox old Ragexe builds had in the top right corner of the ALT+S Skill Tree, and the behaviour it controlled -- while it is ticked, simply hovering a skill pops the skill detail window next to the cursor instead of having to right-click it. The client still owns the option (Show_SkillDescript, saved in OptionInfo.lua), its command handler and the whole display code, which was merely rebound to the right-click gesture -- this patch re-creates the missing checkbox control and the missing hover branch. Unticked, the client behaves exactly as before, right-click included.
+      replace: "Traz de volta a caixa de seleção que os builds antigos do Ragexe tinham no canto superior direito da Árvore de Habilidades (ALT+S), e o comportamento que ela controlava: enquanto estiver marcada, basta passar o mouse sobre uma habilidade para abrir a janela de detalhes ao lado do cursor, em vez de ter que clicar com o botão direito. O cliente ainda tem a opção (Show_SkillDescript, salva em OptionInfo.lua), o manipulador do comando e todo o código de exibição, que só foi religado ao gesto do clique direito: este patch recria o controle de caixa de seleção que falta e o ramo de passar o mouse que falta. Desmarcada, o cliente se comporta exatamente como antes, inclusive o clique direito."
+
+    # ShowPartySP (title)
+    - find: Party HP/SP Bars (Reforged)
+      replace: Barras de HP/SP do grupo (Reforged)
+
+    # ShowPartySP (desc)
+    - find: Splits each party member's bar into an HP (top) and SP (bottom) half and draws the SP number beside it, in the party window and on the detached mini widgets. Optionally sets the HP and SP bar colours, with your own row separate from everyone else's, so you are easy to find in a full party. Requires the matching rAthena change (SHOW_PARTY_SP) so the server sends the 22-byte 0x0BAB party packet with sp/maxsp.
+      replace: Divide a barra de cada membro do grupo em uma metade de HP (em cima) e uma de SP (embaixo) e desenha o número de SP ao lado, na janela do grupo e nos miniwidgets destacados. Opcionalmente, define as cores das barras de HP e SP, com a sua linha separada da de todos os outros, para que você seja fácil de achar num grupo cheio. Requer a alteração correspondente no rAthena (SHOW_PARTY_SP) para que o servidor envie o pacote de grupo 0x0BAB de 22 bytes com sp/maxsp.
+
+    # HideZeroDateInGuildWin (desc)
+    - find: Hides the placeholder date "1969-01-01" shown for guild members whose join date is unknown or unset. Prevents confusing epoch dates from appearing in the guild member list.
+      replace: Oculta a data fictícia "1969-01-01" mostrada para membros da guilda cuja data de entrada é desconhecida ou não foi definida. Evita que datas confusas de época (epoch) apareçam na lista de membros da guilda.
+
+    # ShortcutForAll (desc)
+    - find: Allows any item type to be placed on the shortcut bar, not just consumables and equipment. Makes it easy to quick-access items for trading, crafting, or other purposes.
+      replace: Permite colocar qualquer tipo de item na barra de atalhos, não apenas consumíveis e equipamentos. Facilita o acesso rápido a itens para troca, criação ou outros usos.
+
+    # HideGameWindows (desc)
+    - find: Hides specific in-game UI windows by their internal Window IDs, defined in a YAML configuration file. Useful for removing unused or unwanted UI elements like the navigation window or tip box.
+      replace: Oculta janelas específicas da interface do jogo pelos seus IDs internos de janela, definidos em um arquivo de configuração YAML. Útil para remover elementos de interface não usados ou indesejados, como a janela de navegação ou a caixa de dicas.
+
+    # EnableFlagAnimation (title)
+    - find: Enable WoE Flag Animation
+      replace: Habilitar a animação das bandeiras da WoE
+
+    # EnableFlagAnimation (desc)
+    - find: Restores the animated WoE (War of Emperium) guild flags that Gravity disabled in later client updates. Brings back the waving flag visuals on castle maps.
+      replace: Restaura as bandeiras de guilda animadas da WoE (Guerra do Emperium) que a Gravity desativou em atualizações posteriores do cliente. Traz de volta o visual das bandeiras tremulando nos mapas de castelo.
+
+    # RestoreBattlegroundUI (title)
+    - find: Restore Battleground UI
+      replace: Restaurar a interface de Battleground
+
+    # RestoreBattlegroundUI (desc)
+    - find: Restores the Battleground navigation button and Entry Queue UI that were hidden in newer clients. Required for servers that use the Battleground system.
+      replace: Restaura o botão de navegação de Battleground e a interface da Fila de Entrada que estavam ocultos nos clientes mais novos. Necessário para servidores que usam o sistema de Battleground.
+
+    # HideItemba (title)
+    - find: Hide Item bar
+      replace: Ocultar a barra de itens
+
+    # HideItemba (desc)
+    - find: Hides the Shortcut Item Bar toggle buttons (Open/Close) from the game interface. Use for a cleaner UI if the shortcut bar controls are not needed.
+      replace: Oculta os botões de alternância (Abrir/Fechar) da Barra de Itens de Atalho na interface do jogo. Use para uma interface mais limpa se os controles da barra de atalhos não forem necessários.
+
+    # DisableDoram (title)
+    - find: Disable Doram
+      replace: Desativar Doram
+
+    # DisableDoram (desc)
+    - find: Removes the Doram race option from the character creation screen. Use on servers that do not support the Doram race to avoid confusion.
+      replace: Remove a opção da raça Doram da tela de criação de personagem. Use em servidores que não suportam a raça Doram, para evitar confusão.
+
+    # HideProbabilityUI (title)
+    - find: Hide Probability UI
+      replace: Ocultar a interface de probabilidade
+
+    # HideProbabilityUI (desc)
+    - find: Hides the item probability/drop rate window from the UI. Use on servers that do not implement the official probability display system or prefer to keep drop rates hidden.
+      replace: Oculta da interface a janela de probabilidade/taxa de drop dos itens. Use em servidores que não implementam o sistema oficial de exibição de probabilidades ou que preferem manter as taxas de drop ocultas.
+
+    # FixSelectMenuReset (title)
+    - find: Fix NPC dialogue Select Menu Reset
+      replace: Corrigir o reinício do menu de seleção do diálogo de NPC
+
+    # FixSelectMenuReset (desc)
+    - find: Fixes a bug where the NPC dialogue select menu resets its scroll position unexpectedly. Keeps the menu at the player's current selection when the dialog updates.
+      replace: Corrige um bug em que o menu de seleção do diálogo de NPC reinicia a posição de rolagem de forma inesperada. Mantém o menu na seleção atual do jogador quando o diálogo é atualizado.
+
+    # FixSelectMenuWidthExpansion (title)
+    - find: Fix NPC dialogue Select Menu Width Expansion
+      replace: Corrigir o alargamento do menu de seleção do diálogo de NPC
+
+    # FixSelectMenuWidthExpansion (desc)
+    - find: Fixes the NPC select menu becoming excessively wide when options contain color codes (^RRGGBB). Corrects the width calculation to ignore color tag characters.
+      replace: Corrige o menu de seleção de NPC que fica largo demais quando as opções têm códigos de cor (^RRGGBB). Corrige o cálculo da largura para ignorar os caracteres das tags de cor.
+
+    # FixSelectMenuHeightExpansion (title)
+    - find: Restore Old NPC Select Menu Behavior
+      replace: Restaurar o comportamento antigo do menu de seleção de NPC
+
+    # FixSelectMenuHeightExpansion (desc)
+    - find: Restores the classic NPC select menu behavior where a scrollbar appears when options exceed the visible area, instead of the newer behavior that expands the dialog window height to fit all options.
+      replace: Restaura o comportamento clássico do menu de seleção de NPC, em que aparece uma barra de rolagem quando as opções passam da área visível, em vez do comportamento mais novo que aumenta a altura da janela de diálogo para caber todas as opções.
+
+    # FixSkillbarReset (title)
+    - find: Fix loading shortcuts / skill bar state
+      replace: Corrigir o carregamento dos atalhos / estado da barra de habilidades
+
+    # FixSkillbarReset (desc)
+    - find: Fixes a bug where shortcut bar items and skill bar positions reset every time you log in or change maps. Ensures your hotkey layout is properly saved and restored.
+      replace: Corrige um bug em que os itens da barra de atalhos e as posições da barra de habilidades são redefinidos toda vez que você faz login ou troca de mapa. Garante que a disposição das suas teclas de atalho seja salva e restaurada corretamente.
+
+    # ChangeGoldPCMaxPoints (title)
+    - find: Change GoldPC Maximum Points Limit
+      replace: Alterar o limite máximo de pontos do GoldPC
+
+    # ChangeGoldPCMaxPoints (desc)
+    - find: Changes the maximum Gold PC point cap from the hardcoded limit of 300 to a custom value (up to 99,999). Must be paired with a matching server-side change in rAthena's battle.cpp.
+      replace: Altera o limite máximo de pontos do Gold PC, fixo no código em 300, para um valor personalizado (até 99.999). Precisa ser combinado com uma alteração correspondente no lado do servidor, no battle.cpp do rAthena.
+
+    # CustomBarterZenySep (title)
+    - find: Format Barter Zeny with Commas
+      replace: Formatar o zeny da loja Barter com vírgulas
+
+    # CustomBarterZenySep (desc)
+    - find: Formats zeny amounts in the Barter shop window with thousand separators (e.g., 1,000,000 z instead of 1000000 z). Makes large prices much easier to read at a glance.
+      replace: Formata os valores de zeny na janela da loja Barter com separadores de milhar (por exemplo, 1,000,000 z em vez de 1000000 z). Deixa preços altos muito mais fáceis de ler num relance.
+
+    # TighterClickArea (title)
+    - find: Tighter Entity Click Area
+      replace: Área de clique mais justa nas entidades
+
+    # TighterClickArea (desc)
+    - find: The client widens every entity's clickable rectangle (hitbox) up to a minimum computed from the window width -- <b>width / 640 x 40</b> pixels for actors, <b>x 34</b> for map NPCs and skill units, so 100 and 85 px at 1600x900. A small sprite therefore defends a box far larger than itself, so neighbouring entities overlap and fight over the same click, and the frontmost rectangle wins whoever owns it. This patch divides all three minimums by 2, 4, 8 or 16 while keeping the scaling with the window width. It cannot shrink a big sprite's rectangle, which comes from its artwork.
+      replace: "O cliente amplia o retângulo clicável (hitbox) de cada entidade até um mínimo calculado a partir da largura da janela: <b>largura / 640 x 40</b> pixels para atores e <b>x 34</b> para NPCs do mapa e unidades de habilidade, ou seja, 100 e 85 px em 1600x900. Assim, um sprite pequeno defende uma área muito maior do que ele mesmo, as entidades vizinhas se sobrepõem e disputam o mesmo clique, e o retângulo da frente vence, seja de quem for. Este patch divide os três mínimos por 2, 4, 8 ou 16, mantendo a escala com a largura da janela. Ele não consegue diminuir o retângulo de um sprite grande, que vem da própria arte."
+
+    # InsensitiveStorageSearch (desc)
+    - find: Makes the storage window search ignore uppercase/lowercase differences, so searching "blue gem" also finds "Blue Gem". Much more convenient for finding items.
+      replace: Faz a busca da janela de armazenamento ignorar a diferença entre maiúsculas e minúsculas, então buscar "blue gem" também encontra "Blue Gem". Muito mais prático para encontrar itens.
+
+    # InsensitiveShopSearch (desc)
+    - find: Makes the Cash Shop search ignore uppercase/lowercase differences, so items can be found regardless of how you capitalize the search term.
+      replace: Faz a busca da Loja de Cash ignorar a diferença entre maiúsculas e minúsculas, para que os itens sejam encontrados independentemente de como você escreve o termo buscado.
+
+    # NoGravityAds (desc)
+    - find: Removes Gravity's promotional advertisement images from the login screen background. Keeps the login screen clean for your server.
+      replace: Remove as imagens de propaganda da Gravity do fundo da tela de login. Mantém a tela de login limpa para o seu servidor.
+
+    # NoGravityLogo (desc)
+    - find: Removes the Gravity company logo from the login screen background. Useful for servers that want a custom-branded login experience.
+      replace: Remove o logotipo da empresa Gravity do fundo da tela de login. Útil para servidores que querem uma tela de login com a sua própria marca.
+
+    # CustomFontName (desc)
+    - find: Changes the game font to a custom font of your choice for all langtypes. If the chosen font does not support the required character set, Windows will fall back to a compatible font automatically.
+      replace: Troca a fonte do jogo por uma fonte personalizada de sua escolha em todos os langtypes. Se a fonte escolhida não suportar o conjunto de caracteres necessário, o Windows passa automaticamente para uma fonte compatível.
+
+    # CustomFontHeight (desc)
+    - find: Sets the height of all in-game fonts to a custom value measured in character height units. Use to make text larger or smaller across the entire UI.
+      replace: Define a altura de todas as fontes do jogo para um valor personalizado, medido em unidades de altura do caractere. Use para deixar o texto maior ou menor em toda a interface.
+
+    # CustomFontCellHeight (desc)
+    - find: Sets the height of all in-game fonts to a custom value measured in cell height units. An alternative sizing method to Character Height for finer control.
+      replace: Define a altura de todas as fontes do jogo para um valor personalizado, medido em unidades de altura da célula. É um método de dimensionamento alternativo à altura do caractere, para um controle mais fino.
+
+    # CustomFontHgtOffset (desc)
+    - find: Adds a fixed offset to all font heights, making every font in the UI uniformly larger (positive values) or smaller (negative values) without overriding individual sizes.
+      replace: Adiciona um deslocamento fixo à altura de todas as fontes, deixando todas as fontes da interface uniformemente maiores (valores positivos) ou menores (valores negativos) sem sobrescrever os tamanhos individuais.
+
+    # CustomFontHgtLimits (desc)
+    - find: Clamps all font heights to minimum and maximum values you specify. Prevents fonts from becoming too small to read or too large for the UI layout.
+      replace: Limita a altura de todas as fontes aos valores mínimo e máximo que você especificar. Evita que as fontes fiquem pequenas demais para ler ou grandes demais para o layout da interface.
+
+    # CustomFontWeight (desc)
+    - find: Changes the boldness (weight) of all fonts -- both normal and bold -- to a single custom value. Values range from 100 (thin) to 900 (heavy), with 400 being normal and 700 being bold.
+      replace: Altera a espessura (peso) de todas as fontes, tanto normais quanto em negrito, para um único valor personalizado. Os valores vão de 100 (fino) a 900 (pesado), sendo 400 o normal e 700 o negrito.
+
+    # CustomNormalFontWeight (desc)
+    - find: Changes the boldness (weight) of normal-weight fonts only. Does not affect fonts already marked as bold. Use to make regular UI text thinner or thicker.
+      replace: Altera a espessura (peso) apenas das fontes de peso normal. Não afeta as fontes já marcadas como negrito. Use para deixar o texto comum da interface mais fino ou mais grosso.
+
+    # CustomBoldFontWeight (desc)
+    - find: Changes the boldness (weight) of bold-weight fonts only. Does not affect normal-weight fonts. Use to make bold UI text heavier or lighter.
+      replace: Altera a espessura (peso) apenas das fontes em negrito. Não afeta as fontes de peso normal. Use para deixar o texto em negrito da interface mais pesado ou mais leve.
+
+    # CustomFontWgtOffset (desc)
+    - find: Adds a fixed offset to all font weights, making every font uniformly bolder (positive values) or thinner (negative values) without overriding individual weight settings.
+      replace: Adiciona um deslocamento fixo ao peso de todas as fontes, deixando todas uniformemente mais grossas (valores positivos) ou mais finas (valores negativos) sem sobrescrever as configurações de peso individuais.
+
+    # CustomFontCharset (desc)
+    - find: Overrides the character set (charset) used for all fonts to a custom value. Use to force a specific encoding like ANSI (0), Baltic (186), or UTF-8 when the default charset causes display issues.
+      replace: Substitui o conjunto de caracteres (charset) usado por todas as fontes por um valor personalizado. Use para forçar uma codificação específica, como ANSI (0), Báltico (186) ou UTF-8, quando o charset padrão causar problemas de exibição.
+
+    # CustomCodePage (title)
+    - find: Override client codepage
+      replace: Substituir a página de código do cliente
+
+    # CustomCodePage (desc)
+    - find: Forces the 2025-07-16 client's multibyte codepage with a QJS-only static patch. Use 65001 for UTF-8; this patch does not add DLL imports or runtime hooks.
+      replace: Força a página de código multibyte do cliente 2025-07-16 com um patch estático feito só em QJS. Use 65001 para UTF-8; este patch não adiciona importações de DLL nem hooks em tempo de execução.
+
+    # IgnoreRsrcErr (desc)
+    - find: Suppresses most error popups for missing resources (sprites, textures, models, etc.) and redirects them to the debug output instead. The client will try to continue running, but missing files may still cause visual glitches or crashes.
+      replace: Suprime a maioria dos pop-ups de erro por recursos ausentes (sprites, texturas, modelos etc.) e os redireciona para a saída de depuração. O cliente tenta continuar rodando, mas arquivos ausentes ainda podem causar falhas visuais ou travamentos.
+
+    # IgnorePalErr (desc)
+    - find: Suppresses error popups for missing palette (.pal) files and redirects them to debug output. Useful when using custom jobs or hairstyles where not all palette combinations exist yet.
+      replace: Suprime os pop-ups de erro por arquivos de paleta (.pal) ausentes e os redireciona para a saída de depuração. Útil ao usar classes ou estilos de cabelo personalizados em que nem todas as combinações de paleta existem ainda.
+
+    # IgnoreLuaErr (desc)
+    - find: Suppresses lua runtime error popups (e.g., "attempt to call nil value") and redirects them to debug output. Prevents the client from halting on non-critical lua errors in custom scripts.
+      replace: Suprime os pop-ups de erro de execução de lua (por exemplo, "attempt to call nil value") e os redireciona para a saída de depuração. Evita que o cliente pare por erros de lua não críticos em scripts personalizados.
+
+    # IgnoreQuestErr (desc)
+    - find: Suppresses quest-related error popups (e.g., "Not found Quest Info = XXXX") and redirects them to debug output. Useful when the server has quests that are not yet defined in the client's quest lua files.
+      replace: Suprime os pop-ups de erro relacionados a missões (por exemplo, "Not found Quest Info = XXXX") e os redireciona para a saída de depuração. Útil quando o servidor tem missões que ainda não estão definidas nos arquivos lua de missões do cliente.
+
+    # IgnoreEntryQueueErr (desc)
+    - find: Suppresses Entry Queue error popups and redirects them to debug output. Useful if the Battleground or instance queue system triggers errors on your server configuration.
+      replace: Suprime os pop-ups de erro da Fila de Entrada e os redireciona para a saída de depuração. Útil se o sistema de fila de Battleground ou de instâncias gerar erros na configuração do seu servidor.
+
+    # MsgBox2Beep (desc)
+    - find: Replaces all error/warning message popups with a system beep sound instead. The client will not pause for user input -- it plays a sound and continues running.
+      replace: "Substitui todos os pop-ups de mensagens de erro/aviso por um bipe do sistema. O cliente não pausa esperando a resposta do usuário: ele toca um som e continua rodando."
+
+    # ShowMsgIcon (desc)
+    - find: Adds an icon (error, warning, info, etc.) to message box popups that normally show only plain text. Makes it easier to distinguish between different types of client messages.
+      replace: Adiciona um ícone (erro, aviso, informação etc.) aos pop-ups de caixa de mensagem que normalmente mostram só texto. Facilita distinguir os diferentes tipos de mensagens do cliente.
+
+    # NoMsgBox (desc)
+    - find: Completely disables all message box popups in the client. No error, warning, or info dialogs will appear. Use with caution -- errors will be silently ignored and may cause unexpected behavior.
+      replace: "Desativa completamente todos os pop-ups de caixa de mensagem do cliente. Nenhuma caixa de erro, aviso ou informação vai aparecer. Use com cuidado: os erros serão ignorados em silêncio e podem causar comportamentos inesperados."
+
+    # ===== Window.yml =====
+
+    # HideNewButtons (desc)
+    - find: "Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way."
+      replace: "Oculta os botões selecionados abaixo das barras de HP/SP na Janela de Informações Básicas (estilo de interface novo). Lista <b>todos</b> os botões que este cliente tem, para que um botão continue selecionável quer o cliente já o oculte ou não; escolher um que já está oculto simplesmente não faz nada, e o prompt informa quais são esses. No cliente 2025-07-16, os que já ficam ocultos são <b>Battleground, Booking e Twitter</b> (issue #24 do GitHub). Não escolha o mesmo botão aqui e em <i>Mostrar Botões (Nova Interface)</i>: isso é rejeitado com um erro que o nomeia, em vez de ser resolvido em silêncio de um jeito ou de outro."
+
+    # ShowNewButtons (desc)
+    - find: Restores selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has; picking one that is already shown does nothing. Use it to bring back buttons the client hides by default, which on 2025-07-16 are <b>Battleground, Booking and Twitter</b>. Do not pick the same button here and in <i>Hide Buttons (New UI)</i> - that is rejected with an error naming it.
+      replace: "Restaura os botões selecionados abaixo das barras de HP/SP na Janela de Informações Básicas (estilo de interface novo). Lista <b>todos</b> os botões que este cliente tem; escolher um que já está visível não faz nada. Use para trazer de volta os botões que o cliente oculta por padrão, que no 2025-07-16 são <b>Battleground, Booking e Twitter</b>. Não escolha o mesmo botão aqui e em <i>Ocultar Botões (Nova Interface)</i>: isso é rejeitado com um erro que o nomeia."
+
+    # CustomBtns (group title)
+    - find: CUSTOM BUTTONS
+      replace: BOTÕES PERSONALIZADOS
+
+    # CustomButtons (title)
+    - find: Add your own buttons
+      replace: Adicionar os seus próprios botões
+
+    # CustomButtons (desc)
+    - find: Adds extra buttons of your own to the row below the HP/SP bars in the Basic Info Window, beyond the 25 the client ships with. Each one is written as <b>iconName = behaves like</b>, where the icon name is also the file name - the client loads <b>bt_&lt;iconName&gt;.bmp</b> and <b>bt_&lt;iconName&gt;_press.bmp</b> from <b>data\texture\&lt;UI folder&gt;\menu_icon\</b> as 32x34 24-bit BMPs with magenta (FF00FF) transparent, so without those files the button draws blank. <b>behaves like</b> names one of the stock buttons and the new one does whatever that one does.
+      replace: "Adiciona botões extras seus à linha abaixo das barras de HP/SP na Janela de Informações Básicas, além dos 25 que o cliente já traz. Cada um é escrito como <b>iconName = behaves like</b>, em que o nome do ícone também é o nome do arquivo: o cliente carrega <b>bt_&lt;iconName&gt;.bmp</b> e <b>bt_&lt;iconName&gt;_press.bmp</b> de <b>data\\texture\\&lt;pasta da UI&gt;\\menu_icon\\</b> como BMPs de 32x34 e 24 bits com magenta (FF00FF) transparente, então sem esses arquivos o botão fica em branco. <b>behaves like</b> indica um dos botões originais, e o novo faz o mesmo que ele."
+
+    # CustomNewCharNameHeight (desc)
+    - find: Changes the height of the character name input field in the new character creation dialog. Adjust if the default size clips text or looks misaligned with custom fonts.
+      replace: Altera a altura do campo de entrada do nome do personagem na nova janela de criação de personagem. Ajuste se o tamanho padrão cortar o texto ou parecer desalinhado com fontes personalizadas.
+
+    # IncrNewCharHairs (desc)
+    - find: Pages the character creation hair picker so it can offer more than the built-in 23 styles. Max 128. Needs one thumbnail per extra style in <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO ships 01 to 23 only). Pair with <i>Allow 65k Hair Styles</i>.
+      replace: Pagina o seletor de cabelo da criação de personagem para que ele possa oferecer mais do que os 23 estilos embutidos. Máximo de 128. Precisa de uma miniatura por estilo extra em <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (o kRO traz apenas de 01 a 23). Combine com <i>Permitir 65 mil estilos de cabelo</i>.
+
+    # HairColorGuard (title)
+    - find: Hair colour guard, and extra hair colours
+      replace: Proteção de cor de cabelo e cores de cabelo extras
+
+    # HairColorGuard (desc)
+    - find: Ignores a hair colour in character creation when that style ships no matching <b>.pal</b> file. Without this the client shows a <i>Cannot find File</i> palette error and then <b>crashes</b> with an access violation, because it dereferences the palette it failed to load. Only affects hair colour in the creation window; nothing else is suppressed.<br><br>It also repaints the swatch row when a style change forces the colour back to <b>none</b>, so the lit swatch stops disagreeing with the character.<br><br>Then it asks <b>how many hair colours</b> the picker should offer. <b>9</b> is the client default and changes no layout at all. Above 9 the row keeps its size and gains a <b>tenth cell that pages to the next nine</b>, the way the hair style grid does; it wraps round to the first page at the end. The buttons move to a relocated array because a tenth would otherwise land on the gender button. Each added colour needs its own <b>.pal</b> files, or the guard above will refuse it, and its own <b>color&lt;NN&gt;_off/_over/_on.bmp</b> art under <b>data\texture\...\make_character_ver2\</b>, or the swatch falls back to the first face. Your server's <b>max hair colour</b> has to allow the range too.
+      replace: Ignora uma cor de cabelo na criação de personagem quando aquele estilo não traz o arquivo <b>.pal</b> correspondente. Sem isso, o cliente mostra um erro de paleta <i>Cannot find File</i> e depois <b>trava</b> com uma violação de acesso, porque acessa a paleta que não conseguiu carregar. Só afeta a cor de cabelo na janela de criação; nada mais é suprimido.<br><br>Ele também redesenha a linha de amostras de cor quando uma troca de estilo força a cor de volta para <b>nenhuma</b>, para que a amostra acesa pare de discordar do personagem.<br><br>Depois, pergunta <b>quantas cores de cabelo</b> o seletor deve oferecer. <b>9</b> é o padrão do cliente e não muda o layout em nada. Acima de 9, a linha mantém o tamanho e ganha uma <b>décima célula que passa para as próximas nove</b>, como faz a grade de estilos de cabelo; no final, ela volta para a primeira página. Os botões passam para um array realocado, porque um décimo botão cairia em cima do botão de gênero. Cada cor adicionada precisa dos seus próprios arquivos <b>.pal</b>, senão a proteção acima vai recusá-la, e da sua própria arte <b>color&lt;NN&gt;_off/_over/_on.bmp</b> em <b>data\texture\...\make_character_ver2\</b>, senão a amostra volta para a primeira face. A <b>cor de cabelo máxima</b> do seu servidor também precisa permitir esse intervalo.
+
+    # CustomCharCreateId (desc)
+    - find: Overrides the default starting job ID sent in the character creation packet. Use when your server starts new characters as a different class than Novice (e.g., Super Novice or a custom job).
+      replace: Substitui o ID de classe inicial padrão enviado no pacote de criação de personagem. Use quando o seu servidor começa os novos personagens com uma classe diferente de Novice (por exemplo, Super Novice ou uma classe personalizada).
+
+    # FixLatestNCWin (desc)
+    - find: Fixes visual issues in the latest character creation window, including a misaligned background image and off-center window positioning. Recommended for a clean character creation experience.
+      replace: Corrige problemas visuais na janela de criação de personagem mais recente, incluindo uma imagem de fundo desalinhada e a janela fora do centro. Recomendado para uma criação de personagem sem problemas visuais.
+
+    # CustomCharCreateSecond (desc)
+    - find: Replaces the Doram race slot in the character creation window with a custom job ID of your choice. Use to offer an alternative race or class in the second creation slot.
+      replace: Substitui o espaço da raça Doram na janela de criação de personagem por um ID de classe personalizado de sua escolha. Use para oferecer uma raça ou classe alternativa no segundo espaço de criação.
+
+    # NoDoramCreation (desc)
+    - find: Removes the Doram race option from the character creation UI entirely. Server-side disabling is also recommended to prevent bypasses. Experimental -- may have visual quirks.
+      replace: "Remove por completo a opção da raça Doram da interface de criação de personagem. Também é recomendado desativá-la no lado do servidor para evitar que isso seja contornado. Experimental: pode ter falhas visuais."
+
+    # CustomPartyLimit (desc)
+    - find: Changes the maximum number of party members shown in the party window (Alt+Z). Increase this if your server supports larger parties than the default limit.
+      replace: Altera o número máximo de membros do grupo mostrados na janela do grupo (Alt+Z). Aumente se o seu servidor suportar grupos maiores que o limite padrão.
+
+    # NoAdvAgencyInParty (desc)
+    - find: Removes the Adventurer Agency (party recruitment) button from the party window. Use on servers that do not support or want the automated party matching system.
+      replace: Remove o botão da Agência de Aventureiros (recrutamento de grupo) da janela do grupo. Use em servidores que não suportam ou não querem o sistema automático de formação de grupos.
+
+    # NoEquipSwap (desc)
+    - find: Removes the equipment swap button from the equipment window. Use on servers that do not support the gear swap feature or want a simpler equipment UI.
+      replace: Remove o botão de troca de equipamentos da janela de equipamentos. Use em servidores que não suportam o recurso de troca de equipamentos ou que querem uma interface de equipamentos mais simples.
+
+    # NoEquipWinTitle (desc)
+    - find: Removes the title bar text from the equipment window. A cosmetic change for a cleaner equipment window appearance.
+      replace: Remove o texto da barra de título da janela de equipamentos. Uma mudança estética para uma janela de equipamentos com aparência mais limpa.
+
+    # DisableEquipAttrButton (title)
+    - find: Disable Equipment Attribute Button
+      replace: Desativar o botão de Atributos do Equipamento
+
+    # DisableEquipAttrButton (desc)
+    - find: Disables the Equipment Attribute (Properties) button in the Equipment Window so clicking it does nothing. Use on servers where the Equipment Properties panel is not applicable.
+      replace: Desativa o botão de Atributos do Equipamento (Propriedades) na janela de equipamentos, para que clicar nele não faça nada. Use em servidores onde o painel de Propriedades do Equipamento não se aplica.
+
+    # CustomBarLimits (desc)
+    - find: Overrides the experience bar display limits for Base and Job levels using a custom configuration file. Required if your server has higher max levels than the client normally supports.
+      replace: Substitui os limites de exibição da barra de experiência para os níveis de Base e de Classe usando um arquivo de configuração personalizado. Necessário se o seu servidor tiver níveis máximos maiores do que o cliente normalmente suporta.
+
+    # ShowExpNumbers (desc)
+    - find: Displays numeric Base and Job experience values directly on top of the EXP bars in the Basic Info Window. Shows exact numbers instead of just a progress bar.
+      replace: Exibe os valores numéricos de experiência de Base e de Classe diretamente sobre as barras de EXP na Janela de Informações Básicas. Mostra os números exatos em vez de só uma barra de progresso.
+
+    # DisConnToLogin (desc)
+    - find: Returns to the login window instead of closing the client when disconnected from the server. Lets players reconnect without having to relaunch the game.
+      replace: Volta para a janela de login em vez de fechar o cliente quando a conexão com o servidor cai. Permite que os jogadores se reconectem sem precisar abrir o jogo de novo.
+
+    # ShowReplayBtn (desc)
+    - find: Shows the Replay button on the Service Select screen, allowing players to browse and watch saved replay files. Normally hidden on most langtypes.
+      replace: Mostra o botão Replay na tela de Seleção de Serviço, permitindo que os jogadores naveguem e assistam aos arquivos de replay salvos. Normalmente fica oculto na maioria dos langtypes.
+
+    # ShowRegisterBtn (desc)
+    - find: Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page. On this client the Sign Up button is always there and opens that page, except at langtype 0, where it first asks whether to go to the official website (or, with a Gravity ID, opens Gravity's Korean signup); the patch makes langtype 0 open your page straight away.
+      replace: Mostra um botão Registrar na tela de login em todos os langtypes. Clicar nele abre a URL de cadastro definida na tag &lt;registrationweb&gt; do clientinfo.xml e fecha o cliente. Útil para direcionar novos jogadores à sua página de cadastro. Neste cliente, o botão Sign Up está sempre lá e abre essa página, exceto no langtype 0, em que ele primeiro pergunta se você quer ir ao site oficial (ou, com um Gravity ID, abre o cadastro coreano da Gravity); o patch faz o langtype 0 abrir a sua página diretamente.
+
+    # NoCharnameLimit (desc)
+    - find: Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for character names. Allows shorter names like "GM" or "Ace". Server-side limits may still apply.
+      replace: Remove a exigência mínima de 4 letras (ou 6 letras em alguns langtypes) para nomes de personagem. Permite nomes mais curtos, como "GM" ou "Ace". Os limites do lado do servidor ainda podem valer.
+
+    # NoUsernameLimit (desc)
+    - find: Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for account usernames. Server-side limits may still apply.
+      replace: Remove a exigência mínima de 4 letras (ou 6 letras em alguns langtypes) para os nomes de usuário das contas. Os limites do lado do servidor ainda podem valer.
+
+    # NoPasswordLimit (desc)
+    - find: Removes the minimum 4-letter (or 6-letter on some langtypes) requirement for passwords on the client side. Server-side limits may still apply.
+      replace: Remove a exigência mínima de 4 letras (ou 6 letras em alguns langtypes) para senhas, do lado do cliente. Os limites do lado do servidor ainda podem valer.
+
+    # HideLicense (desc)
+    - find: Skips the EULA/license agreement screen entirely on startup, going directly to the Service Select or login screen. Saves time for players on every launch.
+      replace: Pula por completo a tela do contrato de licença (EULA) na inicialização e vai direto para a Seleção de Serviço ou para a tela de login. Economiza tempo para os jogadores a cada abertura do jogo.
+
+    # ShowLicense (desc)
+    - find: Forces the EULA/license agreement screen to show on every startup for all langtypes. Use if your server requires players to accept terms of service before playing.
+      replace: Força a tela do contrato de licença (EULA) a aparecer em toda inicialização, em todos os langtypes. Use se o seu servidor exige que os jogadores aceitem os termos de serviço antes de jogar.
+
+    # DisableTraitStatusButton (desc)
+    - find: Disables the Trait Status button in the Status Window so clicking it does nothing. Use on pre-4th job servers where the Trait Status panel is not applicable.
+      replace: Desativa o botão de Status de Característica na Janela de Status, para que clicar nele não faça nada. Use em servidores anteriores à 4ª classe, onde o painel de Status de Característica não se aplica.
+
+    # HideTraitStatusButton (desc)
+    - find: Completely hides the Trait Status expansion button from the Status Window. Use on pre-4th job servers to remove the button entirely rather than just disabling it.
+      replace: Oculta completamente o botão de expansão do Status de Característica na Janela de Status. Use em servidores anteriores à 4ª classe para remover o botão por inteiro, em vez de apenas desativá-lo.
+
+    # ===== Part 2 pull requests: #68 (Sound.yml) and #70 (UI.yml) =====
+
+    # PlayFirstFrameSounds (title)
+    - find: "Play the sound placed on the first frame of an animation"
+      replace: "Tocar o som colocado no primeiro quadro de uma animação"
+
+    # PlayFirstFrameSounds (desc)
+    - find: "The client never plays a sound event placed on frame 0 of an animation that has just REPLACED another one. On an action change it rewinds its \"last sounded frame\" cursor to 0 and then plays the frames after it, so frame 0 is skipped. Looping animations and actions replayed as-is are unaffected -- which is why hurt and attack sounds are already heard from the second blow onwards, only the first one missing. Death animations always follow another action and are never replayed, so their frame-0 sound is never heard at all: over the 2103 monster sprites of a 2025 kRO data.grf that is 47 silent death sounds, among them Doppelganger and the twelve Bio Lab clones, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune and Elder Willow. This patch rewinds the cursor to -1 instead, so the loop starts at frame 0 and those sounds are heard. (Warning: doppleganger_die.wav is a bit annoying :D)"
+      replace: "O cliente nunca toca um evento de som colocado no quadro 0 de uma animação que acabou de SUBSTITUIR outra. Na troca de ação, ele volta o cursor de \"último quadro com som\" para 0 e depois toca os quadros seguintes, então o quadro 0 é pulado. Animações em loop e ações repetidas como estão não são afetadas -- por isso os sons de dano e de ataque já são ouvidos a partir do segundo golpe, só o primeiro falta. Animações de morte sempre seguem outra ação e nunca são repetidas, então o som do quadro 0 delas nunca é ouvido: nos 2103 sprites de monstros de um data.grf do kRO de 2025, são 47 sons de morte mudos, entre eles Doppelganger e os doze clones do Bio Lab, Baphomet, Osiris, Thanatos, Pupa, Orc Warrior, Obeaune e Elder Willow. Este patch volta o cursor para -1, então o loop começa no quadro 0 e esses sons são ouvidos. (Aviso: doppleganger_die.wav é um pouco irritante :D)"
+
+    # NativeActJobPreviews (title)
+    - find: "Fix HD Job Sprite Previews (Alt+Q / Alt+S)"
+      replace: "Corrigir prévias de sprites HD de classe (Alt+Q / Alt+S)"
+
+    # NativeActJobPreviews (desc)
+    - find: "Applies ACT layer scale, mirror and rotation to the existing Equipment and Skill Tree sprite resources on 2025-07-16. HD sprites render at their intended size in the native window surfaces. No generated preview pack or runtime DLL is required. Uses the client's existing resource names and GRF priority; install complete matching SPR/ACT pairs."
+      replace: "Aplica a escala, o espelhamento e a rotação das camadas ACT aos recursos de sprite já existentes de Equipamento e Árvore de Habilidades no 2025-07-16. Sprites HD aparecem no tamanho certo nas janelas nativas. Não precisa de pacote de prévias gerado nem de DLL em tempo de execução. Usa os nomes de recurso existentes do cliente e a prioridade de GRF; instale pares SPR/ACT completos e correspondentes."

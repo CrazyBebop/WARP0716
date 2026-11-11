@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Louis T Steinhil, CrazyBebop                           *
 *   Created Date  : 2026-07-02                                             *
-*   Last Modified : 2026-07-20                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 *   Description   : Gates the 2025-07-16 ALT+S Skill Tree repaint so its   *
 *                   immediate-mode grid is rebuilt only after a render     *
@@ -95,13 +95,14 @@ ReduceExpensiveUIRender.askRepaintFloor = function(_)
 		{ choices: choices }
 	);
 
+	// ★ The WARP window returns false for a D_Choice whose default is accepted unchanged (measured
+	// 2026-10-21: accepting "600 ms" built Off, 24 GetTickCount calls against 26), and false is also
+	// what cancel and an unanswered headless build give. So false means the default, 600 ms.
+	const pick = sel || "600 ms";
 	if (!sel)
-	{
-		$$(_, 1.01, `Repaint interval not chosen, leaving idle repaint Off`);
-		return 0;
-	}
+		$$(_, 1.01, `Repaint interval not answered, using the default 600 ms`);
 
-	const ms = parseInt(sel, 10) || 0;   // the "Off" entry parses to NaN -> 0
+	const ms = parseInt(pick, 10) || 0;   // the "Off" entry parses to NaN -> 0
 	$$(_, 1.01, `Skill Tree idle repaint: ${ms > 0 ? ms + "ms" : "Off"}`);
 	return ms;
 };

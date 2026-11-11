@@ -118,12 +118,6 @@ CustomData:
             author : Ai4rei/AN , Neo-Mind
             desc : Removes the hardcoded monster ID limit for 3D Granny models, allowing custom 3D monsters beyond the official range. Required for servers that add new 3D monster sprites.
 
-        - CustomQuestLua:
-            title : Load custom Quest Lua/Lub files
-            recommend : no
-            author : Neo-Mind
-            desc : Enables loading of custom quest lua files specified through a YAML configuration. All listed files must be placed in the 'lua files\\quest' folder. Useful for servers with custom quests that need additional quest data files.
-        
         - IncrMapQuality:
             title : Increase map quality
             recommend : no

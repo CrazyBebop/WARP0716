@@ -1,7 +1,7 @@
 --[[
   CustomJobs Lua Data
-  Author: CrazyBebop
-  Last Modified: 2026-03-16
+  Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
+  Last Modified: 2026-11-06
 ]]--
 
 -- ============================================================
@@ -9,7 +9,7 @@
 -- ============================================================
 -- Stock job IDs are auto-populated by the do-block below, so you can
 -- write `PCNames[PCIds.LORD_KNIGHT2] = "Lord Tite"` (or
--- `PCNames[4014] = "Lord Tite"` - both forms work) in PCNames.lua.
+-- `PCNames[4014] = "Lord Tite"` — both forms work) in PCNames.lua.
 --
 -- Add YOUR custom job IDs after the "ADD CUSTOM JOBS BELOW" marker.
 --
@@ -20,7 +20,7 @@
 PCIds = PCIds or {}
 
 -- ============================================================
--- Stock job IDs (auto-populated - do not edit this block)
+-- Stock job IDs (auto-populated — do not edit this block)
 -- ============================================================
 -- Aliases provided for both rAthena (LORD_KNIGHT2) and legacy WARP
 -- (LORD_MOUNT) mounted-variant naming, plus rAthena (_T) and legacy
@@ -188,9 +188,24 @@ end
 
 -- ====== ADD YOUR CUSTOM JOB IDs BELOW ======
 PCIds.EXAMPLE_JOB = 4435
-PCIds.EXAMPLE_JOB_B = 4436  -- Baby variant
+PCIds.EXAMPLE_JOB_B = 4436
 
 -- Baby class sprite scaling (shrinks baby jobs to 0.75x)
+-- Scales[1] = "3F400000" = 0.75 in IEEE 754 float
 Scales = Scales or { "3F400000", "3F51EB85", "3F4CCCCD" }
 Shrink_Map = Shrink_Map or {}
 Shrink_Map[PCIds.EXAMPLE_JOB_B] = Scales[1]
+
+-- Optional: attack like a stock job (2026-10-21). The client picks a player's attack animation by job, and its
+-- table stops at job 4307, so a custom job always plays the first group. Name the stock job whose sprites yours
+-- reuses; only a number counts, and a job with no row keeps the stock behaviour. Read while the game runs:
+-- restart the client after an edit, no re-patch.
+-- PCMotionInheritTbl = PCMotionInheritTbl or {}
+-- PCMotionInheritTbl[PCIds.EXAMPLE_JOB] = 1      -- attack like Swordman: a spear thrusts
+
+-- Optional: which stock job's garments (wings, capes) it layers like (2026-11-06). With no row: its
+-- PCMotionInheritTbl job, else the job whose body its PCPaths names, else a Novice. Read when the client starts.
+-- PCRobeInheritTbl = PCRobeInheritTbl or {}
+-- PCRobeInheritTbl[PCIds.EXAMPLE_JOB] = 7        -- garments layer like Knight
+
+-- Guide: https://warp.legacygamers.net/warp0716/CustomJobs/ (Attack Motion, Garments)

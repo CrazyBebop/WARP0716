@@ -58,7 +58,6 @@
 37  : QuestDisplay
 38  : NoGravityAds
 39  : NoGravityLogo
-40  : RestoreLoginWindow
 41  : NoNagle
 42  : HideResButton
 43  : DeleteCharWithEmail
@@ -99,7 +98,6 @@
 81  : CustomLicenseTxt
 82  : HeadPalMF
 83  : HeadPalUnisex
-85  : ShowCancelBtn
 88  : AllowSpaceInGName
 91  : DisConnToLogin
 92  : CustomFirstKey
@@ -119,7 +117,6 @@
 201 : CustomHomuns
 202 : CustomJobs
 203 : CustomShields
-206 : CustomQuestLua
 210 : CustomIcon
 211 : CustomDLL
 212 : ShowRoulette
@@ -127,7 +124,6 @@
 214 : RestoreModelCulling
 215 : IncrMapQuality
 216 : HideCashShop
-217 : HideRoulette
 218 : ShowExpNumbers
 219 : ShowResButton
 220 : HideWorldView
@@ -147,7 +143,6 @@
 236 : CustomPlayerSkills
 237 : CustomHomunSkills
 238 : CustomMerceSkills
-239 : IgnoreAccArg
 240 : CustomClientInfo
 241 : LoadClientPlugins
 243 : CustomQSDelay
@@ -159,7 +154,6 @@
 251 : CloseCutinOnEsc
 254 : CustomInventoryLimit
 255 : DecrAFDelay
-256 : DefShopBrowser
 258 : ShortcutForAll
 259 : [HideNewButtons, ShowNewButtons]
 260 : [HideNewButtons, ShowNewButtons]
@@ -220,7 +214,6 @@
 330 : SkipSignBoard
 331 : NoBlindness
 334 : NoHardCodedIP
-335 : EnableHttpEmblem
 336 : NoEquipPreview
 337 : CustomAdvAgencyLimits
 350 : EnableFlagAnimation
@@ -236,7 +229,12 @@
 360 : RestoreSongsEffect
 361 : CustomCodePage
 362 : CustomButtons
+363 : HairColorGuard
 364 : ShowPartySP
-
-365 : ChatMeasurementCache
-366 : ChatStutterFix
+365 : NativeActJobPreviews
+366 : EnableDruidClasses
+367 : MoreBodyStyles
+368 : QoL2026
+369 : RelaunchOnRestart
+370 : ChatMeasurementCache
+371 : ChatStutterFix

@@ -18,7 +18,7 @@
 *                                                                          *
 *   Author(s)     : Stingor empowered by Claude                           *
 *   Created Date  : 2026-08-13                                             *
-*   Last Modified : 2026-08-18                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -170,15 +170,16 @@ RestoreSkillAttackAnimation = function(_)
 	$$(_, 1, `Ask which skills to restore`)
 	// One checkbox per skill rather than a single choice list: it expresses
 	// "either, or both" directly, and it does not depend on the displayed label
-	// coming back verbatim from the dialog.
+	// coming back verbatim from the dialog. A profile hands each answer back as the text
+	// "true" / "false", and "false" is truthy, so the value is tested (a No used to restore it).
 	const ids = SkillAttackMotion.Skills
-		.filter(skill => Exe.GetUserInput(
+		.filter(skill => ["true", "1"].includes(String(Exe.GetUserInput(
 			skill.key,
 			D_Bool,
 			"Restore " + skill.name + " Animation",
 			"Give <b>" + skill.name + "</b> back its attacker sprite animation?",
 			true
-		))
+		))))
 		.map(skill => skill.id);
 
 	if (ids.length === 0)

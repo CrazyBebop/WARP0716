@@ -21,7 +21,7 @@
 *                                                                          *
 *   Author(s)     : CrazyBebop                                             *
 *   Created Date  : 2026-07-20                                             *
-*   Last Modified : 2026-09-02                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 *   Description   : Party members show an SP bar under their HP bar, with  *
 *                   its own number, on the 2025-07-16 client. Requires the *
@@ -225,13 +225,15 @@ ShowPartySP.offerBackgrounds = function(_)
 	if (Warp.TestMode)
 		return;
 
-	if (!Exe.GetUserInput('$copyPartyMiniBg', D_Bool, "Copy the mini party backgrounds",
+	// A profile or session hands a D_Bool back as the text "true" / "false", and "false" is truthy:
+	// test the value (an answered No used to copy).
+	if (!["true", "1"].includes(String(Exe.GetUserInput('$copyPartyMiniBg', D_Bool, "Copy the mini party backgrounds",
 			"On the detached mini party widgets the taller bar ends flush with the frame, "
 		  + "because their background is a texture and the patch cannot resize it.<br><br>"
 		  + "Copy the three bundled backgrounds that have room for it? You pick the folder next."
 		  + "<br><br>Choosing No changes nothing else: the bars still split, they just sit "
 		  + "tight against the bottom edge.",
-			true))
+			true))))
 		return;
 
 	Exe.GetUserInput('$partyMiniBgDir', D_Folder, "Where to put the backgrounds",
@@ -259,7 +261,11 @@ ShowPartySP.onApplied = function()
 	if (Warp.TestMode)
 		return;
 
-	$$(_, 1.1, `The target folder is the switch - unset means the operator said no`)
+	$$(_, 1.1, `The answer and the target folder both say yes`)
+	/// A folder saved by an earlier build must not copy on its own, and the answer comes back as the
+	/// text "true" / "false" from a profile ("false" is truthy), so its value is tested.
+	if (!["true", "1"].includes(String(Exe.GetSavedInput('$copyPartyMiniBg'))))
+		return;
 	const root = Exe.GetSavedInput('$partyMiniBgDir');
 	if (!root)
 		return;
@@ -349,7 +355,9 @@ ShowPartySP.addr = {
 	// client. Same failure this project already recorded once: a gauge resized without its render
 	// surface draws out of bounds. Tried and reverted 2026-08-25 on the owner's report.
 
-	// --- detached mini party widget (UIPartyMiniWnd); its gauge lives at window+0xC0 ---
+	// --- detached mini party widget (UIPartyMiniWnd). TWO classes with TWO layouts: the gauge is
+	//     at +0xC0 in CreateProgressBar's object (init cave) and at +0x108 in the EventHandler's
+	//     object (store cave), where +0xC0 is the member's name. See installMiniStoreCave. ---
 	miniGaugeSize : 0x007085F6,   // `push 5` (SetRenderTargetSize height) in CreateProgressBar
 	miniAddChild  : 0x00708627,   // `call AddChildDirect` - hook for the mini init cave
 	miniAddChildFn: 0x00A1B780,   // CUIComponent::AddChildDirect
@@ -770,7 +778,8 @@ ShowPartySP.installNumberCave = function(_, showNumber, col)
 
 //==========================================================================
 // 4. Detached mini party widget (UIPartyMiniWnd) - same split HP/SP bar.
-//    Its gauge is the same CUIGauge (at window+0xC0), drawn by the shared
+//    Its gauge is the same CUIGauge (at +0xC0 in the CreateProgressBar object, +0x108 in the
+//    EventHandler object; they are different classes), drawn by the shared
 //    CUIGauge::RenderProgressBars, so enlarge + dual-mode + an SP store give
 //    the split bar exactly as the main window. No number (the mini bars have
 //    no HP number either).
@@ -840,7 +849,21 @@ ShowPartySP.installMiniStoreCave = function(_, col)
 
 	const a = ShowPartySP.asm();
 	// on entry: ebx = the matching mini window, esi = the member AID (param_5).
-	a.emit(0x8B, 0x83); a.dword(0xC0);                                  // mov eax,[ebx+0xC0]  (gauge)
+	//
+	// ★★★★★ THE GAUGE IS AT +0x108 IN THIS CLASS, NOT +0xC0 (shipped wrong 2026-09-04, crash reports
+	// "on warp" from 09-06). +0xC0 here is the member's NAME, a std::string: this handler does
+	// `lea ecx,[ebx+0xC0] / call std::string::assign` at 0x0070B4D8 and reads the gauge as
+	// `mov ecx,[ebx+0x108] / test ecx,ecx` at 0x0070B5BB. +0xC0 IS the gauge in CreateProgressBar's
+	// class (0x00708590 stores it at [this+0xC0]), which is where the offset was carried from.
+	// Two classes, one offset. With MSVC's small-string optimisation a name under 16 characters
+	// sits INLINE at +0xC0, so `mov eax,[ebx+0xC0]` loaded the first four letters ("asda" for
+	// asdasfasf, the exact eax in the dump) and the write faulted at once; a longer name put a
+	// heap pointer there and the same write silently corrupted 0x9C bytes into a name buffer.
+	// The null test mirrors the client's own at 0x0070B5C1, so a future path that reaches this
+	// site with no gauge skips the block instead of writing to +0x9C.
+	a.emit(0x8B, 0x83); a.dword(0x108);                                 // mov eax,[ebx+0x108] (gauge)
+	a.emit(0x85, 0xC0);                                                 // test eax,eax
+	a.jcc32(0x84, "tail");                                              // je tail   (no gauge: nothing to store into)
 	a.emit(0xC7, 0x80); a.dword(0x9C); a.emit(0x01, 0x00, 0x00, 0x00);  // mov dword [eax+0x9C],1  (ensure dual)
 	a.emit(0x3B, 0x35); a.dword(A.gAccountId);                          // cmp esi,[gAccountId]
 	a.jcc8(0x75, "other");                                              // jne -> other member

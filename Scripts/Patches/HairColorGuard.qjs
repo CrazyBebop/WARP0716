@@ -1,0 +1,858 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026 CrazyBebop                                          *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+*   This program is distributed in the hope that it will be useful,        *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+*   GNU General Public License for more details.                           *
+*                                                                          *
+*   You should have received a copy of the GNU General Public License      *
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+*                                                                          *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : CrazyBebop                                             *
+*   Created Date  : 2026-08-14                                             *
+*   Last Modified : 2026-10-21                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Stop a missing hair palette from killing the client, keep the swatch row honest, and
+///        optionally give the row more than the nine colours the client hardcodes.
+///
+/// WHY THIS EXISTS
+///
+/// Picking a hair colour for a style with no matching .pal does not degrade, it KILLS the client.
+/// Reproduced end to end on 2026-08-14 with a custom hair pack:
+///
+///     CPaletteRes :: Cannot find File : palette\<hair>\<hair>47_<male>_8.pal
+///       -> OK -> Gravity(tm) Error Handler, Exception Type 0xc0000005, Exit only
+///
+/// The fault is at 0x00566CE9, in the palette to 16bpp convert loop:
+///
+///     mov   ebx, [ebp+0xC]            ; the palette pointer, an argument
+///     movzx ecx, cl                   ; source pixel index
+///     mov   cx, word ptr [ebx+ecx*4]  ; <-- dereferenced with NO null check
+///
+/// It cannot be caught downstream. CSpriteRes__LoadPalette (0x00725B60) has no failing return: the
+/// success branch returns 1 and the failure branch builds the message and NEVER RETURNS. So the
+/// only fix is to not ask for a palette that is not there.
+///
+/// WHAT IT DOES
+///
+/// Hooks the clicked colour branch of UICharCreateWnd__OnEvent (0x007A1470, case 0xD7 with
+/// param_5 == 0x1EF), builds the palette path for the selected style, gender and the colour being
+/// clicked, and probes it with CFile_Open. If the file is missing the click is discarded through
+/// the handler's own loop continue, exactly as the client does for a button that was not the one
+/// hit. Nothing else is suppressed: this is scoped to hair colour in character creation.
+///
+/// It also guards UpdateCharacterAppearanceInfo, which is where a STYLE change reaches the same
+/// load, and on that path it repaints the swatch row so the lit swatch matches the stored colour.
+///
+/// * CFile_Open is the right probe because it resolves through the GRF AND loose data. The plain
+///   file_exists at 0x00A89050 only sees the filesystem and would hide every packed palette.
+///
+/// * The path follows the client's own format string. CSession::GetHeadPaletteName formats
+///   "<hair>\<hair>%s_%s_%d.pal" (style, gender, colour) through one PUSH, and the shared head
+///   palette patches (HeadPalMF / HeadPalUnisex) repoint exactly that PUSH. The guard reads the
+///   operand at run time, so it probes the file the client is about to load whichever of those
+///   is applied. (It used to build the stock path itself and so refused every colour under them.)
+///
+/// THE COLOUR COUNT
+///
+/// The row is nine buttons at window+0x330 and it cannot grow in place: window+0x354 is where a
+/// tenth would land and it is the FIRST GENDER BUTTON, with 13 references. So asking for more than
+/// nine relocates the array. Exactly three instructions in the whole image reach it, measured
+/// rather than assumed, and all three take a same-size rewrite:
+///
+///     0x0079FE2A  movq [edi+0x330], xmm0          the constructor zeroing entries 0 and 1
+///     0x007A0E0F  mov  [ebx+eax*4+0x330], edi     the creation loop store
+///     0x007A1AC2  lea  eax, [esi+0x330]           the OnEvent walk base
+///
+/// The layout is computed, not a table, so extra swatches simply add rows: the creation loop puts
+/// button i at x = (i % 5) * 27 + 619, y = (i / 5) * 24 + 306. Five per row.
+///
+/// * The relocated array is ONE static block, which assumes a single character creation window is
+///   alive at a time. That holds in this client: the window is created on entering creation and
+///   destroyed on leaving it.
+///
+HairColorGuard = function(_)
+{
+	$$(_, 1.1, `Ask how many hair colours the picker should offer`)
+
+	/// WARP hands back false for an unattended build, so treat that as "keep nine" rather than
+	/// letting the patch cancel itself silently. Nine is the client default and changes nothing.
+	const countIn = Exe.GetUserInput('$hairColourCount', D_Uint16,
+		"Hair Colours",
+		"How many hair colours should character creation offer?\n" +
+		"9 is the client default and changes no layout at all.\n" +
+		"Above 9 the row keeps its size and gains a TENTH cell that pages to the next nine,\n" +
+		"the way the hair style grid does. Every colour still needs its own .pal files.",
+		9, { min: 9, max: 90 });
+
+	const COLOURS  = (countIn === false || countIn < 9) ? 9 : countIn;
+	const PAGING   = COLOURS > 9;
+	const PERPAGE  = 9;
+	const PAGES    = Math.ceil(COLOURS / PERPAGE);
+	const CELLS    = PAGING ? PERPAGE + 1 : PERPAGE;   //the extra cell is the pager
+	const RELOCATE = PAGING;
+
+	$$(_, 1.2, `Find the clicked colour branch inside UICharCreateWnd__OnEvent`)
+
+	/// movzx eax, di                    ; the colour index the loop is on
+	/// xor   ecx, ecx
+	/// mov   word ptr [esi+0x278], ax   ; store it as the selected colour
+	const hookPhy = Exe.FindHex(" 0F B7 C7 33 C9 66 89 86 78 02 00 00");
+	if (hookPhy < 0)
+		throw Error("Hair colour selection site missing");
+
+	$$(_, 1.3, `Find the loop continue, which is where a rejected click has to land`)
+
+	/// mov eax, [ebp-0x34]   ; the array cursor
+	/// inc edi               ; next colour
+	/// mov edx, [ebp-0x38]
+	const skipPhy = Exe.FindHex(" 8B 45 CC 47 8B 55 C8", hookPhy, hookPhy + 0x60);
+	if (skipPhy < 0)
+		throw Error("Hair colour loop continue missing");
+
+	const contVir = Exe.Phy2Vir(hookPhy + 5, CODE);   //past the 5 bytes we displace
+	const skipVir = Exe.Phy2Vir(skipPhy, CODE);
+
+	$$(_, 2.1, `Find the PUSH of the client's own head palette format`)
+
+	/// Raw CP949 bytes, NOT text: "<hair>\<hair>%s_%s_%d.pal", found the way SharedPal finds it
+	/// (the doram variant "%s\<hair>\<hair>..." ends in the same bytes and is a different PUSH).
+	const palStrVir = Exe.FindText("\xB8\xD3\xB8\xAE\\\xB8\xD3\xB8\xAE%s_%s_%d.pal");
+	if (palStrVir < 0)
+		throw Error("Hair palette format string missing");
+	const palPushPhy = Exe.FindHex(PUSH(palStrVir));
+	if (palPushPhy < 0 || Exe.FindHex(PUSH(palStrVir), palPushPhy + 1) >= 0)
+		throw Error("Hair palette format PUSH missing or not unique");
+	const palSlotVir = Exe.Phy2Vir(palPushPhy, CODE) + 1;   //the operand, read at run time
+
+	$$(_, 2.11, `Stage the gender names and the routine that builds a palette path`)
+
+	/// The two guards pass the gender NAME where a template used to go, so their call sites keep
+	/// the cdecl shape sprintf(buf, x, style, colour) and only the call target changes.
+	const [genPhy, genVir] = Exe.Allocate(16, 4);
+	Exe.SetHex(genPhy, " B3 B2 00 00 BF A9 00 00 25 64 00 00 00 00 00 00");   //<male>, <female>, "%d"
+	const fmtMaleVir   = genVir;
+	const fmtFemaleVir = genVir + 4;
+	const decVir       = genVir + 8;
+
+	/// palPath(buf, gender, style, colour), cdecl:
+	///     sprintf(text, "%d", style)
+	///     sprintf(buf + 8, *palSlot, text, gender, colour)     ; the client's format, as patched
+	///     buf[0..7] = "palette\"
+	let pp = "";
+	pp += " 55";                               //push ebp
+	pp += " 8B EC";                            //mov ebp, esp
+	pp += " 83 EC 10";                         //sub esp, 0x10               ; the style as text
+	pp += " FF 75 10";                         //push [ebp+0x10]             ; style
+	pp += " 68" + decVir.toHex(4);             //push "%d"
+	pp += " 8D 45 F0";                         //lea eax, [ebp-0x10]
+	pp += " 50";                               //push eax
+	const ppSp1 = pp.byteCount();
+	pp += " E8 00 00 00 00";                   //call <sprintf>
+	pp += " 83 C4 0C";                         //add esp, 0x0C
+	pp += " FF 75 14";                         //push [ebp+0x14]             ; colour
+	pp += " FF 75 0C";                         //push [ebp+0x0C]             ; gender name
+	pp += " 8D 45 F0";                         //lea eax, [ebp-0x10]
+	pp += " 50";                               //push eax                    ; style text
+	pp += " A1" + palSlotVir.toHex(4);         //mov eax, [palSlot]          ; the format the client uses now
+	pp += " 50";                               //push eax
+	pp += " 8B 45 08";                         //mov eax, [ebp+8]
+	pp += " 83 C0 08";                         //add eax, 8                  ; after "palette\"
+	pp += " 50";                               //push eax
+	const ppSp2 = pp.byteCount();
+	pp += " E8 00 00 00 00";                   //call <sprintf>
+	pp += " 83 C4 14";                         //add esp, 0x14
+	pp += " 8B 4D 08";                         //mov ecx, [ebp+8]
+	pp += " C7 01 70 61 6C 65";                //mov dword [ecx], "pale"
+	pp += " C7 41 04 74 74 65 5C";             //mov dword [ecx+4], "tte\"
+	pp += " 8B E5";                            //mov esp, ebp
+	pp += " 5D";                               //pop ebp
+	pp += " C3";                               //ret
+
+	const [ppPhy, palPathVir] = Exe.Allocate(pp.byteCount(), 0x10);
+	Exe.SetHex(ppPhy, pp);
+	Exe.SetInt32(ppPhy + ppSp1 + 1, 0x00529850 - (palPathVir + ppSp1 + 5));
+	Exe.SetInt32(ppPhy + ppSp2 + 1, 0x00529850 - (palPathVir + ppSp2 + 5));
+
+	$$(_, 2.2, `Stage ONE CFile and initialise it here, not per call`)
+
+	/// * CFile_Open does `std::string::assign(this + 0x14, path)`, so a CFile handed to it must
+	/// have a VALID std::string at +0x14. A first version built the object on the stack with only
+	/// the five fields CSpriteRes__LoadPalette sets, left +0x14 as stack garbage, and died in the
+	/// heap at 0x004F0928 the moment assign treated that garbage as an allocated buffer.
+	///
+	/// A single static instance fixes it twice over: the string is initialised once here, and
+	/// because our paths are ~30 characters (past the 15 char inline buffer) it heap-allocates on
+	/// first use and then REUSES that buffer, so there is no per-call allocation to free either.
+	/// Only ever touched from the UI thread, so one shared instance is safe.
+	const cfile =
+		" 74 30 FD 00"                     //+0x00 vtable, as LoadPalette constructs it
+	+	" FF FF FF FF"                     //+0x04 handle = -1
+	+	" 00 00 00 00 00 00 00 00 00 00 00 00"   //+0x08 .. +0x13
+	+	" 00 00 00 00 00 00 00 00"         //+0x14 std::string inline buffer
+	+	" 00 00 00 00 00 00 00 00"
+	+	" 00 00 00 00"                     //+0x24 size     = 0
+	+	" 0F 00 00 00"                     //+0x28 capacity = 15, so it reads as "empty, inline"
+	+	" 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"   //slack
+	;
+	const [filePhy, fileVir] = Exe.Allocate(cfile.byteCount(), 0x10);
+	Exe.SetHex(filePhy, cfile);
+
+	$$(_, 2.3, `Relocate the swatch array when the row gains its pager cell`)
+
+	/// arrRead is how our own code reaches button i. It stays 7 bytes in both modes, so nothing
+	/// downstream shifts and the measured jump offsets hold either way.
+	let arrayVir = 0;
+	let arrRead  = " 8B 8C B3 30 03 00 00";      //mov ecx, [ebx+esi*4+0x330]
+
+	if (RELOCATE)
+	{
+		const [arrPhy, arrVir] = Exe.Allocate(CELLS * 4, 0x10);
+		Exe.SetHex(arrPhy, " 00".repeat(CELLS * 4));
+		arrayVir = arrVir;
+		arrRead  = " 8B 0C B5 " + arrVir.toHex(4);   //mov ecx, [esi*4 + <array>]
+
+		//the creation loop store: mov [ebx+eax*4+0x330], edi  ->  mov [eax*4+<array>], edi
+		const stoPhy = Exe.FindHex(" 8B CB 57 89 BC 83 30 03 00 00");
+		if (stoPhy < 0)
+			throw Error("Hair colour array store missing");
+		Exe.SetHex(stoPhy + 3, " 89 3C 85 " + arrVir.toHex(4));
+
+		//the OnEvent walk base: lea eax, [esi+0x330]  ->  lea eax, [<array>]
+		const basPhy = Exe.FindHex(" 8D 86 30 03 00 00 33 FF 89 45 CC");
+		if (basPhy < 0)
+			throw Error("Hair colour walk base missing");
+		Exe.SetHex(basPhy, " 8D 05 " + arrVir.toHex(4));
+
+		//both loop bounds, creation and the OnEvent walk
+		const cntPhy = Exe.FindHex(" 8B B5 68 FF FF FF 89 B5 6C FF FF FF 83 FE 09");
+		if (cntPhy < 0)
+			throw Error("Hair colour creation bound missing");
+		Exe.SetUint8(cntPhy + 14, CELLS);
+
+		const wcnPhy = Exe.FindHex(" 83 C0 04 89 45 CC 83 FF 09");
+		if (wcnPhy < 0)
+			throw Error("Hair colour walk bound missing");
+		Exe.SetUint8(wcnPhy + 8, CELLS);
+	}
+
+	/// Declared out here because step 2.5's repaint routine probes with the same string, and a
+	/// const inside the if-block below is invisible to it. WARP reported that as a plain
+	/// ReferenceError, wrote an exe anyway, and only the .epi showed the patch had not applied.
+	let pfVir = 0;
+
+	$$(_, 2.4, `Give the extra swatches art that exists`)
+
+	/// Found by running it, not by reading it. The creation loop names each swatch's bitmap from
+	/// the client's own format strings and the index:
+	///
+	///     <UI>\make_character_ver2\color%02d_off.bmp     0x0101E3C0
+	///     <UI>\make_character_ver2\color%02d_over.bmp    0x0101E3F8
+	///
+	/// Only color01..color09 ship, so a tenth swatch loads a NULL surface and the client dies in
+	/// CSurface__BlitAlphaBlended (fault 0x0053E7C6, 0xC0000005) the moment the row is drawn. Same
+	/// shape as the palette bug this patch exists for: the resource is simply not there. So probe
+	/// the art and fall back to swatch 1. An operator who ships color10_off.bmp gets it; one who
+	/// does not gets a duplicate face instead of a crash.
+	///
+	/// ★★★★★ [ebp-0x98] IS THE LOOP COUNTER, not just the art index. The loop bottom reloads ESI
+	/// from it (0x007A0E1B). A first version wrote the clamped value there and a missing bitmap
+	/// reset the counter to 1 on every pass: the client HUNG instead of crashing, which reads as a
+	/// different bug entirely. So the counter keeps the true index and only the three art reads are
+	/// redirected at a scratch dword.
+	if (RELOCATE)
+	{
+		const artPhy = Exe.FindHex(" 8D 46 01 50 89 85 68 FF FF FF");
+		if (artPhy < 0)
+			throw Error("Hair colour swatch art index site missing");
+
+		const artBack = Exe.Phy2Vir(artPhy + 10, CODE);
+
+		const [idxPhy, idxVir] = Exe.Allocate(4, 4);
+		Exe.SetHex(idxPhy, " 01 00 00 00");
+
+		/// ***** THE PROBE NEEDS ITS OWN PATH, NOT THE CLIENT'S FORMAT STRING.
+		/// The client stores "<UI>\make_character_ver2\color%02d_off.bmp" and its resource
+		/// manager prepends "texture\\" before touching the disk or the GRF. CFile_Open does NOT,
+		/// so probing the client's string verbatim misses EVERY file and every swatch falls back
+		/// to 1. That failure is invisible by eye, because swatch 1 is the crossed "no colour"
+		/// box: a full row of them reads as "no art loaded" rather than "the probe is wrong".
+		/// Caught by a 9-swatch control, where swatches 2..9 render in colour.
+		const probeFmt =
+			" 74 65 78 74 75 72 65 5C"                                  //"texture\\"
+		+	" C0 AF C0 FA C0 CE C5 CD C6 E4 C0 CC BD BA 5C"             //<UI> CP949, then a slash
+		+	" 6D 61 6B 65 5F 63 68 61 72 61 63 74 65 72 5F 76 65 72 32 5C"   //"make_character_ver2\\"
+		+	" 63 6F 6C 6F 72 25 30 32 64 5F 6F 66 66 2E 62 6D 70 00"    //"color%02d_off.bmp"
+		;
+		const [pfPhy, pfV] = Exe.Allocate(probeFmt.byteCount(), 0x10);
+		Exe.SetHex(pfPhy, probeFmt);
+		pfVir = pfV;   //hoisted: the repaint routine in 2.5 probes with the same string
+
+		let t = "";
+		t += " 60";                                //pushad
+		t += " 9C";                                //pushfd
+		t += " 81 EC 00 01 00 00";                 //sub esp, 0x100
+		/// The pager cell must NOT share a face with a colour. Its art number is its index+1,
+		/// which is 10, and 10 is also the first colour on page 2, so both would draw the same
+		/// square. Reserve 99 for it instead: the range tops out at 90 colours, so nothing else
+		/// can claim it. Supply color99_off/_over/_on.bmp to give it a proper "next" arrow.
+		t += " 8D 5E 01";                          //lea ebx, [esi+1]        ; the wanted index
+		if (PAGING)
+		{
+			t += " 83 FE 09";                      //cmp esi, 9              ; the pager cell?
+			t += " 75 05";                         //jne short _num
+			t += " BB 63 00 00 00";                //mov ebx, 99
+		}
+		t += " 53";                                //push ebx                ; _num
+		t += " 68 " + pfVir.toHex(4);              //push <probe format>     ; ours, with texture\
+		t += " 8D 44 24 08";                       //lea eax, [esp+8]        ; the buffer
+		t += " 50";                                //push eax
+		const tSprintf = t.byteCount();
+		t += " E8 00 00 00 00";                    //call <sprintf>
+		t += " 83 C4 0C";                          //add esp, 0x0C           ; cdecl, 3 args
+		t += " 6A 00";                             //push 0
+		t += " 6A 01";                             //push 1
+		t += " 6A 00";                             //push 0
+		t += " 8D 44 24 0C";                       //lea eax, [esp+0xC]      ; the path
+		t += " 50";                                //push eax
+		t += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+		const tOpen = t.byteCount();
+		t += " E8 00 00 00 00";                    //call <CFile_Open>       ; thiscall, cleans 4
+		t += " 84 C0";                             //test al, al
+		const tMissAt = t.byteCount();
+		t += " 74 00";                             //je short _missing
+		t += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+		const tClose = t.byteCount();
+		t += " E8 00 00 00 00";                    //call <CFile_Close>
+		t += " 89 1D " + idxVir.toHex(4);          //mov [idx], ebx          ; art = the real one
+		const tDoneAt = t.byteCount();
+		t += " EB 00";                             //jmp short _done
+		const tMissTarget = t.byteCount();
+		t += " C7 05 " + idxVir.toHex(4) + " 01 00 00 00";   //mov dword [idx], 1   ; _missing
+		const tDoneTarget = t.byteCount();
+		t += " 81 C4 00 01 00 00";                 //add esp, 0x100          ; _done
+		t += " 9D";                                //popfd
+		t += " 61";                                //popad
+		t += " A1 " + idxVir.toHex(4);             //mov eax, [idx]          ; CLAMPED, for sprintf
+		t += " 50";                                //push eax
+		t += " 8D 46 01";                          //lea eax, [esi+1]        ; TRUE, for the counter
+		t += " 89 85 68 FF FF FF";                 //mov [ebp-0x98], eax
+		const tBack = t.byteCount();
+		t += " E9 00 00 00 00";                    //jmp <back>
+
+		const [tPhy, tVir] = Exe.Allocate(t.byteCount(), 0x10);
+		Exe.SetHex(tPhy, t);
+
+		Exe.SetInt32(tPhy + tSprintf + 1, 0x00529850 - (tVir + tSprintf + 5));
+		Exe.SetInt32(tPhy + tOpen    + 1, 0x00573750 - (tVir + tOpen    + 5));
+		Exe.SetInt32(tPhy + tClose   + 1, 0x00573060 - (tVir + tClose   + 5));
+		Exe.SetInt32(tPhy + tBack    + 1, artBack    - (tVir + tBack    + 5));
+
+		const r8 = (from, to) =>
+		{
+			const d = to - (from + 2);
+			if (d < -128 || d > 127)
+				throw Error(`HairColorGuard: art clamp jump out of range (${d})`);
+			return d & 0xFF;
+		};
+		Exe.SetUint8(tPhy + tMissAt + 1, r8(tMissAt, tMissTarget));
+		Exe.SetUint8(tPhy + tDoneAt + 1, r8(tDoneAt, tDoneTarget));
+
+		Exe.SetJMP(artPhy, tVir);
+		Exe.SetHex(artPhy + 5, " 90 90 90 90 90");   //the rest of the displaced 10 bytes
+
+		/// The other two art reads: push [ebp-0x98] -> push [idx]. Both 6 bytes, so nothing shifts.
+		/// The counter reload at 0x007A0E1B is deliberately NOT touched.
+		let n = 0;
+		for (const site of [" FF B5 68 FF FF FF 8D 85 70 FF FF FF 68 F8 E3 01 01",
+		                    " FF B5 68 FF FF FF 8D 85 70 FF FF FF 68"])
+		{
+			const p = Exe.FindHex(site, Exe.Vir2Phy(0x007A0D40, CODE), Exe.Vir2Phy(0x007A0DC0, CODE));
+			if (p > 0)
+			{
+				Exe.SetHex(p, " FF 35 " + idxVir.toHex(4));
+				n++;
+			}
+		}
+		if (n < 2)
+			throw Error(`Hair colour art reads: patched ${n} of 2`);
+	}
+
+	$$(_, 2.5, `The page cursor, and the routine that repaints the row`)
+
+	/// The style grid pages by handing each of its buttons a page number and letting the button
+	/// derive its own art. The colour swatches are plain CUIButtons with fixed bitmaps, so they
+	/// have no such machinery and the faces have to be re-set by hand. The client does exactly that
+	/// for the gender button, but with a DIFFERENT function, and that difference matters:
+	///
+	///     CUIButton__SetBmpResource      0x0082DAC0  dims +0xB4/+0xB8, names +0xBC +0xD4 +0xEC +0x104
+	///     CUIComponent__LoadSpriteAndMeasure 0x00863890  dims +0x14/+0x18, names +0x7C +0x94 +0xAC +0xC4
+	///
+	/// ***** THEY WRITE DIFFERENT FIELDS. The swatch faces are installed at creation by
+	/// LoadSpriteAndMeasure, so calling SetBmpResource on a swatch sets members it never reads:
+	/// the call succeeds, the redraw runs, and the face does not change. Measured, not guessed,
+	/// after the page counter was read out of the live process as 1 while the row stayed put.
+	/// Use the function that put the art there:
+	///
+	///     push <state> ; push <name> ; mov ecx,<button> ; call LoadSpriteAndMeasure
+	///     mov ecx,<button> ; mov eax,[ecx] ; call [eax+0x98]        ; redraw
+	///
+	/// A swatch has THREE states, not four. The client holds one format string each and the
+	/// creation loop reads them in this order, so the table below is in state order:
+	///     0x0101E3C0 _off (0)   0x0101E3F8 _over (1)   0x0101E430 _on (2)
+	/// The loose data folder also carries color<NN>_press.bmp, which this client never asks for.
+	let pageVir = 0, repaintVir = 0, wantVir = 0;
+
+	{
+		const [wPhy, wVir] = Exe.Allocate(4, 4);
+		Exe.SetHex(wPhy, " 00 00 00 00");
+		wantVir = wVir;
+	}
+
+	if (PAGING)
+	{
+		const [pgPhy, pgVir] = Exe.Allocate(4, 4);
+		Exe.SetHex(pgPhy, " 00 00 00 00");
+		pageVir = pgVir;
+
+		const [ftPhy, ftVir] = Exe.Allocate(12, 4);
+		Exe.SetHex(ftPhy, " C0 E3 01 01 F8 E3 01 01 30 E4 01 01");   //off, over, on
+
+		let r = "";
+		r += " 55";                                //push ebp
+		r += " 8B EC";                             //mov ebp, esp
+		r += " 81 EC 20 01 00 00";                 //sub esp, 0x120           ; buffer + a local
+		r += " 33 F6";                             //xor esi, esi             ; i = 0
+		const rEach = r.byteCount();
+		r += " A1 " + pgVir.toHex(4);              //mov eax, [page]
+		r += " 6B C0 09";                          //imul eax, eax, 9
+		r += " 03 C6";                             //add eax, esi
+		r += " 40";                                //inc eax                  ; art number = colour+1
+		/// The pager keeps its own face. Setting it once at creation is not enough: the client
+		/// re-derives a swatch's art from its index the moment it ticks it, so the first click on
+		/// cell 9 replaced the arrow with colour 9's face and it never came back. Restore it on
+		/// every flip instead. Measured by clicking through a full wrap, not reasoned about.
+		r += " 83 FE 09";                          //cmp esi, 9               ; the pager cell?
+		r += " 75 05";                             //jne short _num
+		r += " B8 63 00 00 00";                    //mov eax, 99
+		r += " 89 45 FC";                          //mov [ebp-4], eax         ; _num
+		r += " FF 75 FC";                          //push [ebp-4]
+		r += " 68 " + pfVir.toHex(4);              //push <probe format>      ; carries texture\
+		r += " 8D 85 E0 FE FF FF";                 //lea eax, [ebp-0x120]
+		r += " 50";                                //push eax
+		const rSp1 = r.byteCount();
+		r += " E8 00 00 00 00";                    //call <sprintf>
+		r += " 83 C4 0C";                          //add esp, 0x0C
+		r += " 6A 00";                             //push 0
+		r += " 6A 01";                             //push 1
+		r += " 6A 00";                             //push 0
+		r += " 8D 85 E0 FE FF FF";                 //lea eax, [ebp-0x120]
+		r += " 50";                                //push eax
+		r += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+		const rOpen = r.byteCount();
+		r += " E8 00 00 00 00";                    //call <CFile_Open>
+		r += " 84 C0";                             //test al, al
+		const rFallAt = r.byteCount();
+		r += " 74 00";                             //jz short _fallback
+		r += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+		const rClose = r.byteCount();
+		r += " E8 00 00 00 00";                    //call <CFile_Close>
+		const rSkipAt = r.byteCount();
+		r += " EB 00";                             //jmp short _states
+		const rFallTarget = r.byteCount();
+		r += " C7 45 FC 01 00 00 00";              //mov dword [ebp-4], 1     ; _fallback
+		const rStates = r.byteCount();
+		r += " 33 FF";                             //xor edi, edi             ; _states, state = 0
+		const rSt = r.byteCount();
+		r += " 8B 04 BD " + ftVir.toHex(4);        //mov eax, [fmt + edi*4]
+		r += " FF 75 FC";                          //push [ebp-4]
+		r += " 50";                                //push eax
+		r += " 8D 85 E0 FE FF FF";                 //lea eax, [ebp-0x120]
+		r += " 50";                                //push eax
+		const rSp2 = r.byteCount();
+		r += " E8 00 00 00 00";                    //call <sprintf>
+		r += " 83 C4 0C";                          //add esp, 0x0C
+		r += " 57";                                //push edi                 ; the state
+		r += " 8D 85 E0 FE FF FF";                 //lea eax, [ebp-0x120]
+		r += " 50";                                //push eax                 ; the name
+		r += " 8B 0C B5 " + arrayVir.toHex(4);     //mov ecx, [array + esi*4]
+		const rSet = r.byteCount();
+		r += " E8 00 00 00 00";                    //call <LoadSpriteAndMeasure> ; thiscall, cleans 2
+		r += " 47";                                //inc edi
+		r += " 83 FF 03";                          //cmp edi, 3
+		const rStBack = r.byteCount();
+		r += " 7C 00";                             //jl short _st
+		r += " 8B 0C B5 " + arrayVir.toHex(4);     //mov ecx, [array + esi*4]
+		r += " 8B 01";                             //mov eax, [ecx]
+		r += " FF 90 98 00 00 00";                 //call [eax+0x98]          ; redraw
+		r += " 46";                                //inc esi
+		r += " 83 FE 0A";                          //cmp esi, 10              ; 9 colours + the pager
+		const rEachBack = r.byteCount();
+		r += " 0F 8C 00 00 00 00";                 //jl near _each   ; the body is ~160 bytes
+		r += " 8B E5";                             //mov esp, ebp
+		r += " 5D";                                //pop ebp
+		r += " C3";                                //ret
+
+		const [rPhy, rVir] = Exe.Allocate(r.byteCount(), 0x10);
+		Exe.SetHex(rPhy, r);
+		repaintVir = rVir;
+
+		Exe.SetInt32(rPhy + rSp1   + 1, 0x00529850 - (rVir + rSp1   + 5));
+		Exe.SetInt32(rPhy + rOpen  + 1, 0x00573750 - (rVir + rOpen  + 5));
+		Exe.SetInt32(rPhy + rClose + 1, 0x00573060 - (rVir + rClose + 5));
+		Exe.SetInt32(rPhy + rSp2   + 1, 0x00529850 - (rVir + rSp2   + 5));
+		Exe.SetInt32(rPhy + rSet   + 1, 0x00863890 - (rVir + rSet   + 5));
+
+		const rr = (from, to) =>
+		{
+			const d = to - (from + 2);
+			if (d < -128 || d > 127)
+				throw Error(`HairColorGuard: repaint jump out of range (${d})`);
+			return d & 0xFF;
+		};
+		Exe.SetUint8(rPhy + rFallAt  + 1, rr(rFallAt,  rFallTarget));
+		Exe.SetUint8(rPhy + rSkipAt  + 1, rr(rSkipAt,  rStates));
+		Exe.SetUint8(rPhy + rStBack  + 1, rr(rStBack,  rSt));
+		Exe.SetInt32(rPhy + rEachBack + 2, rEach - (rEachBack + 6));   //near, not rel8
+	}
+
+	$$(_, 3.1, `Build the click guard`)
+
+	/// ESI is the window and DI is the cell the loop is on, both live here. The only stack scratch
+	/// is a 0x100 path buffer. CFile_Open is __thiscall and cleans its own four arguments; the
+	/// sprintf wrapper is cdecl and does not.
+	///
+	/// With paging on, cell 9 is not a colour at all: it advances the page, repaints the row and
+	/// discards the click through the handler's own loop continue. Every other cell resolves to the
+	/// ABSOLUTE colour page*9 + cell, which is what gets probed and what gets stored.
+	let c = "";
+
+	c += " 60";                                //pushad
+	c += " 9C";                                //pushfd
+
+	let cPageMiss = -1;
+	if (PAGING)
+	{
+		c += " 0F B7 C7";                      //movzx eax, di
+		c += " 83 F8 09";                      //cmp eax, 9                ; the pager cell
+		const cNotPager = c.byteCount();
+		c += " 75 00";                         //jne short _colour
+		c += " A1 " + pageVir.toHex(4);        //mov eax, [page]
+		c += " 40";                            //inc eax
+		c += " 83 F8 " + PAGES.toHex(1);       //cmp eax, <pages>
+		c += " 72 02";                         //jb short _store
+		c += " 33 C0";                         //xor eax, eax              ; wrap to the first page
+		c += " A3 " + pageVir.toHex(4);        //mov [page], eax           ; _store
+		const cCall = c.byteCount();
+		c += " E8 00 00 00 00";                //call <repaint>
+		c += " 9D";                            //popfd
+		c += " 61";                            //popad
+		const cPagerOut = c.byteCount();
+		c += " E9 00 00 00 00";                //jmp <skipVir>             ; colour unchanged
+		const cColour = c.byteCount();
+		c += " A1 " + pageVir.toHex(4);        //mov eax, [page]           ; _colour
+		c += " 6B C0 09";                      //imul eax, eax, 9
+		c += " 0F B7 CF";                      //movzx ecx, di
+		c += " 03 C1";                         //add eax, ecx
+		c += " 3D " + COLOURS.toHex(4);        //cmp eax, <colours>
+		cPageMiss = c.byteCount();
+		c += " 0F 83 00 00 00 00";             //jae _missing              ; past the real count
+		c += " A3 " + wantVir.toHex(4);        //mov [wanted], eax
+
+		//hoisted so step 3.2 can wire them; QuickJS var is function scoped
+		var _cNotPager = cNotPager, _cCall = cCall,
+		    _cPagerOut = cPagerOut, _cColour = cColour;
+	}
+	else
+	{
+		c += " 0F B7 C7";                      //movzx eax, di
+		c += " A3 " + wantVir.toHex(4);        //mov [wanted], eax
+	}
+
+	c += " 81 EC 00 01 00 00";                 //sub esp, 0x100            ; path buffer
+	c += " 0F B6 86 BE 02 00 00";              //movzx eax, byte ptr [esi+0x2BE]   ; gender, RO's sex: 0 female, 1 male
+	c += " 85 C0";                             //test eax, eax
+	c += " 74 07";                             //je short _female   (was jne: probed the other gender's file, 2026-10-21)
+	c += " B8 " + fmtMaleVir.toHex(4);         //mov eax, <male>
+	c += " EB 05";                             //jmp short _build
+	c += " B8 " + fmtFemaleVir.toHex(4);       //mov eax, <female>                 ; _female
+	c += " FF 35 " + wantVir.toHex(4);         //push [wanted]                     ; _build, colour
+	c += " 0F B7 8E 66 02 00 00";              //movzx ecx, word ptr [esi+0x266]   ; style
+	c += " 51";                                //push ecx
+	c += " 50";                                //push eax                          ; gender
+	c += " 8D 44 24 0C";                       //lea eax, [esp+0xC]                ; the buffer
+	c += " 50";                                //push eax
+	const cSprintf = c.byteCount();
+	c += " E8 00 00 00 00";                    //call <palPath>
+	c += " 83 C4 10";                          //add esp, 0x10                     ; cdecl
+	c += " 6A 00";                             //push 0
+	c += " 6A 01";                             //push 1
+	c += " 6A 00";                             //push 0
+	c += " 8D 44 24 0C";                       //lea eax, [esp+0xC]                ; the path
+	c += " 50";                                //push eax
+	c += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+	const cOpen = c.byteCount();
+	c += " E8 00 00 00 00";                    //call <CFile_Open>
+	c += " 84 C0";                             //test al, al
+	const cMissAt = c.byteCount();
+	c += " 74 00";                             //je short _missingStack
+	c += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+	const cClose = c.byteCount();
+	c += " E8 00 00 00 00";                    //call <CFile_Close>                ; we opened it
+	c += " 81 C4 00 01 00 00";                 //add esp, 0x100
+	c += " 9D";                                //popfd
+	c += " 61";                                //popad
+	c += " A1 " + wantVir.toHex(4);            //mov eax, [wanted]                 ; the ABSOLUTE colour
+	c += " 33 C9";                             //xor ecx, ecx
+	const cCont = c.byteCount();
+	c += " E9 00 00 00 00";                    //jmp <contVir>
+	const cMissStack = c.byteCount();
+	c += " 81 C4 00 01 00 00";                 //add esp, 0x100                    ; _missingStack
+	const cMissing = c.byteCount();
+	c += " 9D";                                //popfd                             ; _missing
+	c += " 61";                                //popad
+	const cSkip = c.byteCount();
+	c += " E9 00 00 00 00";                    //jmp <skipVir>
+
+	const [cPhy, cVir] = Exe.Allocate(c.byteCount(), 0x10);
+	Exe.SetHex(cPhy, c);
+
+	$$(_, 3.2, `Wire the calls and the exits, every displacement measured`)
+
+	const c8 = (from, to) =>
+	{
+		const d = to - (from + 2);
+		if (d < -128 || d > 127)
+			throw Error(`HairColorGuard: click guard short jump out of range (${d}) at +${from}`);
+		return d & 0xFF;
+	};
+
+	Exe.SetInt32(cPhy + cSprintf + 1, palPathVir - (cVir + cSprintf + 5));
+	Exe.SetInt32(cPhy + cOpen    + 1, 0x00573750 - (cVir + cOpen    + 5));
+	Exe.SetInt32(cPhy + cClose   + 1, 0x00573060 - (cVir + cClose   + 5));
+	Exe.SetInt32(cPhy + cCont    + 1, contVir - (cVir + cCont + 5));
+	Exe.SetInt32(cPhy + cSkip    + 1, skipVir - (cVir + cSkip + 5));
+	Exe.SetUint8(cPhy + cMissAt  + 1, c8(cMissAt, cMissStack));
+
+	if (PAGING)
+	{
+		Exe.SetUint8(cPhy + _cNotPager + 1, c8(_cNotPager, _cColour));
+		Exe.SetInt32(cPhy + _cCall     + 1, repaintVir - (cVir + _cCall + 5));
+		Exe.SetInt32(cPhy + _cPagerOut + 1, skipVir    - (cVir + _cPagerOut + 5));
+		Exe.SetInt32(cPhy + cPageMiss  + 2, cMissing   - (cPageMiss + 6));
+	}
+
+	$$(_, 4.1, `Divert the selection through the guard`)
+	Exe.SetJMP(hookPhy, cVir);
+
+	$$(_, 5.1, `Cover the STYLE path too, which reaches the same load`)
+
+	/// * Guarding the colour click alone is NOT enough, and the live test on 2026-08-18 proved it:
+	/// selecting a palette-less style while a non-zero colour was already chosen still died, on
+	/// `...47_<male>_8.pal`, colour 8 carried over from the previous style. Style changes and colour
+	/// changes both funnel through UpdateCharacterAppearanceInfo, so guard that instead of chasing
+	/// each caller: if the palette for the current combination is missing, fall the colour back to
+	/// 0. Colour 0 is the "none" swatch and never loads a palette, which is why selecting a
+	/// palette-less style with 0 selected was always safe.
+	const updPhy = Exe.FindHex(" 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00", Exe.Vir2Phy(0x007A1E10, CODE), Exe.Vir2Phy(0x007A1E10, CODE) + 0x10);
+	if (updPhy < 0)
+		throw Error("UpdateCharacterAppearanceInfo prologue missing");
+
+	const updRet = Exe.Phy2Vir(updPhy + 5, CODE);
+
+	$$(_, 5.2, `A latch, so the swatch repaint can never re-enter this guard`)
+
+	/// The repaint sends each swatch the same message the click handler sends. That handler calls
+	/// UpdateCharacterAppearanceInfo straight afterwards and never from inside the message, so
+	/// recursion is not expected. The cost of being wrong is an infinite loop inside a UI callback
+	/// and the cost of the latch is one byte, so the latch wins.
+	const [latchPhy, latchVir] = Exe.Allocate(4, 4);
+	Exe.SetHex(latchPhy, " 00 00 00 00");
+
+	$$(_, 5.3, `Build the style guard`)
+
+	/// ECX is the window on entry (thiscall). EBX holds it across the probe because PUSHAD saves it
+	/// and the probe clobbers ECX for arguments.
+	///
+	/// Offsets below are RECORDED with byteCount() while the block is built and every displacement
+	/// is computed from them, never counted by hand. Three hand-counted rel8s in this project were
+	/// wrong and two of them crashed the client with no message at all.
+	let u = "";
+
+	u += " 60";                                //pushad
+	u += " 9C";                                //pushfd
+	u += " 8B D9";                             //mov ebx, ecx                      ; the window
+
+	/// Colour 0 never loads a palette, so there is nothing to probe and nothing to repaint. This
+	/// also keeps the probe off the path during window construction, before the buttons exist.
+	u += " 66 83 BB 78 02 00 00 00";           //cmp word ptr [ebx+0x278], 0
+	const uZeroAt = u.byteCount();
+	u += " 0F 84 00 00 00 00";                 //je _tail            ; near, the body exceeds rel8
+
+	u += " 81 EC 00 01 00 00";                 //sub esp, 0x100
+	u += " 0F B6 83 BE 02 00 00";              //movzx eax, byte ptr [ebx+0x2BE]   ; gender, RO's sex: 0 female, 1 male
+	u += " 85 C0";                             //test eax, eax
+	u += " 74 07";                             //je short _female   (was jne, see above)
+	u += " B8 " + fmtMaleVir.toHex(4);         //mov eax, <male>
+	u += " EB 05";                             //jmp short _build
+	u += " B8 " + fmtFemaleVir.toHex(4);       //mov eax, <female>                 ; _female
+	u += " 0F B7 8B 78 02 00 00";              //movzx ecx, word ptr [ebx+0x278]   ; _build, colour
+	u += " 51";                                //push ecx
+	u += " 0F B7 8B 66 02 00 00";              //movzx ecx, word ptr [ebx+0x266]   ; style
+	u += " 51";                                //push ecx
+	u += " 50";                                //push eax
+	u += " 8D 44 24 0C";                       //lea eax, [esp+0xC]
+	u += " 50";                                //push eax
+	const uSprintfAt = u.byteCount();
+	u += " E8 00 00 00 00";                    //call <palPath>
+	u += " 83 C4 10";                          //add esp, 0x10
+	u += " 6A 00";                             //push 0
+	u += " 6A 01";                             //push 1
+	u += " 6A 00";                             //push 0
+	u += " 8D 44 24 0C";                       //lea eax, [esp+0xC]
+	u += " 50";                                //push eax
+	u += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>
+	const uOpenAt = u.byteCount();
+	u += " E8 00 00 00 00";                    //call <CFile_Open>
+	u += " 84 C0";                             //test al, al
+	const uOkAt = u.byteCount();
+	u += " 0F 85 00 00 00 00";                 //jne _ok
+
+	/// _missing: force the colour back to "none", then make the panel say so.
+	u += " 66 C7 83 78 02 00 00 00 00";        //mov word ptr [ebx+0x278], 0
+
+	u += " 80 3D " + latchVir.toHex(4) + " 00";//cmp byte ptr [latch], 0
+	const uLatchAt = u.byteCount();
+	u += " 75 00";                             //jne short _tailStack
+	let uRepaintAt = -1;
+
+	u += " C6 05 " + latchVir.toHex(4) + " 01";//mov byte ptr [latch], 1
+
+	/// The client ticks a swatch with OnEvent(window, 0x0D, state, 0,0,0) on the BUTTON, state 1
+	/// for the one hit and 0 for the rest (0x007A1AD0 .. 0x007A1B28). The selected colour is stored
+	/// on the window but the tick is per button, which is why forcing the colour on its own left the
+	/// old swatch lit while the character rendered with none. Send the same message rather than
+	/// poking at button state we would have to reverse separately.
+	/// With paging on, the forced colour 0 lives on page 0, so the faces have to come back to
+	/// page 0 as well or the lit swatch sits over the wrong nine colours.
+	if (PAGING)
+	{
+		u += " C7 05 " + pageVir.toHex(4) + " 00 00 00 00";   //mov dword [page], 0
+		uRepaintAt = u.byteCount();
+		u += " E8 00 00 00 00";                //call <repaint>
+	}
+
+	u += " 33 F6";                             //xor esi, esi                      ; i = 0
+	const uLoopTop = u.byteCount();
+	u += arrRead;                              //mov ecx, <button i>               ; 7 bytes either mode
+	u += " 85 C9";                             //test ecx, ecx
+	const uNullAt = u.byteCount();
+	u += " 74 00";                             //jz short _next
+	u += " 8B 01";                             //mov eax, [ecx]                    ; vtable
+	u += " 8B 80 94 00 00 00";                 //mov eax, [eax+0x94]               ; OnEvent
+	u += " 6A 00";                             //push 0
+	u += " 6A 00";                             //push 0
+	u += " 6A 00";                             //push 0
+	u += " 33 D2";                             //xor edx, edx
+	u += " 85 F6";                             //test esi, esi
+	u += " 75 01";                             //jne short _push                   ; only swatch 0 lit
+	u += " 42";                                //inc edx
+	u += " 52";                                //push edx                          ; _push, the state
+	u += " 6A 0D";                             //push 0x0D
+	u += " 53";                                //push ebx                          ; the window
+	u += " FF D0";                             //call eax                          ; callee cleans 24
+	const uNextAt = u.byteCount();
+	u += " 46";                                //inc esi                           ; _next
+	/// ***** BOUNDED BY THE ARRAY, NOT BY THE COLOUR COUNT. This walks the BUTTON array, which
+	/// holds PERPAGE colour swatches (plus the pager, which must not be ticked). Using COLOURS
+	/// here read 18 entries out of a 10 entry array, dereferenced the allocation that follows it
+	/// as a button, and killed the client at 0x0171F800 with ecx = 0x63, which is this patch's own
+	/// scratch dword. Same shape as comparing a sprite index against a job id: the loop was
+	/// comparing the wrong quantity, and it only shows once the two numbers differ.
+	u += " 83 FE " + PERPAGE.toHex(1);         //cmp esi, <swatches per page>
+	const uBackAt = u.byteCount();
+	u += " 7C 00";                             //jl short _loop
+	u += " C6 05 " + latchVir.toHex(4) + " 00";//mov byte ptr [latch], 0
+
+	const uMissEndAt = u.byteCount();
+	u += " EB 00";                             //jmp short _tailStack              ; skip _ok
+	const uOkTarget = u.byteCount();
+	u += " B9 " + fileVir.toHex(4);            //mov ecx, <the static CFile>       ; _ok
+	const uCloseAt = u.byteCount();
+	u += " E8 00 00 00 00";                    //call <CFile_Close>
+	const uStackTarget = u.byteCount();
+	u += " 81 C4 00 01 00 00";                 //add esp, 0x100                    ; _tailStack
+	const uTailTarget = u.byteCount();
+	u += " 9D";                                //popfd                             ; _tail
+	u += " 61";                                //popad
+	u += " 55";                                //push ebp                          ; the displaced prologue
+	u += " 8B EC";                             //mov ebp, esp
+	u += " 6A FF";                             //push -1
+	const uRetAt = u.byteCount();
+	u += " E9 00 00 00 00";                    //jmp <updRet>
+
+	const [uPhy, uVir] = Exe.Allocate(u.byteCount(), 0x10);
+	Exe.SetHex(uPhy, u);
+
+	$$(_, 5.4, `Wire it, with every displacement measured and range checked`)
+
+	/// A rel8 written out of range still assembles and WARP still exits 0. It only lands mid
+	/// instruction at runtime, on a client that then dies looking exactly like the bug this patch
+	/// exists to fix. So assert rather than trust the arithmetic.
+	const rel8 = (from, to) =>
+	{
+		const d = to - (from + 2);
+		if (d < -128 || d > 127)
+			throw Error(`HairColorGuard: short jump out of range (${d}) at +${from}`);
+		return d & 0xFF;
+	};
+
+	Exe.SetInt32(uPhy + uSprintfAt + 1, palPathVir - (uVir + uSprintfAt + 5));
+	Exe.SetInt32(uPhy + uOpenAt    + 1, 0x00573750 - (uVir + uOpenAt    + 5));
+	Exe.SetInt32(uPhy + uCloseAt   + 1, 0x00573060 - (uVir + uCloseAt   + 5));
+	Exe.SetInt32(uPhy + uRetAt     + 1, updRet     - (uVir + uRetAt     + 5));
+
+	//near jumps: colour already 0, and palette present
+	Exe.SetInt32(uPhy + uZeroAt + 2, uTailTarget - (uZeroAt + 6));
+	Exe.SetInt32(uPhy + uOkAt   + 2, uOkTarget   - (uOkAt   + 6));
+
+	//short jumps
+	Exe.SetUint8(uPhy + uLatchAt   + 1, rel8(uLatchAt,   uStackTarget));
+	Exe.SetUint8(uPhy + uNullAt    + 1, rel8(uNullAt,    uNextAt));
+	Exe.SetUint8(uPhy + uBackAt    + 1, rel8(uBackAt,    uLoopTop));
+	Exe.SetUint8(uPhy + uMissEndAt + 1, rel8(uMissEndAt, uStackTarget));
+
+	if (PAGING && uRepaintAt >= 0)
+		Exe.SetInt32(uPhy + uRepaintAt + 1, repaintVir - (uVir + uRepaintAt + 5));
+
+	Exe.SetJMP(updPhy, uVir);
+
+	if (RELOCATE)
+		print(`${_} - ${COLOURS} colours over ${PAGES} page(s); array 0x${arrayVir.toString(16)}`
+		    + `, page 0x${pageVir.toString(16)}, wanted 0x${wantVir.toString(16)}`
+		    + `, repaint 0x${repaintVir.toString(16)}`);
+
+	return true;
+};
+
+///
+/// \brief Only for the 2025-07-16 grid based creation window. Older clients use a hair colour
+///        scrollbar and never reach this code.
+///
+HairColorGuard.validate = () =>
+	Exe.FindHex(" 0F B7 C7 33 C9 66 89 86 78 02 00 00") > 0;

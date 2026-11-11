@@ -22,7 +22,7 @@
 *                                                                          *
 *   Author(s)     : Andrei (4144)                                          *
 *   Created Date  : 2021-10-01                                             *
-*   Last Modified : 2024-08-12	                                           *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -114,9 +114,10 @@ ShowMsgIcon = function(_)
 
 	$$(_, 2.1, `Get the icon type from user`)
 	const choices = Object.getOwnPropertyNames(MB_Types).filter(v => v !== "SIMPLE_BEEP");
-	const key = Exe.GetUserInput('$msgIconType', D_Choice, "MessageBox Change", "Enter the beep type expected", 'OK_DEFAULT', {choices});
-	if (key === false)
-		Cancel("MessageBox reverted");
+	// The WARP window returns false for a D_Choice whose default is accepted unchanged (measured
+	// 2026-10-21: accepting OK_DEFAULT cancelled the patch), so false means the default here.
+	// MsgBox2Beep's saveDefault already keeps its own default; cancel is no longer distinguishable.
+	const key = Exe.GetUserInput('$msgIconType', D_Choice, "MessageBox Change", "Enter the beep type expected", 'OK_DEFAULT', {choices}) || 'OK_DEFAULT';
 
 	$$(_, 2.2, `Construct the new function`)
 	const code =

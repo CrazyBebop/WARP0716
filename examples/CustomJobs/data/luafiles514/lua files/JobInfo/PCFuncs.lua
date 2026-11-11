@@ -1,6 +1,6 @@
 --[[
   CustomJobs Lua Functions
-  Author: CrazyBebop
+  Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
   Last Modified: 2026-03-16
 
   Core helper functions for the CustomJobs system.

@@ -1,6 +1,6 @@
 --[[
   CustomJobs Lua Data
-  Author: CrazyBebop
+  Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
   Last Modified: 2026-03-16
 ]]--
 
@@ -13,7 +13,7 @@
 --   1. Custom jobs (required)
 --   2. Renaming an existing job (optional)
 --
--- Both forms work for renaming a stock job - pick whichever you prefer:
+-- Both forms work for renaming a stock job — pick whichever you prefer:
 --   PCNames[PCIds.WARLOCK]      = "Dark Wizard"     -- by name
 --   PCNames[4055]               = "Dark Wizard"     -- by raw ID
 --   PCNames[PCIds.LORD_KNIGHT2] = "Holy Knight"     -- mounted variant

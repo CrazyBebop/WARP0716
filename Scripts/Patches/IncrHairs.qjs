@@ -23,7 +23,7 @@
 *                                                                          *
 *   Author(s)     : Ai4rei/AN, Neo-Mind, CrazyBebop                        *
 *   Created Date  : 2021-02-24                                             *
-*   Last Modified : 2026-03-29                                             *
+*   Last Modified : 2026-08-20                                             *
 *   Modified By   : CrazyBebop                                             *
 *                                                                          *
 \**************************************************************************/
@@ -74,7 +74,15 @@ IncrHairs.stage2_open = _ =>
 		{ addr: femaleAddr, tableGlobal: 0x015fb318 }
 	];
 
-	const TABLE_LIMIT = 0x2B; // 43 entries in hair table (indices 0-42)
+	/// 43 entries in the hair table, so the only valid indices are 0..42.
+	///
+	/// ★ The comparison below has to be JL, not JLE - GitHub #23. With JLE, index 43 skipped the
+	/// clamp and the table read went one entry past the end, which is exactly the reported
+	/// "hairstyle 43 crashes" (it surfaces when a mid-headgear such as Cyclop's Eye forces this
+	/// lookup, e.g. on opening the equipment window or re-entering character select).
+	/// The client's own bounds check on the same table, at VA 0x00B43583, is
+	/// `CMP ECX,2Bh / JL` - so JL is what matches the engine, and JLE was simply wrong.
+	const TABLE_LIMIT = 0x2B;
 
 	hookSites.forEach( (site, i) =>
 	{
@@ -84,7 +92,7 @@ IncrHairs.stage2_open = _ =>
 		const hookCode =
 			" A1" + site.tableGlobal.toHex(4)  // MOV EAX, [table_global]  (5 bytes)
 		+	" 83 F9" + TABLE_LIMIT.toHex(1)    // CMP ECX, 43             (3 bytes)
-		+	" 7E 03"                            // JLE +3 → skip clamp    (2 bytes)
+		+	" 7C 03"                            // JL +3 → skip clamp     (2 bytes)
 		+	" 33 C9"                            // XOR ECX, ECX            (2 bytes)
 		+	" 41"                               // INC ECX → ECX = 1      (1 byte)
 		+	" 8B 14 88"                         // MOV EDX, [EAX+ECX*4]   (3 bytes)
@@ -140,29 +148,17 @@ IncrHairs.stage1 = patchName =>
 	$$(_, 1.6, `Get the status of shared head palette patches`)
 	const isPalShared = Warp.GetPatchState("HeadPalMF") || Warp.GetPatchState("HeadPalUnisex");
 
-	$$(_, 1.7, `Get the limit from user or set it to 65k based on the patch`)
-	let maxHairs;
-	switch (patchName)
-	{
-		case "IncrHairStyles":
-		{
-			maxHairs = Exe.GetUserInput('$maxHairs', D_Uint16, "Limit input", "Enter the maximum no of hairstyles", 100, {saveDefault: true});
-			if (maxHairs === false)
-				Cancel("Limit reverted to default");
+	$$(_, 1.7, `The limit is fixed - Allow65kHairs is the only patch bound to this function`)
 
-			break;
-		}
-		case "Allow65kHairs":
-		{
-			maxHairs = 65535;
-			break;
-		}
-		default:
-		{
-			maxHairs = CACHE.get('IH_Max');
-			break;
-		}
-	}
+	/// IncrHairStyles, the variant that prompted for a limit, was never registered in Patches/*.yml,
+	/// so it could never be selected and its branch here was unreachable - as were the `default`
+	/// branch and, consequently, the two non-65535 paths in fixCmp below. Wrapper removed 2026-07-29.
+	///
+	/// Note what 65535 actually does: fixCmp forces the conditional jump, so there is no clamp at
+	/// all and an out-of-range style renders as a missing sprite rather than falling back to a valid
+	/// one. If a limited mode is ever wanted again, add a Patches/*.yml entry and restore the switch;
+	/// fixCmp still carries the code for it.
+	const maxHairs = 65535;
 	CACHE.put('IH_Max', maxHairs);
 
 	$$(_, 2, `Prep the lambda function for fixing comparisons`)
@@ -234,6 +230,29 @@ IncrHairs.stage1 = patchName =>
 	let itoaBufVir = 0;
 	const TABLE_SIZE = 0x2B;
 
+	/// ★ UPPER BOUND. Without one, ANY number the server accepts becomes a filename: the itoa path
+	/// below turns style 100 into "100", the client asks for 100_<gender>.spr, the file does not
+	/// exist, and the resource loader pops a modal naming the missing file and then renders the
+	/// character with NO HEAD. That is a hard stop for the player, not a cosmetic fallback, and it
+	/// is reachable with a single @hstyle.
+	///
+	/// So ask for the highest style actually shipped and clamp anything above it to 1, which is the
+	/// same fallback stage2_open already uses for the hair NAME table.
+	///
+	/// Default 45: kRO's own data.grf carries hair sprites 1-45 for both genders and nothing at 46,
+	/// so 45 is the content wall on a stock install. Raise it to whatever you actually ship.
+	/// ★ Beware: sprites are not the only requirement - kRO ships character-creation thumbnails for
+	/// 1-23 ONLY, so styles past 23 need art supplied before they are usable at creation.
+	const maxStyle = Exe.GetUserInput('$maxHairStyle', D_Uint16, "Hair Style Limit",
+		"Highest hair style you ship sprites for.\n\nStyles above this fall back to style 1 instead of leaving the character headless.", 45, {
+		min: TABLE_SIZE,
+		max: 65535,
+		saveDefault: true,
+	});
+	if (maxStyle === false)
+		Cancel("Hair Style Limit", 45);
+	const MAX_STYLE = Number(maxStyle);
+
 	const fixTblCond = (addr) =>
 	{
 		if (itoaVir === 0)
@@ -268,8 +287,24 @@ IncrHairs.stage1 = patchName =>
 		const origBytes = Exe.GetHex(addr, 5);
 		const origMov = Exe.GetHex(addr + 3, 2);
 
+		/// 11-byte upper-bound prefix, then the original lower-bound test unchanged.
+		/// CMP uses imm32 rather than imm8 because MAX_STYLE is routinely above 127.
+		///     81 F9 <max>   CMP ECX, MAX_STYLE      6
+		///     7E 03         JLE .inRange            2
+		///     33 C9         XOR ECX, ECX            2   out of range ->
+		///     41            INC ECX                 1   ECX = 1, the table's safe entry
+		///   .inRange:
+		const guard =
+			" 81 F9" + MAX_STYLE.toHex(4)
+		+	" 7E 03"
+		+	" 33 C9"
+		+	" 41"
+		;
+		const GUARD_LEN = 11;
+
 		const hookCode =
-			" 83 F9" + TABLE_SIZE.toHex(1)
+			guard
+		+	" 83 F9" + TABLE_SIZE.toHex(1)
 		+	" 7D 0A"
 		+	origBytes
 		+	" E9 00 00 00 00"
@@ -281,9 +316,10 @@ IncrHairs.stage1 = patchName =>
 		const [hookPhy, hookVir] = Exe.Allocate(hookCode.byteCount(), 0x10);
 		Exe.SetHex(hookPhy, hookCode);
 
-		Exe.SetInt32(hookPhy + 11, retVir - (hookVir + 15));
-		Exe.SetInt32(hookPhy + 16, itoaVir - (hookVir + 20));
-		Exe.SetInt32(hookPhy + 23, retVir - (hookVir + 27));
+		/// every displacement below shifts by GUARD_LEN; the internal 7D 0A is relative and does not
+		Exe.SetInt32(hookPhy + GUARD_LEN + 11, retVir  - (hookVir + GUARD_LEN + 15));
+		Exe.SetInt32(hookPhy + GUARD_LEN + 16, itoaVir - (hookVir + GUARD_LEN + 20));
+		Exe.SetInt32(hookPhy + GUARD_LEN + 23, retVir  - (hookVir + GUARD_LEN + 27));
 
 		const addrVir = Exe.Phy2Vir(addr, CODE);
 		Exe.SetHex(addr, " E9" + (hookVir - (addrVir + 5)).toHex(4));
@@ -380,7 +416,12 @@ IncrHairs.stage1 = patchName =>
 			throw Error("Limit checker missing");
 
 		$$(__, 4.8, `Fix the CMP`)
-		fixCmp(addr + 2);
+
+		/// addr is still -1 here when the last (palette) site has no limit check. Passing that on
+		/// as addr + 2 sends fixCmp to file offset 1, i.e. straight through the MZ header - the
+		/// same class of bug as GitHub #49. Skip instead.
+		if (addr > 0)
+			fixCmp(addr + 2);
 
 		$$(__, 4.9, `Repeat when doram specific section is present (only for the spr & act)`)
 		if (idx === 0 && doramOn)
@@ -608,4 +649,3 @@ IncrHairs.stage2 = 	Warp.Execute([
 /// \brief Wrappers for individual patches
 ///
 Allow65kHairs = IncrHairs;
-IncrHairStyles = IncrHairs;

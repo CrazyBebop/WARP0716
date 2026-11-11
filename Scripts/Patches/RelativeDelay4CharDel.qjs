@@ -115,8 +115,8 @@ RelativeDelay4CharDel = function(_)
 	$$(_, 2.2, `Replace the original with our code`)
 	Exe.SetHex(addr, code);
 
-	$$(_, 2.3, `Hide the text 'X month X day' by changing coords (28h to 90h)`)
-	Exe.SetUint8(this.PushAddr + 2, 0x90); //its not a NOP
+	$$(_, 2.3, `Hide the text 'X month X day' by changing its Y coordinate (see validate)`)
+	Exe.SetUint8(this.YAddr, this.YNew);
 
 	return true;
 };
@@ -154,5 +154,25 @@ RelativeDelay4CharDel.validate = function()
 		this.PushAddr = Exe.FindHex(parts);
 	}
 
-	return (this.PushAddr > 0);
+	if (this.PushAddr > 0)
+	{
+		this.YAddr = this.PushAddr + 2; //the 28h of "push 28h"
+		this.YNew = 0x90;               //its not a NOP
+		return true;
+	}
+
+	//2025 clients draw "Deletable on: %02d/%02d" (msgstring 0xC20) on the character card with
+	//"push 28h ; push regX ; mov ecx, edi ; call" and the time below it. 90h would still land on
+	//the taller card, so that line moves above it (-100) instead.
+	const msgAddr = Exe.FindHex(PUSH(0xC20) + CALL());
+	if (msgAddr < 0)
+		return false;
+
+	const yAddr = Exe.FindHex(PUSH(0x28) + PUSH_R + MOV(ECX, EDI) + CALL(), msgAddr, msgAddr + 0x100);
+	if (yAddr < 0)
+		return false;
+
+	this.YAddr = yAddr + 1;
+	this.YNew = 0x9C;
+	return true;
 };

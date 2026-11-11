@@ -4,12 +4,12 @@
 
 **[warp.legacygamers.net](https://warp.legacygamers.net)** is the project website: a guide for every patch that needs files from you, an FAQ for a client that will not start, and one changelog covering both WARP0716 and WARPGATE.
 
-## Development Status - Active Again
+## Development Status - Active, Part 3 next
 
-**WARP0716 development has resumed.** After a pause, the project is back open, and I'll keep working on patches as time allows.
+**WARP0716 is actively developed, and Part 3 is next.** The November 6, 2026 update is the last before it: expect one to two months without updates, and until then only hotfixes for bugs ship. With Part 3, **WARP0716 becomes LGN-WARP**: our own WARP, rebuilt from source, inside WARPGATE, so one app gets your client and patches it. Issues and pull requests are still welcome; every update so far is in the [changelog](CHANGELOG.md).
 
 **What's been built so far:**
-- 268 patches that work on the 2025-07-16 kRO Ragexe client, 37 of them recommended by default
+- 280 patches that work on the 2025-07-16 kRO Ragexe client, 37 of them recommended by default
 - Custom Jobs system (Reforged)
 - Party HP/SP Bars (Reforged), with the rAthena patch that feeds it
 - Custom Buttons, for adding your own buttons to the Basic Info window
@@ -18,7 +18,14 @@
 - A working exit button on the service select screen
 - …and plenty more improvements across the board
 
-**Running a newer client?** [WARP2026](https://github.com/zVictorHG/WARP2026-Project) by zVictorHG targets the **2026-01-07 Ragexe** ([rAthena thread](https://rathena.org/board/topic/149414-2026-01-07-ragexe-clientinfo-warp/)). Some patches, like CustomJobs, will be ported over there as time allows.
+**What's next: Part 3**
+- **WARP0716 becomes LGN-WARP.** The project takes a new name with Part 3: LGN-WARP, our own WARP rebuilt from source.
+- **WARPGATE and LGN-WARP in one app.** You patch your client from inside WARPGATE instead of a separate WARP.exe.
+- **Your patches come along.** LGN-WARP is built to run the same patch scripts, so the patches and profiles you use today carry over.
+- **More of kRO's 2026 quality-of-life changes**, continuing Quality of Life Changes (2026).
+- **Still made for the 2025-07-16 client.**
+
+Until then, only hotfixes for bugs ship. This repository stays up, and where bug reports and pull requests go after the move comes with Part 3.
 
 Thanks to everyone who's tested, reported issues, and helped shape WARP0716. Your bug reports and feedback are what keep this project moving.
 
@@ -42,11 +49,13 @@ That's all most people need. The sections below are for server operators and tin
 
 See **[CHANGELOG.md](CHANGELOG.md)** for every patch and update, newest first.
 
-The latest is the **September 4, 2026 update**: two new patches, six fixes and a new `WARP.exe`. Party HP/SP Bars (Reforged) splits every party member's bar into an HP half and an SP half with colours you choose, and Custom Buttons lets you add your own buttons past the 25 the client ships with. The fixes cover the experience bar limits, the player bar resize, the zoom presets and the walk delay, and both the Hide and Show Buttons patches now list every button this client has. This one is a patch update, so re-apply WARP to use it.
+The latest is the **November 6, 2026 update**, the last before Part 3: fixes for Enable Custom Jobs (Reforged) garments, All HatEffects Screen-Size World Depth up close ([#77](https://github.com/CrazyBebop/WARP0716/issues/77)) and the Druid line's Nature Rage and Plume Piercer ([#81](https://github.com/CrazyBebop/WARP0716/issues/81)), and one server patch for the Druid line, which is now in beta. It is a patch update, so re-apply WARP to use it.
+
+The **November 2, 2026 update** (Part 2) before it brought seven new patches, two of them from the community. **Enable Druid classes (2026)** brings the whole Druid line to this client, with a server patch for plain rAthena master; **Hair colour guard** stops the crash on a hair colour with no palette and adds extra colours; then **More Body Styles**, **Restart relaunches the client** and the experimental **Quality of Life Changes (2026)**. It also fixes the Party HP/SP Bars crash on warp, brings a round of Custom Jobs fixes, ports four more patches to this client, removes nine with nothing to patch here, and adds a Filipino language pack.
 
 The **July 29, 2026 Ragexe update** before it fixed the exit button on server select, switching to a different server mid-session, an 8 server limit at start-up, and a broken `clientinfo.xml` that said nothing about what was wrong. Those fixes are in the executable itself, so get the new one through **[WARPGATE](https://mirror2.romirrors.com/downloads/Warpgate.zip)** (the **RAGEXE** tab) rather than by re-WARPing an older exe.
 
-**Guides:** [warp.legacygamers.net/warp0716](https://warp.legacygamers.net/warp0716/) (Custom Jobs, Custom Buttons, Party HP/SP Bars). The guides live on the website, not in this repository. The two hair guides, Custom Hairstyles and Hair Colours, are coming with the hair patches.
+**Guides:** [warp.legacygamers.net/warp0716](https://warp.legacygamers.net/warp0716/) (Custom Jobs, Custom Buttons, Party HP/SP Bars, Custom Hairstyles, Hair Colours and Druid Classes). The guides live on the website, not in this repository.
 
 **Examples:** `examples/` holds the Custom Jobs example job (a drop-in `data/` tree: Lua, sprites, IMFs, icons) with its annotated Lua reference, and the Party HP/SP Bars server patch. Each guide on the website links the folder it needs.
 

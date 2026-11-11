@@ -1,0 +1,93 @@
+/**************************************************************************\
+*                                                                          *
+*   Copyright (C) 2026                                                     *
+*                                                                          *
+*   This file is a part of WARP project (specific to RO clients)           *
+*                                                                          *
+*   WARP is free software: you can redistribute it and/or modify           *
+*   it under the terms of the GNU General Public License as published by   *
+*   the Free Software Foundation, either version 3 of the License, or      *
+*   (at your option) any later version.                                    *
+*                                                                          *
+|**************************************************************************|
+*                                                                          *
+*   Author(s)     : Stingor empowered by Claude                            *
+*   Created Date  : 2026-09-09                                             *
+*   Last Modified : 2026-09-09                                             *
+*                                                                          *
+\**************************************************************************/
+
+///
+/// \brief Plays the sound event attached to the FIRST frame of an animation.
+///
+///        Every .act frame can carry a sound event, and on each tick the client
+///        walks the frames it has just crossed and plays the sounds it finds.
+///        On an action change it rewinds its "last sounded frame" cursor to 0,
+///        then plays frames cursor+1 .. current -- so frame 0 is skipped:
+///
+///            MOV DWORD PTR [ESI+44],0   ; last sounded frame <- 0
+///            XOR EDI,EDI
+///            ...
+///            CMP EDI,EBX                ; EBX = current frame
+///            JGE (nothing to play)
+///            INC EDI                    ; the loop starts at last+1, i.e. 1
+///
+///        Frame 0 is only ever reached through the other branch, the one where
+///        the cursor sits FURTHER along than the current frame. Two things take
+///        it there: an animation that LOOPS (idle, walk), and an action REPLAYED
+///        AS-IS -- ChildSprite_SetAction (0x00C55DA0) rewrites the action and
+///        resets the frame to 0 without touching the cursor, so a monster hit
+///        again while already playing its hurt animation walks over frame 0 and
+///        does sound it.
+///
+///        What stays silent is therefore not "every action that does not loop",
+///        but the first frame of an action that has just REPLACED another one.
+///        In practice: hurt and attack sounds are already heard from the second
+///        blow onwards and only the very first is missing, which nobody notices.
+///        Death sounds are never heard at all -- a death action always follows
+///        another one and is never replayed.
+///
+///        Counted over the 2103 monster sprites of a 2025 kRO data.grf, 47
+///        sprites carry their death sound on that first frame and so never make
+///        it heard: Doppelganger and the twelve Bio Lab clones (Seyren, Eremes,
+///        Katrinn, ...), whose die action is a single frame carrying
+///        doppleganger_die.wav, plus Baphomet, Osiris, Thanatos, Pupa, Orc
+///        Warrior, Obeaune and Elder Willow. (95 further sprites put a sound on
+///        the first frame of their hurt animation and 11 on their attack; those
+///        are already audible, and the patch only adds their first blow.)
+///
+///        This patch rewinds the cursor to -1 instead of 0, so the loop starts
+///        at frame 0 and the sprite data is honoured. Nothing else changes. The
+///        wrap-around branch is untouched, so idle and walk sound exactly as
+///        they did, and no sound can play twice -- as before, the cursor is
+///        written back to the current frame at the end of every call, so a
+///        frame is never walked over more than once.
+///
+PlayFirstFrameSounds = function(_)
+{
+	$$(_, 1, `Find the actor frame sound player`)
+	// MOV ESI,ECX | MOV EDI,[ESI+44] | LEA EDX,[ESI+40] | MOV EBX,[ESI+3C] |
+	// MOV EAX,[EDX] | CMP EDI,EBX
+	// Three field loads in a row -- last sounded frame, remembered action,
+	// current frame -- followed by the comparison that drives the whole
+	// function. That is enough to name it: a single match in the executable.
+	const fnAddr = Exe.FindHex("8B F1 8B 7E 44 8D 56 40 8B 5E 3C 8B 02 3B FB");
+	if (fnAddr < 0)
+		throw Error("Frame sound player not found");
+
+	$$(_, 2, `Find the cursor rewind performed on an action change`)
+	// MOV DWORD PTR [ESI+44],0 | XOR EDI,EDI
+	// Reached only when the current action differs from the remembered one.
+	const rewindAddr = Exe.FindHex("C7 46 44 00 00 00 00 33 FF", fnAddr, fnAddr + 0x40);
+	if (rewindAddr < 0)
+		throw Error("Frame cursor rewind not found");
+
+	$$(_, 3, `Rewind to -1 so the loop starts at frame 0`)
+	// OR DWORD PTR [ESI+44],-1 | OR EDI,-1 | NOP | NOP
+	// Nine bytes in, nine bytes out, so nothing downstream moves. OR writes the
+	// flags where the original XOR did; harmless, since the next branch is a CMP
+	// two instructions further down.
+	Exe.SetHex(rewindAddr, "83 4E 44 FF 83 CF FF 90 90");
+
+	return true;
+};

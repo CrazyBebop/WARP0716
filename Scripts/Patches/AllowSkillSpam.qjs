@@ -25,7 +25,7 @@
 *                                                                          *
 *   Author(s)     : Functor, Andrei (4144), Neo-Mind, CrazyBebop                  *
 *   Created Date  : 2020-11-22                                             *
-*   Last Modified : 2026-03-04                                             *
+*   Last Modified : 2026-10-21                                             *
 *                                                                          *
 \**************************************************************************/
 
@@ -36,6 +36,26 @@
 ///
 AllowSkillSpam = function(_)
 {
+	$$(_, 0.1, `Always on, or switched in game with a slash command (GitHub #67)`)
+	/// An accepted default comes back false, which is Always on: the patch as it always was.
+	const toggle = !Warp.TestMode && Exe.GetUserInput('$skillSpamMode', D_Choice, "Skill Spam Mode",
+		"Always on, or switched on and off in game with a slash command? Toggled, it starts off.",
+		'Always on', {choices: ['Always on', 'Toggle with a slash command']}) === 'Toggle with a slash command';
+
+	let cmdName = null;
+	let flagVir = 0;
+	if (toggle)
+	{
+		cmdName = Exe.GetUserInput('$skillSpamCmd', D_Text, "Skill Spam Command",
+			"The slash command that switches skill spam on and off", "/skillspam", {minLen: 2, maxLen: 24, saveDefault: true});
+		if (!cmdName)
+			cmdName = "/skillspam";
+		if (cmdName[0] !== '/' || /\s/.test(cmdName))
+			throw Error("The command must start with / and have no spaces");
+
+		[, flagVir] = Exe.AddInt32(0);
+	}
+
 	$$(_, 1, `Find the comparison`)
 	let parts =
 	[
@@ -65,6 +85,9 @@ AllowSkillSpam = function(_)
 	}
 	if (addr > 0)
 	{
+		if (toggle)
+			throw Error("The slash command toggle is built for the 2025-07-16 hotkey layout only");
+
 		$$(_, 2.1, `Prepare replacement code - CMP is for triggering Zero Flag`)
 		const code =
 			CMP(EBX, EBX)  //cmp ebx, ebx
@@ -126,9 +149,12 @@ AllowSkillSpam = function(_)
 			}
 		}
 
+		if (toggle && !isModernReorder)
+			throw Error("The slash command toggle is built for the 2025-07-16 hotkey layout only");
+
 		if (addr2 < 0 && ROC.FullVer >= 14.29)
 		{
-			$$(_, '3.3b', `VS2022 inlines virtual_key_code with CMOVE — find and make unconditional`)
+			$$(_, '3.3b', `VS2022 inlines virtual_key_code with CMOVE: find it and make it unconditional`)
 			code =
 				MOV(EAX, [POS4WC])    //mov eax, dword ptr [g_session.virtual_key_code]
 			+	CMOVE(EAX, R32)       //cmove eax, regA ; conditional copy of field_5ADC
@@ -144,7 +170,7 @@ AllowSkillSpam = function(_)
 
 			$$(_, '4b', `Hook at the CMP to copy field_5ADC → virtual_key_code before comparing`)
 			// For the inlined case, the CMOVE→MOV change is sufficient.
-			// No AutoHook needed — the unconditional MOV ensures field_5ADC always overwrites virtual_key_code.
+			// No AutoHook needed: the unconditional MOV ensures field_5ADC always overwrites virtual_key_code.
 		}
 		else if (addr2 < 0)
 		{
@@ -196,25 +222,80 @@ AllowSkillSpam = function(_)
 			const rcmp = jz1.getNext();
 			let jz2 = rcmp.getNext();
 
-			$$(_, 3.5, `Update modern jumps`)
-			jz1.Immd -= (rcmp.Size + jz2.Size);
-			jz2.Immd += (cmp0.Size + jz1.Size);
-
-			$$(_, 3.6, `Reorder modern and apply`)
-			Exe.SetHex(addr2, rcmp + jz2 + cmp0 + jz1);
-
 			$$(_, 3.7, `Extract the target address`)
 			const tgt = rcmp.Disp;
 
-			$$(_, 4.1, `Construct the new function`)
-			code =
+			const copy =
 				PUSH_EAX
 			+	MOV(EAX, [tgt + 4])
 			+	MOV([tgt], EAX)
 			+	POP_EAX
-			+	cmp74
-			+	RETN()
 			;
+
+			if (toggle)
+			{
+				$$(_, '3.5t', `Toggle: run the reordered block only while the flag is on`)
+				/// Both orders live in a cave and the flag picks one, so the client is stock while
+				/// the toggle is off. CMP sets the flags the original jumps test, after ours.
+				const skipVir = Exe.Phy2Vir(jz1.Addr, CODE) + jz1.Size + jz1.Immd;
+				const assignVir = Exe.Phy2Vir(jz2.Addr, CODE) + jz2.Size + jz2.Immd;
+				const blockSize = cmp0.Size + jz1.Size + rcmp.Size + jz2.Size;
+				const contVir = Exe.Phy2Vir(addr2, CODE) + blockSize;
+				const cmp0Hex = Exe.GetHex(cmp0.Addr, cmp0.Size);
+				const rcmpHex = Exe.GetHex(rcmp.Addr, rcmp.Size);
+
+				const block =
+					CMP(BYTE_PTR, [flagVir], 0)  //cmp byte ptr [flag], 0
+				+	JE(Filler(1))                //je _stock
+				+	rcmpHex                      //cmp dword ptr [tgt], regB
+				+	JE(Filler(2))                //je _assign
+				+	cmp0Hex                      //cmp dword ptr [ebp+x], 0
+				+	JZ(Filler(3))                //jz _skip
+				+	JMP(Filler(4))               //jmp _continue
+				;
+				const stock =
+					cmp0Hex                      //_stock: the original order
+				+	JZ(Filler(3))
+				+	rcmpHex
+				+	JE(Filler(2))
+				+	JMP(Filler(4))
+				;
+				const [blockPhy, blockVir] = Exe.Allocate((block + stock).byteCount(), 0x10);
+				Exe.SetHex(blockPhy, SetFillTargets(block + stock,
+				{
+					start: blockVir,
+					1: blockVir + block.byteCount(),
+					2: assignVir,
+					3: skipVir,
+					4: contVir
+				}));
+				Exe.SetJMP(addr2, blockVir, blockSize - 5);
+
+				$$(_, '4.1t', `Toggle: copy the held key only while the flag is on`)
+				code =
+					CMP(BYTE_PTR, [flagVir], 0)  //cmp byte ptr [flag], 0
+				+	' 74' + copy.byteCount().toHex(1) //je _cmp
+				+	copy
+				+	cmp74                        //_cmp: cmp regA, 7F4h
+				+	RETN()
+				;
+			}
+			else
+			{
+				$$(_, 3.5, `Update modern jumps`)
+				jz1.Immd -= (rcmp.Size + jz2.Size);
+				jz2.Immd += (cmp0.Size + jz1.Size);
+
+				$$(_, 3.6, `Reorder modern and apply`)
+				Exe.SetHex(addr2, rcmp + jz2 + cmp0 + jz1);
+
+				$$(_, 4.1, `Construct the new function`)
+				code =
+					copy
+				+	cmp74
+				+	RETN()
+				;
+			}
 
 			$$(_, 4.2, `Prepare the arguments for auto-hook`)
 			const args =
@@ -226,6 +307,93 @@ AllowSkillSpam = function(_)
 			$$(_, 4.3, `Add our code and call it from the original comparison address`)
 			AutoHook(cmp74.Addr, code, args);
 		}
+	}
+
+	if (toggle)
+	{
+		$$(_, 5.1, `Find CSession::GetNoParamTalkType's entry (the slash command lookup)`)
+		/// thiscall, one argument: the typed command (char*), returns its talk type. Load GRF On
+		/// Slash Cmd hooks this function's "unknown command" exit; the entry is a different site,
+		/// so both patches can be applied together.
+		const lookupPhy = Exe.FindHex(" 55 8B EC 83 EC 08 8B 81 ?? ?? 00 00 8B 91 ?? ?? 00 00 56 8B F0 89 55 FC 2B F2 89 45 F8 C1 FE 03 57 8B 7D 08");
+		if (lookupPhy < 0)
+			throw Error("Slash command lookup not found");
+		const lookupVir = Exe.Phy2Vir(lookupPhy, CODE);
+
+		$$(_, 5.2, `Find the chat window and its print call (the unknown command message uses them)`)
+		const msgPhy = Exe.FindHex(" 68 58 0D 00 00 E8 ?? ?? ?? ?? 83 C4 04 B9 ?? ?? ?? ?? 50 6A 01 E8");
+		if (msgPhy < 0)
+			throw Error("Chat print call not found");
+		const chatWnd = Exe.GetInt32(msgPhy + 14);
+		const chatPrint = Exe.GetTgtAddr(msgPhy + 22);
+
+		/// thiscall print(1, text, colour, 0, 0); the callee cleans its five arguments
+		const chatMsg = (msg) =>
+			PUSH(0) + PUSH(0) + PUSH(0xFFFF) + PUSH_STR(msg) + PUSH(1)
+		+	MOV(ECX, chatWnd)
+		+	CALL(Filler(9))
+		;
+
+		$$(_, 5.3, `Build the command check`)
+		/// short jumps are derived from the byte counts, never counted by hand
+		const rel8 = (from, to) => ((to - from) & 0xFF).toHex(1);
+		const head = " 8A 06 3A 07";                 //_loop: mov al, [esi]; cmp al, [edi]
+		const step = " 46 47";                       //inc esi; inc edi
+		const other = POP(EDI) + POP(ESI) + JMP(Filler(1));
+		const oJne = head.byteCount();               //jne _other
+		const oJe = oJne + 2 + 2;                    //after jne + test al, al: je _match
+		const oJmp = oJe + 2 + step.byteCount();     //jmp _loop
+		const oOther = oJmp + 2;
+		const oMatch = oOther + other.byteCount();
+		const loop =
+			head
+		+	" 75" + rel8(oJne + 2, oOther)
+		+	" 84 C0"
+		+	" 74" + rel8(oJe + 2, oMatch)
+		+	step
+		+	" EB" + rel8(oJmp + 2, 0)
+		+	other
+		;
+		const cave =
+			" 55 8B EC 83 EC 08"            //stolen: push ebp; mov ebp, esp; sub esp, 8
+		+	PUSH(ESI)
+		+	PUSH(EDI)
+		+	MOV(ESI, [EBP, 8])              //mov esi, [ebp+8] ; the typed command
+		+	PUSH_STR(cmdName)               //push <our command>
+		+	POP(EDI)                        //pop edi
+		+	loop                            //compare, fall back to the stock lookup on any difference
+		;
+		const matchOff = cave.byteCount();
+		const match =
+			POP(EDI)                        //_match
+		+	POP(ESI)
+		+	" 80 35" + flagVir.toHex(4) + " 01"  //xor byte ptr [flag], 1
+		+	CMP(BYTE_PTR, [flagVir], 0)     //cmp byte ptr [flag], 0
+		+	JE(Filler(2))                   //je _off
+		+	chatMsg("Skill spam is ON: holding a skill hotkey casts it again and again.")
+		+	JMP(Filler(3))                  //jmp _ret
+		;
+		const offOff = matchOff + match.byteCount();
+		const off = chatMsg("Skill spam is OFF.");
+		const retOff = offOff + off.byteCount();
+		const ret =
+			" 33 C0"                        //_ret: xor eax, eax ; handled, no "invalid command"
+		+	" 8B E5 5D C2 04 00"            //mov esp, ebp; pop ebp; retn 4
+		;
+
+		const all = cave + match + off + ret;
+		const [cavePhy, caveVir] = Exe.Allocate(all.byteCount(), 0x10);
+		Exe.SetHex(cavePhy, SetFillTargets(all,
+		{
+			start: caveVir,
+			1: lookupVir + 6,
+			2: caveVir + offOff,
+			3: caveVir + retOff,
+			9: chatPrint
+		}));
+
+		$$(_, 5.4, `Enter the check from the lookup's entry`)
+		Exe.SetJMP(lookupPhy, caveVir, 1);
 	}
 
 	return true;

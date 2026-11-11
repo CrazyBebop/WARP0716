@@ -1,9 +1,22 @@
 --[[
   CustomJobs Lua Data
-  Author: CrazyBebop
-  Last Modified: 2026-03-16
+  Author: CrazyBebop​‌​​​​‌‌​‌​​​​‌​
+  Last Modified: 2026-10-30
 ]]--
 
+-- ============================================================
+-- NOTE (2026-10-30): this table is read when you APPLY the patch, not by the client.
+-- WARP bakes its rows into the patched exe (through PCIds.lua for the id), after the
+-- five official 2025 rows (Druid, Karnos, Alitea), so re-apply WARP after editing it.
+-- WARP reads two copies: this one in its Inputs folder and the one in the client
+-- folder of the exe you patch (data/luafiles514/lua files/JobInfo/PCHands.lua), and
+-- the client's rows win. A row is a quoted folder name, a quoted "folder\\prefix",
+-- or a row naming another row, such as PCHands[PCIds.MY_JOB], which takes that
+-- row's value. A row naming a stock job, such as (PCHands[PCIds.NOVICE] or ""),
+-- means "stock hands" and adds nothing. The runtime Lua lookup crashes the
+-- 2025-07-16 client (2026-08-27), which is why the table is baked at all.
+-- Guide: https://warp.legacygamers.net/warp0716/CustomJobs/
+-- ============================================================
 -- ============================================================
 -- Custom Job Hand/Weapon Sprite Paths
 -- ============================================================
@@ -21,11 +34,5 @@
 -- ============================================================
 
 PCHands = PCHands or {}
--- Read when you APPLY the WARP patch (2026-09-02), not by the client: WARP bakes every
--- quoted row into the patched exe, after the five official 2025 jobs. Re-apply WARP after
--- editing this file. An inheritance form like the two below means stock (Novice) hands
--- and adds no row; that is right for this example, which ships no weapon sprites.
--- A quoted folder name is a row:  PCHands[PCIds.EXAMPLE_JOB] = "example_job"
--- and expects data\sprite\<race>\example_job\example_job_<gender>_<weapon>.spr to exist.
 PCHands[PCIds.EXAMPLE_JOB] = (PCHands[PCIds.NOVICE] or "")
 PCHands[PCIds.EXAMPLE_JOB_B] = (PCHands[PCIds.NOVICE] or "")

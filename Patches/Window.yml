@@ -36,7 +36,7 @@ ButtonVis:
             title : Hide Buttons (New UI)
             recommend : no
             author : Neo-Mind,Skylove,Cremané
-            desc : Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way.
+            desc : "Hides selected buttons below the HP/SP bars in the Basic Info Window (new UI style). Lists <b>every</b> button this client has, so a button stays selectable whether or not the client already hides it; picking one that is already hidden simply does nothing, and the prompt says which those are. On the 2025-07-16 client the ones already hidden are <b>Battleground, Booking and Twitter</b> (GitHub #24). Do not pick the same button here and in <i>Show Buttons (New UI)</i> - that is rejected with an error naming it, rather than silently resolving one way."
 
         - ShowNewButtons:
             title : Show Buttons (New UI)
@@ -68,10 +68,16 @@ CharCreation:
             desc : Changes the height of the character name input field in the new character creation dialog. Adjust if the default size clips text or looks misaligned with custom fonts.
         
         - IncrNewCharHairs:
-            title : Increase char create Hair limits
+            title : Increase char create Hair limits (Reforged)
             recommend : no
             author : Neo-Mind, CrazyBebop
-            desc : Raises the maximum hairstyle and hair color options available during character creation to custom values. Required for servers with more hair options than the default client supports.
+            desc : Pages the character creation hair picker so it can offer more than the built-in 23 styles. Max 128. Needs one thumbnail per extra style in <b>data\texture\&lt;UI&gt;\make_character_ver2\</b> (kRO ships 01 to 23 only). Pair with <i>Allow 65k Hair Styles</i>.
+        
+        - HairColorGuard:
+            title : Hair colour guard, and extra hair colours
+            recommend : no
+            author : CrazyBebop
+            desc : Ignores a hair colour in character creation when that style ships no matching <b>.pal</b> file. Without this the client shows a <i>Cannot find File</i> palette error and then <b>crashes</b> with an access violation, because it dereferences the palette it failed to load. Only affects hair colour in the creation window; nothing else is suppressed.<br><br>It also repaints the swatch row when a style change forces the colour back to <b>none</b>, so the lit swatch stops disagreeing with the character.<br><br>Then it asks <b>how many hair colours</b> the picker should offer. <b>9</b> is the client default and changes no layout at all. Above 9 the row keeps its size and gains a <b>tenth cell that pages to the next nine</b>, the way the hair style grid does; it wraps round to the first page at the end. The buttons move to a relocated array because a tenth would otherwise land on the gender button. Each added colour needs its own <b>.pal</b> files, or the guard above will refuse it, and its own <b>color&lt;NN&gt;_off/_over/_on.bmp</b> art under <b>data\texture\...\make_character_ver2\</b>, or the swatch falls back to the first face. Your server's <b>max hair colour</b> has to allow the range too.
         
         - CustomCharCreateId:
             title : Customize job id in char create dialog
@@ -183,6 +189,8 @@ ReturnToLogin:
 #                  natively; this patch targets the branch raising entry 17 "Are you sure that
 #                  you want to quit?" ending in SendMsg(2)=quit. Verified on a build carrying
 #                  NEITHER ReturnToLogin patch.
+#                  RestoreLoginWindow itself was removed 2026-10-21: 07-16 draws its own
+#                  login window, so there is nothing to restore.
 #  * DisConnToLogin above is UNAFFECTED and stays - it is live in LGRO_2025-07-16_dev.yml.
 #
 #        - CancelToLogin:
@@ -204,17 +212,11 @@ ShowButton:
             author : Neo-Mind,Skylove
             desc : Shows the Replay button on the Service Select screen, allowing players to browse and watch saved replay files. Normally hidden on most langtypes.
         
-        - ShowCancelBtn:
-            title : Always show Cancel button in Login
-            recommend : no
-            author : Neo-Mind
-            desc : Restores the Cancel button on the login screen, placed between the Login and Exit buttons. Allows players to go back to the Service Select screen to choose a different server.
-        
         - ShowRegisterBtn:
             title : Always show Register button in Login
             recommend : no
             author : Neo-Mind
-            desc : Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page.
+            desc : Shows a Register button on the login screen for all langtypes. Clicking it opens the registration URL defined in clientinfo.xml's &lt;registrationweb&gt; tag and closes the client. Useful for directing new players to your registration page. On this client the Sign Up button is always there and opens that page, except at langtype 0, where it first asks whether to go to the official website (or, with a Gravity ID, opens Gravity's Korean signup); the patch makes langtype 0 open your page straight away.
 
 NoLetterLimit:
     title : 4/6 LETTER LIMIT REMOVAL

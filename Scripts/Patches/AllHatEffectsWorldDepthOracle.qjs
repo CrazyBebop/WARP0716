@@ -28,6 +28,10 @@
 *                                                                          *
 *   This build-specific oracle passed live occlusion and zoom validation.  *
 *                                                                          *
+*   2026-11-05 (CrazyBebop, WARP0716 #77): the camera-facing nudge now     *
+*   follows the camera the way the wearer's own sprite layers do, so an    *
+*   effect stays in front of its wearer at any zoom.                       *
+*                                                                          *
 \**************************************************************************/
 
 const AllHatEffectsWorldDepthOracleStatic = {
@@ -54,12 +58,39 @@ const AllHatEffectsWorldDepthOracleStatic = {
 	NativeDepthQuantumVir: 0x00FD6AE4,
 	NativeAbsMaskVir: 0x00FD5D60,
 	ContactDepthBiasBits: 0x3827C5AC,
-	CaveSize: 0x120,
+	// The wearer's sprite layers sit (layers drawn + 3) * [0x01228A94] + scale * [0x01228A98] in front of its
+	// own plane (0x00C40C20), and CCamera::SmoothUpdate rewrites both every frame in proportion to 1 / camera
+	// distance (0x00A7ADFE, 0x00A7AE14). A fixed nudge therefore lost to the wearer when zoomed in (#77).
+	LayerQuantumVir: 0x01228A94,
+	ScaleQuantumVir: 0x01228A98,
+	LayerQuantumWriteVir: 0x00A7ADFE,
+	LayerQuantumWriteBytes: "F3 0F 11 05 94 8A 22 01",
+	ScaleQuantumWriteVir: 0x00A7AE14,
+	ScaleQuantumWriteBytes: "F3 0F 11 0D 98 8A 22 01",
+	WearerLayerBiasReadVir: 0x00C40FC2,
+	WearerLayerBiasReadBytes: "F3 0F 59 05 94 8A 22 01",
+	WearerScaleBiasReadVir: 0x00C40C56,
+	WearerScaleBiasReadBytes: "F3 0F 59 05 98 8A 22 01",
+	// The wearer's sprite stands up by a linear depth tilt per screen pixel, also camera-written:
+	// w(y) = w(anchor) + (y - anchorY) * [0x011DD478] (0x00C40C20 with its last argument 0).
+	SpriteTiltVir: 0x011DD478,
+	SpriteTiltWriteVir: 0x00A7ADA1,
+	SpriteTiltWriteBytes: "D9 1D 78 D4 1D 01",
+	WearerTiltReadVir: 0x00C4102B,
+	WearerTiltReadBytes: "F3 0F 59 25 78 D4 1D 01",
+	OneBits: 0x3F800000,
+	WearerLayerSpanBits: 0x41400000,   // 12.0: 3 + up to 8 layers drawn + 1 to spare
+	WearerScaleSpanBits: 0x3F800000,   // 1.0: a player is drawn at about 0.95
+	CaveSize: 0x160,
 	ContactBiasOffset: 0x04,
 	WrapperOffset: 0x08,
-	DepthBridgeOffset: 0x30,
+	DepthBiasOffset: 0x28,
+	WearerLayerSpanOffset: 0x2C,
+	WearerScaleSpanOffset: 0x30,
+	OneOffset: 0x34,
+	DepthBridgeOffset: 0x40,
 	WrapperSize: 32,
-	DepthBridgeSize: 228
+	DepthBridgeSize: 243
 };
 
 AllHatEffectsWorldDepthOracleStatic.normalizeHex = function(hex)
@@ -83,6 +114,18 @@ AllHatEffectsWorldDepthOracleStatic.assertBytes = function(label, virAddr, expec
 			`AllHatEffectsWorldDepthOracle: ${label} mismatch, got ${actual}`
 		);
 	return phyAddr;
+};
+
+// The camera globals the wearer's sprite depth reads, and the camera update that writes them.
+AllHatEffectsWorldDepthOracleStatic.assertWearerBias = function()
+{
+	const state = AllHatEffectsWorldDepthOracleStatic;
+	state.assertBytes("camera layer-depth quantum write", state.LayerQuantumWriteVir, state.LayerQuantumWriteBytes);
+	state.assertBytes("camera scale-depth quantum write", state.ScaleQuantumWriteVir, state.ScaleQuantumWriteBytes);
+	state.assertBytes("wearer layer-depth bias read", state.WearerLayerBiasReadVir, state.WearerLayerBiasReadBytes);
+	state.assertBytes("wearer scale-depth bias read", state.WearerScaleBiasReadVir, state.WearerScaleBiasReadBytes);
+	state.assertBytes("camera sprite-tilt write", state.SpriteTiltWriteVir, state.SpriteTiltWriteBytes);
+	state.assertBytes("wearer sprite-tilt read", state.WearerTiltReadVir, state.WearerTiltReadBytes);
 };
 
 AllHatEffectsWorldDepthOracleStatic.byteCount = function(hex)
@@ -148,6 +191,7 @@ AllHatEffectsWorldDepthOracle = function(_)
 		state.WorldDepthConvertCallVir,
 		state.WorldDepthConvertCallBytes
 	);
+	state.assertWearerBias();
 
 	$$(_, 2, `Build the HatEffect render scope and normalized-depth bridge`);
 	const [cavePhy, caveVir] = Exe.Allocate(state.CaveSize, 0x10);
@@ -159,9 +203,17 @@ AllHatEffectsWorldDepthOracle = function(_)
 	const wrapperVir = caveVir + state.WrapperOffset;
 	const depthBridgePhy = cavePhy + state.DepthBridgeOffset;
 	const depthBridgeVir = caveVir + state.DepthBridgeOffset;
+	const depthBiasVir = caveVir + state.DepthBiasOffset;
+	const layerSpanVir = caveVir + state.WearerLayerSpanOffset;
+	const scaleSpanVir = caveVir + state.WearerScaleSpanOffset;
+	const oneVir = caveVir + state.OneOffset;
 
 	Exe.SetUint32(flagPhy, 0);
 	Exe.SetUint32(contactBiasPhy, state.ContactDepthBiasBits);
+	Exe.SetUint32(cavePhy + state.DepthBiasOffset, state.ContactDepthBiasBits);
+	Exe.SetUint32(cavePhy + state.WearerLayerSpanOffset, state.WearerLayerSpanBits);
+	Exe.SetUint32(cavePhy + state.WearerScaleSpanOffset, state.WearerScaleSpanBits);
+	Exe.SetUint32(cavePhy + state.OneOffset, state.OneBits);
 
 	// The wrapper scopes the global depth hook to the two generic HatEffect
 	// render methods. The original screen-space STR loop still owns position,
@@ -181,14 +233,26 @@ AllHatEffectsWorldDepthOracle = function(_)
 	// layer-biased RHW at vertex +0C. For vertex Z, pixels at/below the projected
 	// actor anchor retain a four-quantum contact-biased anchor plane, preventing
 	// floor intersection and shallow wall contact from consuming the sprite.
-	// Upper pixels reconstruct reciprocal depth along Ragnarok's Y-up axis:
+	// As shipped, upper pixels reconstructed reciprocal depth along the Y-up axis:
 	//
 	//   rhw' = rhw * (m5*(y-cy) - m4*sy) /
 	//                (m5*(anchorY-cy) - m4*sy)
 	//
-	// This is the algebraic inverse of the native 005541B0 Y projection. A
+	// (the algebraic inverse of the native 005541B0 Y projection; see #77). A
 	// four-native-quantum contact tolerance is tiny relative to the stock
 	// always-on-top Z, but lets attached visuals survive touching geometry.
+	//
+	// #77 (2026-11-05): the effect is now depth-modelled as one more layer of its
+	// wearer. The wearer's sprite (0x00C40C20) stands up by a LINEAR tilt,
+	//   w(y) = 1 / rhw(anchor) + (y - anchorY) * [0x011DD478]
+	// and its layers are nudged toward the camera by camera-scaled quanta. The
+	// exact reconstruction above drifted from that tilt up close, and the fixed
+	// nudge lost to the wearer's layers, so the wearer covered its own effect.
+	// Upper vertices now use the wearer's tilt; every vertex gets the nudge
+	//   max(contact, 12 * [0x01228A94] + 1.0 * [0x01228A98])
+	// recomputed from the live camera globals: just in front of the wearer's
+	// layers at any zoom, never less than the original nudge, so what hides
+	// the wearer's sprite (walls, buildings, trees) still hides the effect.
 	const depthBridgeHead =
 		"83 3D " + flagVir.toHex(4) + " 00 " +
 		"75 0A " +
@@ -202,36 +266,31 @@ AllHatEffectsWorldDepthOracle = function(_)
 		"F3 0F 11 64 24 08 " +
 		"F3 0F 11 6C 24 0C " +
 		"F3 0F 11 74 24 10 " +
+		"F3 0F 10 2D " + state.LayerQuantumVir.toHex(4) + " " +   // movss xmm5, layer quantum
+		"F3 0F 59 2D " + layerSpanVir.toHex(4) + " " +            // mulss xmm5, 12.0
+		"F3 0F 10 35 " + state.ScaleQuantumVir.toHex(4) + " " +   // movss xmm6, scale quantum
+		"F3 0F 59 35 " + scaleSpanVir.toHex(4) + " " +            // mulss xmm6, 1.0
+		"F3 0F 58 EE " +                                           // addss xmm5, xmm6
+		"F3 0F 5F 2D " + contactBiasVir.toHex(4) + " " +          // maxss xmm5, contact
+		"F3 0F 11 2D " + depthBiasVir.toHex(4) + " " +            // movss [nudge], xmm5
 		"F3 0F 10 45 9C " +
-		"F3 0F 58 05 " + contactBiasVir.toHex(4) + " " +
+		"F3 0F 58 05 " + depthBiasVir.toHex(4) + " " +
 		"F3 0F 10 62 E8 " +
 		"0F 2F 65 C4 ";
-	// The projection matrix must be reloaded from stable argument [EBP+10].
-	// Local [EBP-38] initially mirrors it but is reused before the vertex loop.
+	// Upper vertices (above the anchor on screen): the wearer's linear tilt.
 	const uprightDepthHead =
-		"A1 " + state.RenderContextPtrVir.toHex(4) + " " +
-		"66 0F 6E 68 24 " +
-		"0F 5B ED " +
-		"F3 0F 5C E5 " +
-		"F3 0F 10 75 C4 " +
-		"F3 0F 5C F5 " +
-		"8B 4D 10 " +
-		"F3 0F 10 69 14 " +
-		"F3 0F 59 E5 " +
-		"F3 0F 59 F5 " +
-		"F3 0F 10 69 10 " +
-		"F3 0F 59 68 08 " +
-		"F3 0F 5C E5 " +
-		"F3 0F 5C F5 ";
+		"F3 0F 5C 65 C4 " +                                       // subss xmm4, [ebp-3C]  y - anchorY
+		"F3 0F 59 25 " + state.SpriteTiltVir.toHex(4) + " " +    // mulss xmm4, tilt
+		"F3 0F 10 2D " + oneVir.toHex(4) + " " +                 // movss xmm5, 1.0
+		"F3 0F 5E 6D 9C " +                                       // divss xmm5, [ebp-64]  anchor w
+		"F3 0F 58 E5 ";                                           // addss xmm4, xmm5      w at y
 	const uprightDepthGuard =
-		"0F 28 EE " +
-		"0F 54 2D " + state.NativeAbsMaskVir.toHex(4) + " " +
-		"0F 2F 2D " + state.NativeDepthQuantumVir.toHex(4) + " ";
+		"0F 2F 25 " + oneVir.toHex(4) + " ";                     // comiss xmm4, 1.0 (else keep the anchor plane)
 	const uprightDepthTail =
-		"F3 0F 5E E6 " +
-		"F3 0F 59 65 9C " +
-		"F3 0F 58 25 " + contactBiasVir.toHex(4) + " " +
-		"0F 28 C4 ";
+		"F3 0F 10 2D " + oneVir.toHex(4) + " " +                 // movss xmm5, 1.0
+		"F3 0F 5E EC " +                                          // divss xmm5, xmm4      rhw at y
+		"F3 0F 58 2D " + depthBiasVir.toHex(4) + " " +           // addss xmm5, nudge
+		"0F 28 C5 ";                                              // movaps xmm0, xmm5
 	const depthConvertVir = depthBridgeVir +
 		state.byteCount(depthBridgeHead) + 2 +
 		state.byteCount(uprightDepthHead) +
@@ -350,6 +409,7 @@ AllHatEffectsWorldDepthOracle.validate = function()
 			state.WorldDepthConvertCallVir,
 			state.WorldDepthConvertCallBytes
 		);
+		state.assertWearerBias();
 	}
 	catch (error)
 	{

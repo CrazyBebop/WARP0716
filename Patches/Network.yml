@@ -56,18 +56,6 @@ CustomNW:
 #            author :  Andrei Karas (4144)
 #            desc : Remove hardcoded connection addresses and ports.
         
-        - EnableHttpEmblem:
-            title : Fix HTTP emblem in client
-            recommend : no
-            author : CH.C (jchcc)
-            desc : Fixes guild emblem loading via HTTP on clients that have the cheat defender enabled. Requires an HTTP emblem service running on your server.
-            
-        - CustomMerchantURL:
-            title : Customize Merchant store URLs
-            recommend : no
-            author : CH.C (jchcc)
-            desc : Changes the hardcoded URLs used for saving and loading Merchant Store (vending) data to custom ones. Requires an HTTP service on your server to handle merchant store requests.
-        
         - SendClientFlags :
             title : Send client flags
             recommend : no

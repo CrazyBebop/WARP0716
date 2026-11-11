@@ -61,8 +61,8 @@ WalkDelay = function(_)
 	// For post-20170329 clients this patch also searched for `add ecx, 15Eh / cmp eax, ecx` and
 	// treated it as a second walk delay. On 2025-07-16 that resolves to 0x00D47790, inside
 	// C3dActorPC__DispatchActionEvent (0x00D473B0) - a jump table over ~150 action-event ids.
-	// Ghidra bails on it ("Could not recover jumptable"), so the whole region is unanalyzed and
-	// neither get_function_by_address nor get_xrefs_to finds anything there. Resolving the table
+	// Its jump table cannot be recovered automatically, so the whole region is unanalyzed and
+	// no function or cross-reference lookup finds anything there. Resolving the table
 	// by hand (ptr table 0x00D47E64, index table 0x00D47EBC, 22 targets over 150 ids) the body
 	// holding it is slot 18, reached by EXACTLY ONE id: 91.
 	//
