@@ -319,3 +319,15 @@ CustomSleep:
             recommend : no
             author : Andrei Karas (4144)
             desc : Changes the Sleep() delay in the main game loop to a custom value (in milliseconds). Lower values make the client more responsive but use more CPU; higher values save CPU at the cost of smoothness.
+
+SpecialFixes:
+    title : Special Fixes
+    mutex : false
+    color : Gold
+
+    patches:
+        - StrayHitDisplayFix:
+            title : Fix Stray Hit Display
+            recommend : no
+            author : Cross
+            desc : Fixes MISS and NON CRIT text that sometimes flashes oversized or in the wrong place for an instant. Critical hits are not fixed yet. (2025-07-16 client only)
